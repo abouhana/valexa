@@ -20,5 +20,6 @@ def is_ui_file(filename: str) -> bool:
     except IndexError:
         return False
 
+
 if __name__ == '__main__':
     convert_all_ui_files()

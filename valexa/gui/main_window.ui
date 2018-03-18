@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>717</width>
-    <height>595</height>
+    <width>779</width>
+    <height>676</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="main">
        <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -79,7 +79,7 @@
        </layout>
       </widget>
       <widget class="QWidget" name="data">
-       <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0,0,0,0">
+       <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0,0,0,0,0,0">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0">
           <property name="spacing">
@@ -143,7 +143,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QListWidget" name="listWidget">
+         <widget class="QListWidget" name="calibration_data_list_widget">
           <property name="alternatingRowColors">
            <bool>false</bool>
           </property>
@@ -157,10 +157,51 @@
          </widget>
         </item>
         <item>
-         <widget class="QListWidget" name="listWidget_2"/>
+         <widget class="QListWidget" name="validation_data_list_widget"/>
+        </item>
+        <item>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="unitIntroLabel">
+            <property name="text">
+             <string>Unit intro</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="unitIntroLineEdit"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="responseUnitLabel">
+            <property name="text">
+             <string>Response unit</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="responseUnitLineEdit"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="confirm_data_button">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>699</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Next</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="model"/>
      </widget>
     </item>
    </layout>
@@ -170,7 +211,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>717</width>
+     <width>779</width>
      <height>20</height>
     </rect>
    </property>

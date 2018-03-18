@@ -7,12 +7,15 @@ name = "pypi"
 
 [packages]
 
-pytest = "*"
 "pyqt5" = "*"
 openpyxl = "*"
+matplotlib = "*"
+numpy = "*"
 
 
 [dev-packages]
+
+pytest = "*"
 
 
 

@@ -12,19 +12,34 @@ class ValexaApp(QMainWindow, main_window.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
 
-        self.btn_response.clicked.connect(self.open_data_format)
+        self.btn_response.clicked.connect(self.open_data_page)
+        self.confirm_data_button.clicked.connect(self.open_model_page)
         self.xlsx_choose_button.clicked.connect(self.select_xlsx)
 
         self.stackedWidget.setCurrentIndex(0)
 
-    def open_data_format(self):
+    def open_data_page(self):
         self.stackedWidget.setCurrentIndex(1)
+
+    def open_model_page(self):
+        self.stackedWidget.setCurrentIndex(2)
 
     def select_xlsx(self):
         filename, _ = QFileDialog.getOpenFileName()
         try:
-            xlsx_handler = XlsxHandler(filename)
-            self.file_name_input.setText(filename)
+            if filename != "":
+                xlsx_handler = XlsxHandler(filename)
+                self.file_name_input.setText(filename)
+                self.confirm_data_button.setEnabled(True)
+
+                calib_data = xlsx_handler.get_calibration_data()
+                for row in calib_data:
+                    self.calibration_data_list_widget.addItem(str(row))
+
+                valid_data = xlsx_handler.get_validation_data()
+                for row in valid_data:
+                    self.validation_data_list_widget.addItem(str(row))
+
         except InvalidFileException as e:
             QMessageBox.critical(self, "Error", str(e))
 
