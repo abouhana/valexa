@@ -103,3 +103,4 @@ ENV/
 
 # Data directory
 data
+!/valexa/tests/data/
