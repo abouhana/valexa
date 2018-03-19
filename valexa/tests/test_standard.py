@@ -36,7 +36,6 @@ class TestStandard:
         assert len(std.series[1]) == 3
 
     @pytest.mark.parametrize("degree,expected", [
-        (3, 3),
         (1, 1),
         (2, 2),
     ])
@@ -48,10 +47,11 @@ class TestStandard:
         assert len(models_parameters) == expected
 
     def test_apply_models_parameters_returns_result_by_model(self, calib_data, valid_data):
+        max_degree = 2
         std_calib = Standard(calib_data)
         std_valid = Standard(valid_data)
-        models_parameters = std_calib.get_models_parameters(max_degree=3)
+        models_parameters = std_calib.get_models_parameters(max_degree=max_degree)
 
         models_results = std_valid.apply_models(models_parameters)
 
-        assert len(models_results) == 3
+        assert len(models_results) == max_degree

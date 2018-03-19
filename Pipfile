@@ -11,6 +11,7 @@ name = "pypi"
 openpyxl = "*"
 matplotlib = "*"
 numpy = "*"
+scipy = "*"
 
 
 [dev-packages]
