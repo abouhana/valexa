@@ -1,5 +1,8 @@
 from collections import defaultdict
+from operator import attrgetter
 from typing import List, Dict
+
+from matplotlib.axes import Axes
 from scipy.stats import t
 
 import math
@@ -125,6 +128,7 @@ class Profile:
         self.levels: List[ProfileLevel] = []
 
         self.__split_series_by_levels(model_results)
+        self.levels.sort(key=attrgetter('index'))
 
     def __split_series_by_levels(self, series):
         for s in series:
@@ -139,3 +143,10 @@ class Profile:
     def calculate(self):
         for level in self.levels:
             level.calculate()
+
+    def make_plot(self, ax: Axes):
+        ax.plot([l.recovery for l in self.levels], linewidth=2.0)
+        ax.plot([l.relative_tolerance[0] for l in self.levels], linewidth=1.0, color="b")
+        ax.plot([l.relative_tolerance[1] for l in self.levels], linewidth=1.0, color="g")
+        ax.set_xlabel("Concentration")
+        ax.set_ylabel("Recovery (%)")

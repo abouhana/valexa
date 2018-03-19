@@ -201,7 +201,20 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="model"/>
+      <widget class="QWidget" name="models">
+       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,5">
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Models&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="plot_layout"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>

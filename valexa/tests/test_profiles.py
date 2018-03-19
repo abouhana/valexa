@@ -1,4 +1,5 @@
 import pytest
+from matplotlib import pyplot as plt
 
 from valexa.core.profiles import make_profiles, Profile
 from valexa.core.standard import Result
@@ -65,6 +66,10 @@ class TestProfile:
     def model_results(self):
         return self.results_without_repetition
 
+    @pytest.fixture()
+    def model_results_with_rep(self):
+        return self.results_with_repetition
+
     def test_create_from_a_model_results_calculate_levels_from_series(self, model_results):
         profile = Profile(model_results)
 
@@ -90,3 +95,13 @@ class TestProfile:
             assert l.inter_series_std is not None
             assert l.absolute_tolerance
             assert l.relative_tolerance
+
+    def test_plot_function(self, model_results_with_rep):
+        profile = Profile(model_results_with_rep)
+        profile.calculate()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        profile.make_plot(ax)
+
+        # plt.show()
