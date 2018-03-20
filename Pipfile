@@ -18,6 +18,7 @@ scipy = "*"
 
 pytest = "*"
 pytest-cov = "*"
+pyinstaller = "*"
 
 
 [requires]

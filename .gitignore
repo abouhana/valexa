@@ -104,3 +104,6 @@ ENV/
 # Data directory
 data
 !/valexa/tests/data/
+
+# Custom Pyinstaller spec
+!/valexa.spec
