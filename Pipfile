@@ -19,6 +19,7 @@ scipy = "*"
 pytest = "*"
 pytest-cov = "*"
 pyinstaller = "*"
+pytest-mock = "*"
 
 
 [requires]

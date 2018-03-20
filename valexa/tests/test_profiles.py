@@ -1,5 +1,6 @@
 import pytest
 from matplotlib import pyplot as plt
+from unittest.mock import Mock
 
 from valexa.core.profiles import make_profiles, Profile
 from valexa.core.standard import Result
@@ -32,9 +33,22 @@ def valid_data():
 
 
 def test_make_profiles_returns_profiles(calib_data, valid_data):
-    profiles = make_profiles(calib_data, valid_data)
+    tolerance_limit = 80
+    acceptance_limit = 20
+
+    profiles = make_profiles(calib_data, valid_data, tolerance_limit, acceptance_limit)
 
     assert profiles
+
+
+def test_make_profiles_calls_profile_calculate_with_tolerance_limit_and_acceptance_limit(calib_data, valid_data, mocker):
+    tolerance_limit = 80
+    acceptance_limit = 20
+    calculate_mock: Mock = mocker.patch('valexa.core.profiles.Profile.calculate')
+
+    make_profiles(calib_data, valid_data, tolerance_limit, acceptance_limit)
+
+    calculate_mock.assert_called_with(tolerance_limit, acceptance_limit)
 
 
 class TestProfile:
@@ -79,9 +93,12 @@ class TestProfile:
     @pytest.mark.parametrize("model_results", [results_without_repetition, results_with_repetition],
                              ids=["without_rep", "with_rep"])
     def test_calculate_generate_values_to_make_accuracy_profile(self, model_results):
+        tolerance_limit = 80
         profile = Profile(model_results)
 
-        profile.calculate()
+        profile.calculate(tolerance_limit)
+
+        assert profile.acceptance_interval
 
         for l in profile.levels:
             assert l.introduced_concentration
@@ -97,8 +114,10 @@ class TestProfile:
             assert l.relative_tolerance
 
     def test_plot_function(self, model_results_with_rep):
+        tolerance_limit = 80
+        acceptance_limit = 20
         profile = Profile(model_results_with_rep)
-        profile.calculate()
+        profile.calculate(tolerance_limit, acceptance_limit)
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
