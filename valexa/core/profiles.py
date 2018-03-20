@@ -164,4 +164,4 @@ class Profile:
         ax.scatter(results_x, results_y, alpha=0.5, s=2)
         ax.set_xlabel("Concentration")
         ax.set_ylabel("Recovery (%)")
-        ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
+        ax.legend(loc=1)

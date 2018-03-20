@@ -6,7 +6,6 @@ import numpy as np
 Entry = namedtuple('Entry', ['series', 'level', 'concentration', 'response'])
 Result = namedtuple('Result', ['series', 'level', 'concentration', 'result'])
 
-
 ModelsParameters = List[Dict]
 ModelsResults = List[List[Result]]
 
@@ -43,10 +42,8 @@ class Standard:
                 for s in self.series[key]:
                     p_func = np.poly1d(params)
                     result_value = (p_func - s.response).roots[-1]
-                    result = Result(s.series, s.level, s.concentration,  result_value)
+                    result = Result(s.series, s.level, s.concentration, result_value)
                     results.append(result)
             models_results.append(results)
 
         return models_results
-
-
