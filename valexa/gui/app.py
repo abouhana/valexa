@@ -35,8 +35,8 @@ class ValexaApp(QMainWindow, main_window.Ui_MainWindow):
             profiles = make_profiles(self.state.calib_data, self.state.valid_data)
             charts_layout = self.plot_layout
             for profile in profiles:
-                chart_canva = ProfilePlotCanvas(profile=profile)
-                charts_layout.addWidget(chart_canva)
+                plot_canvas = ProfilePlotCanvas(profile=profile)
+                charts_layout.addWidget(plot_canvas)
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 

@@ -58,7 +58,7 @@ class ProfileLevel:
         self.inter_series_var = self.get_inter_series_var()
         self.inter_series_std = np.sqrt(self.inter_series_var)
         self.absolute_tolerance = self.get_absolute_tolerance()
-        self.relative_tolerance = [(t/self.introduced_concentration)*100 for t in self.absolute_tolerance]
+        self.relative_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.absolute_tolerance]
 
     def get_repeatability_var(self) -> float:
         repeatability_var = 0
@@ -105,13 +105,13 @@ class ProfileLevel:
         b_coefficient = (variance_report + 1) / (nb_rep * variance_report + 1)
         degree_of_freedom = (variance_report + 1) ** 2 / (
                 (variance_report + 1 / nb_rep) ** 2 / (nb_series - 1) + (1 - 1 / nb_rep) / nb_measure)
-        student_interval = t.interval(0.80, round(degree_of_freedom))
+        student_low = t.ppf(1 - 0.80, math.floor(degree_of_freedom))
+        student_high = t.ppf(1 - 0.80, math.ceil(degree_of_freedom))
 
-        cover_factor = student_interval[0] - (student_interval[0] - student_interval[1]) * (
-                    degree_of_freedom - math.floor(degree_of_freedom))
-        tolerance_std = fidelity_std*np.sqrt(1+1/(nb_measure*b_coefficient))
-        tolerance_low = self.calculated_concentration-tolerance_std*cover_factor
-        tolerance_high = self.calculated_concentration+tolerance_std*cover_factor
+        cover_factor = student_low - (student_low - student_high) * (degree_of_freedom - math.floor(degree_of_freedom))
+        tolerance_std = fidelity_std * np.sqrt(1 + 1 / (nb_measure * b_coefficient))
+        tolerance_low = self.calculated_concentration - tolerance_std * cover_factor
+        tolerance_high = self.calculated_concentration + tolerance_std * cover_factor
 
         return [tolerance_low, tolerance_high]
 
