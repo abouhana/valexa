@@ -1,5 +1,6 @@
 import pytest
 from matplotlib import pyplot as plt
+import mpl_toolkits.axisartist as AA
 from unittest.mock import Mock
 
 from valexa.core.profiles import make_profiles, Profile
@@ -119,7 +120,8 @@ class TestProfile:
         profile = Profile(model_results_with_rep)
         profile.calculate(tolerance_limit, acceptance_limit)
         fig = plt.figure()
-        ax = fig.add_subplot(111)
+        ax = AA.Subplot(fig, 111)
+        fig.add_subplot(ax)
 
         profile.make_plot(ax)
 

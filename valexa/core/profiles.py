@@ -2,7 +2,6 @@ from collections import defaultdict
 from operator import attrgetter
 from typing import List, Dict
 
-from matplotlib.axes import Axes
 from scipy.stats import t
 
 import math
@@ -152,8 +151,10 @@ class Profile:
         for level in self.levels:
             level.calculate(tolerance_limit)
 
-    def make_plot(self, ax: Axes):
+    def make_plot(self, ax):
         levels_x = [l.calculated_concentration for l in self.levels]
+        ax.axis["bottom", "top", "right"].set_visible(False)
+        ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
         ax.plot(levels_x, [l.recovery for l in self.levels], color="m", linewidth=2.0, marker=".", label="Recovery")
         ax.plot(levels_x, [l.relative_tolerance[0] for l in self.levels], linewidth=1.0, color="b", label="Max tolerance limit")
         ax.plot(levels_x, [l.relative_tolerance[1] for l in self.levels], linewidth=1.0, color="g", label= "Min tolerance limit")
