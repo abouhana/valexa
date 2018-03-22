@@ -7,7 +7,8 @@ from scipy.stats import t
 import math
 import numpy as np
 
-from valexa.core.standard import Standard, Result
+from valexa.core.standard import Standard
+from valexa.core.models import Result, ModelHandler, Model
 
 DEFAULT_TOLERANCE = 80
 DEFAULT_ACCEPTANCE = 20
@@ -17,13 +18,13 @@ def make_profiles(calib_data: List[tuple], valid_data: List[tuple], tolerance_li
                   acceptance_limit: int) -> List:
     std_calib = Standard(calib_data)
     std_valid = Standard(valid_data)
+    model_handler = ModelHandler(std_calib, std_valid)
 
-    models_parameters = std_calib.get_models_parameters()
-    models_results = std_valid.apply_models(models_parameters)
+    models = model_handler.get_models()
 
     profiles = []
-    for results in models_results:
-        profile = Profile(results)
+    for model in models:
+        profile = Profile(model)
         profile.calculate(tolerance_limit, acceptance_limit)
         profiles.append(profile)
 
@@ -128,8 +129,8 @@ class ProfileLevel:
 
 
 class Profile:
-    def __init__(self, model_results: List[Result]):
-        self.series = model_results
+    def __init__(self, model: Model):
+        self.series = model.series_calculated
         self.levels: List[ProfileLevel] = []
         self.acceptance_interval: List[float] = []
 
