@@ -4,8 +4,8 @@ from openpyxl.utils.exceptions import InvalidFileException
 
 from valexa.core.profiles import make_profiles, DEFAULT_TOLERANCE, DEFAULT_ACCEPTANCE
 from valexa.core.xlsx import XlsxHandler
-from valexa.gui import main_window
-from valexa.gui.plot import ProfilePlotCanvas
+from valexa.gui import Ui_main_window
+from valexa.gui.profile_widget import ProfileWidget
 
 
 class AppState:
@@ -21,7 +21,7 @@ class AppState:
         self.__init__()
 
 
-class ValexaApp(QMainWindow, main_window.Ui_MainWindow):
+class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
     def __init__(self, state: AppState):
         super().__init__()
         self.state = state
@@ -65,9 +65,8 @@ class ValexaApp(QMainWindow, main_window.Ui_MainWindow):
                                      self.state.acceptance_limit)
             plot_layout = self.plot_layout
             for profile in profiles:
-                plot_canvas = ProfilePlotCanvas(profile=profile)
-                plot_layout.addWidget(plot_canvas)
-                self.plot_canvas.append(plot_canvas)
+                profile_widget = ProfileWidget(profile=profile)
+                plot_layout.addWidget(profile_widget)
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 
