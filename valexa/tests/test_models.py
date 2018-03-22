@@ -41,3 +41,14 @@ class TestModelHandler:
         assert isinstance(models[0], Model)
         assert models[0].series_params
         assert len(models[0].series_calculated) == 6
+
+
+class TestModel:
+    def test_name_property(self):
+        degree = 1
+        model = Model()
+        model.degree = degree
+
+        name = model.name
+
+        assert name == Model.NAME_BY_DEGREE[degree]

@@ -9,9 +9,22 @@ Result = namedtuple('Result', ['series', 'level', 'concentration', 'result'])
 
 
 class Model:
+    NAME_BY_DEGREE = {
+        1: "Linear",
+        2: "Quadratic"
+    }
+
     def __init__(self):
+        self.degree: int = None
         self.series_params = {}
         self.series_calculated: List[Result] = []
+
+    @property
+    def name(self) -> str:
+        try:
+            return self.NAME_BY_DEGREE[self.degree]
+        except KeyError:
+            return "Unknown model"
 
 
 class ModelHandler:
@@ -25,6 +38,7 @@ class ModelHandler:
         models = []
         for degree in range(1, max_degree + 1):
             model = Model()
+            model.degree = degree
             for (key, entries) in self.calib_std.series.items():
                 x_value = [e.concentration for e in entries]
                 y_value = [e.response for e in entries]

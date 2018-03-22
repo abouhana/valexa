@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/kdesrosiers/Documents/valexa/scripts/../valexa/gui/main_window.ui'
+# Form implementation generated from reading ui file '/home/kdesrosiers/Documents/valexa/scripts/../valexa/gui/Ui_main_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #

@@ -56,7 +56,7 @@ class ProfileLevel:
         self.introduced_concentration = np.mean([s.concentration for s in self.series])
         self.calculated_concentration = np.mean([s.result for s in self.series])
         self.bias = self.calculated_concentration - self.introduced_concentration
-        self.relative_bias = self.bias / self.introduced_concentration
+        self.relative_bias = (self.bias / self.introduced_concentration)*100
         self.recovery = (self.calculated_concentration / self.introduced_concentration) * 100
         self.repeatability_var = self.get_repeatability_var()
         self.repeatability_std = np.sqrt(self.repeatability_var)
@@ -130,6 +130,7 @@ class ProfileLevel:
 
 class Profile:
     def __init__(self, model: Model):
+        self.model = model
         self.series = model.series_calculated
         self.levels: List[ProfileLevel] = []
         self.acceptance_interval: List[float] = []
