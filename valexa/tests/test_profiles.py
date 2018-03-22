@@ -4,7 +4,7 @@ import mpl_toolkits.axisartist as AA
 from unittest.mock import Mock
 
 from valexa.core.profiles import make_profiles, Profile
-from valexa.core.standard import Result
+from valexa.core.models import Result, Model
 
 
 @pytest.fixture()
@@ -78,29 +78,34 @@ class TestProfile:
     ]
 
     @pytest.fixture()
-    def model_results(self):
-        return self.results_without_repetition
+    def model_without_rep(self):
+        model = Model()
+        model.series_calculated = self.results_without_repetition
+        return model
 
     @pytest.fixture()
-    def model_results_with_rep(self):
-        return self.results_with_repetition
+    def model_with_rep(self):
+        model = Model()
+        model.series_calculated = self.results_with_repetition
+        return model
 
-    def test_create_from_a_model_results_calculate_levels_from_series(self, model_results):
-        profile = Profile(model_results)
+    def test_create_from_a_model_results_calculate_levels_from_series(self, model_without_rep):
+        profile = Profile(model_without_rep)
 
         assert len(profile.levels) == 3
         assert len(profile.levels[0].series) == 2
 
-    @pytest.mark.parametrize("model_results", [results_without_repetition, results_with_repetition],
+    @pytest.mark.parametrize("results", [results_with_repetition, results_without_repetition],
                              ids=["without_rep", "with_rep"])
-    def test_calculate_generate_values_to_make_accuracy_profile(self, model_results):
+    def test_calculate_generate_values_to_make_accuracy_profile(self, results):
+        model = Model()
+        model.series_calculated = results
         tolerance_limit = 80
-        profile = Profile(model_results)
+        profile = Profile(model)
 
         profile.calculate(tolerance_limit)
 
         assert profile.acceptance_interval
-
         for l in profile.levels:
             assert l.introduced_concentration
             assert l.calculated_concentration
@@ -114,10 +119,10 @@ class TestProfile:
             assert l.absolute_tolerance
             assert l.relative_tolerance
 
-    def test_plot_function(self, model_results_with_rep):
+    def test_plot_function(self, model_with_rep):
         tolerance_limit = 80
         acceptance_limit = 20
-        profile = Profile(model_results_with_rep)
+        profile = Profile(model_with_rep)
         profile.calculate(tolerance_limit, acceptance_limit)
         fig = plt.figure()
         ax = AA.Subplot(fig, 111)
