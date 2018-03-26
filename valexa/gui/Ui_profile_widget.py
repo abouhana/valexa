@@ -22,10 +22,16 @@ class Ui_profileWidget(object):
         self.frame.setObjectName("frame")
         self.frame_layout = QtWidgets.QVBoxLayout(self.frame)
         self.frame_layout.setObjectName("frame_layout")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
         self.name_label = QtWidgets.QLabel(self.frame)
         self.name_label.setAutoFillBackground(False)
         self.name_label.setObjectName("name_label")
-        self.frame_layout.addWidget(self.name_label)
+        self.horizontalLayout.addWidget(self.name_label)
+        self.correction_label = QtWidgets.QLabel(self.frame)
+        self.correction_label.setObjectName("correction_label")
+        self.horizontalLayout.addWidget(self.correction_label)
+        self.frame_layout.addLayout(self.horizontalLayout)
         self.table_widget = QtWidgets.QTableWidget(self.frame)
         self.table_widget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.table_widget.setObjectName("table_widget")
@@ -40,5 +46,6 @@ class Ui_profileWidget(object):
 
     def retranslateUi(self, profileWidget):
         _translate = QtCore.QCoreApplication.translate
-        self.name_label.setText(_translate("profileWidget", "TextLabel"))
+        self.name_label.setText(_translate("profileWidget", "NameLabel"))
+        self.correction_label.setText(_translate("profileWidget", "CorrectionLabel"))
 

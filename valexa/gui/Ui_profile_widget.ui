@@ -27,14 +27,25 @@
      </property>
      <layout class="QVBoxLayout" name="frame_layout">
       <item>
-       <widget class="QLabel" name="name_label">
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>TextLabel</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="name_label">
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>NameLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="correction_label">
+          <property name="text">
+           <string>CorrectionLabel</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QTableWidget" name="table_widget">
