@@ -1,6 +1,6 @@
 import pytest
 
-from valexa.core.models import ModelHandler, Model
+from valexa.core.models import ModelHandler, Model, Result
 from valexa.core.standard import Standard
 
 
@@ -52,3 +52,35 @@ class TestModel:
         name = model.name
 
         assert name == Model.NAME_BY_DEGREE[degree]
+
+    @pytest.fixture()
+    def results_with_shift(self):
+        return [
+            Result(1, 1, 10.0, 8.0),
+            Result(1, 2, 20.0, 16.0),
+            Result(2, 1, 10.0, 7.5),
+            Result(2, 2, 20.0, 17.0),
+        ]
+
+    @pytest.fixture()
+    def model_with_shift(self, results_with_shift):
+        model = Model()
+        model.series_calculated = results_with_shift
+
+        return model
+
+    def test_correction_detection(self, model_with_shift: Model):
+        model_with_shift.handle_correction()
+
+        assert model_with_shift.has_correction
+        assert model_with_shift.correction_factor == 1/0.8
+
+    def test_apply_correction_factor_to_result(self, model_with_shift: Model, results_with_shift):
+        model_with_shift.handle_correction()
+
+        correction_factor = model_with_shift.correction_factor
+        for (index, s) in enumerate(model_with_shift.series_calculated):
+            assert s.result == results_with_shift[index].result * correction_factor
+
+
+

@@ -19,6 +19,10 @@ class ProfileWidget(QWidget, Ui_profileWidget):
         self.frame_layout.addWidget(plot_canvas)
 
         self.name_label.setText(self.profile.model.name)
+        self.correction_label.hide()
+        if self.profile.model.has_correction:
+            self.correction_label.show()
+            self.correction_label.setText(f"Correction factor: {self.profile.model.correction_factor}")
 
         self.create_table()
 
