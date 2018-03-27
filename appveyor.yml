@@ -1,0 +1,28 @@
+build: false
+
+environment:
+  matrix:
+#    - PYTHON: "C:\\Python36-x64"
+  - PYTHON: "C:\\Miniconda36-x64"
+
+install:
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  - "python --version"
+
+  - "conda install -yq pip numpy scipy matplotlib"
+
+  - "pip install --disable-pip-version-check --user --upgrade pip"
+  - "pip install --upgrade pipenv"
+  - "pipenv install --system --dev"
+
+test_script:
+  - "pipenv run pytest"
+
+
+#after_test:
+#  - "pipenv run pyinstaller -y valexa.spec"
+
+artifacts:
+  - path: dist
+    name: Valexa

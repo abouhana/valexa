@@ -1,16 +1,22 @@
 # -*- mode: python -*-
+import os
+import sys
 
 block_cipher = None
 
+DIR = os.path.realpath(".")
+
+sys.modules['FixTk'] = None
 
 a = Analysis(['main.py'],
-             pathex=['/home/kdesrosiers/Documents/valexa'],
-             binaries=[],
-             datas=[],
+             pathex=[DIR],
+             datas=[('matplotlibrc', '.')],
              hiddenimports=['scipy._lib.messagestream'],
-             hookspath=[],
+             hookspath=None,
              runtime_hooks=[],
-             excludes=[],
+             excludes=['FixTk', 'tcl', 'tk', '_tkinter', '_tkinter', 'Tkinter', 'gtk3', 'wx', 'gtk+', 'gtk2',
+             'gdk', 'cairo', 'wayland', 'xinerama', 'share', 'icons', 'atk', 'pango', 'pil', 'PIL', 'pdf', 'WebAgg',
+             'GTK3Agg','GTK3Cairo','WX', 'WXAgg'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher)
