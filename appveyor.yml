@@ -20,9 +20,9 @@ test_script:
   - "pipenv run pytest"
 
 
-#after_test:
-#  - "pipenv run pyinstaller -y valexa.spec"
+after_test:
+  - "pipenv run pyinstaller -y valexa.spec"
 
-artifacts:
-  - path: dist
-    name: Valexa
+#artifacts:
+#  - path: dist
+#    name: Valexa
