@@ -36,7 +36,7 @@ class ProfileWidget(QWidget, Ui_profileWidget):
             table.setItem(index, 2, QTableWidgetItem(f'{l.bias:.3f}'))
             table.setItem(index, 3, QTableWidgetItem(f'{l.relative_bias:.2f}'))
             table.setItem(index, 4, QTableWidgetItem(f'{l.recovery:.1f}'))
-            table.setItem(index, 5, QTableWidgetItem(f'[{l.absolute_tolerance[1]:.2f},{l.absolute_tolerance[0]:.2f}]'))
+            table.setItem(index, 5, QTableWidgetItem(f'[{l.absolute_tolerance[0]:.2f},{l.absolute_tolerance[1]:.2f}]'))
 
         table.setHorizontalHeaderLabels(
             ["Concentration", "Calculated concentration", "Absolute bias", "Relative biais (%)", "Recovery (%)", "Tolerance Interval"])

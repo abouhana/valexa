@@ -73,7 +73,7 @@ class TestModel:
         model_with_shift.handle_correction()
 
         assert model_with_shift.has_correction
-        assert model_with_shift.correction_factor == 1/0.8
+        assert model_with_shift.correction_factor == round(1/0.8, 1)
 
     def test_apply_correction_factor_to_result(self, model_with_shift: Model, results_with_shift):
         model_with_shift.handle_correction()

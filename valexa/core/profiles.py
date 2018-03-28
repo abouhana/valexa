@@ -48,15 +48,31 @@ class ProfileLevel:
         self.absolute_tolerance: List[float] = []
         self.relative_tolerance: List[float] = []
         self.acceptance_interval: List[float] = []
+        self.sum_square_error_intra_series: float = None
+        self.series_by_group: Dict = {}
+        self.nb_series: int = None
+        self.nb_measures: int = None
+        self.nb_rep: int = None
+
+    def __series_by_group(self) -> Dict:
+        series_group = defaultdict(list)
+        for s in self.series:
+            series_group[s.series].append(s)
+
+        return series_group
 
     def add_result(self, result):
         self.series.append(result)
 
     def calculate(self, tolerance_limit: int = DEFAULT_TOLERANCE):
+        self.series_by_group = self.__series_by_group()
+        self.nb_series = len(self.series_by_group.keys())
+        self.nb_measures = len(self.series)
+        self.nb_rep = self.nb_measures / self.nb_series
         self.introduced_concentration = np.mean([s.concentration for s in self.series])
         self.calculated_concentration = np.mean([s.result for s in self.series])
         self.bias = self.calculated_concentration - self.introduced_concentration
-        self.relative_bias = (self.bias / self.introduced_concentration)*100
+        self.relative_bias = (self.bias / self.introduced_concentration) * 100
         self.recovery = (self.calculated_concentration / self.introduced_concentration) * 100
         self.repeatability_var = self.get_repeatability_var()
         self.repeatability_std = np.sqrt(self.repeatability_var)
@@ -68,64 +84,49 @@ class ProfileLevel:
     def get_repeatability_var(self) -> float:
         repeatability_var = 0
         sum_square_errors = 0
-        series_group = self.__series_by_group()
-        for (k, series) in series_group.items():
-            series_mean_result = np.mean([s.result for s in series_group[k]])
-            for rep in series:
-                sum_square_errors += (rep.result - series_mean_result) ** 2
+        for (k, series) in self.series_by_group.items():
+            series_mean_result = np.mean([s.result for s in series])
+            sum_square_errors += np.sum([(rep.result - series_mean_result) ** 2 for rep in series])
+        self.sum_square_error_intra_series = sum_square_errors
 
         if sum_square_errors > 0:
-            repeatability_var = sum_square_errors / (len(self.series) - len(series_group.keys()))
+            repeatability_var = sum_square_errors / (self.nb_series * (self.nb_rep - 1))
         return repeatability_var
 
     def get_inter_series_var(self) -> float:
-        sum_square_errors = 0
-        series_group = self.__series_by_group()
-        nb_rep = len(self.series) / len(series_group.keys())
-        for (k, series) in series_group.items():
-            series_mean_result = np.mean([s.result for s in series_group[k]])
-            sum_square_errors += (series_mean_result - self.calculated_concentration) ** 2
+        sum_square_errors_total = np.sum([(s.result - self.calculated_concentration) ** 2 for s in self.series])
+        sum_square_errors_inter_series = sum_square_errors_total - self.sum_square_error_intra_series
 
-        if sum_square_errors > 0:
-            inter_series_var = ((sum_square_errors / (len(series_group.keys()) - 1)) -
-                                self.repeatability_var) / nb_rep
-            if inter_series_var < 0:
-                return 0
-            else:
-                return inter_series_var
+        if sum_square_errors_inter_series <= 0:
+            return 0
+
+        inter_series_var: float = ((sum_square_errors_inter_series / (
+                self.nb_series - 1)) - self.repeatability_var) / self.nb_rep
+        if inter_series_var < 0:
+            return 0
+
+        return inter_series_var
 
     def get_absolute_tolerance(self, tolerance_limit: int) -> List[float]:
         fidelity_var = np.sum([self.repeatability_var, self.inter_series_var])
         fidelity_std = np.sqrt(fidelity_var)
         if self.inter_series_var == 0 or self.repeatability_var == 0:
-            variance_report = 0
+            ratio_var = 0
         else:
-            variance_report = self.inter_series_var / self.repeatability_var
+            ratio_var = self.inter_series_var / self.repeatability_var
 
-        series_group = self.__series_by_group()
-        nb_series = len(series_group.keys())
-        nb_measure = len(self.series)
-        nb_rep = nb_measure / nb_series
-
-        b_coefficient = (variance_report + 1) / (nb_rep * variance_report + 1)
-        degree_of_freedom = (variance_report + 1) ** 2 / (
-                (variance_report + 1 / nb_rep) ** 2 / (nb_series - 1) + (1 - 1 / nb_rep) / nb_measure)
-        student_low = t.ppf(1 - (tolerance_limit / 100), math.floor(degree_of_freedom))
-        student_high = t.ppf(1 - (tolerance_limit / 100), math.ceil(degree_of_freedom))
+        b_coefficient = (ratio_var + 1) / (self.nb_rep * ratio_var + 1)
+        degree_of_freedom = (ratio_var + 1) ** 2 / ((ratio_var + (1 / self.nb_rep)) ** 2 / (self.nb_series - 1) + (
+                1 - (1 / self.nb_rep)) / self.nb_measures)
+        student_low = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.floor(degree_of_freedom))
+        student_high = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.ceil(degree_of_freedom))
 
         cover_factor = student_low - (student_low - student_high) * (degree_of_freedom - math.floor(degree_of_freedom))
-        tolerance_std = fidelity_std * np.sqrt(1 + 1 / (nb_measure * b_coefficient))
-        tolerance_low = self.calculated_concentration - tolerance_std * cover_factor
-        tolerance_high = self.calculated_concentration + tolerance_std * cover_factor
+        tolerance_std = fidelity_std * (np.sqrt(1 + (1 / (self.nb_measures * b_coefficient))))
+        tolerance_low = self.calculated_concentration - cover_factor * tolerance_std
+        tolerance_high = self.calculated_concentration + cover_factor * tolerance_std
 
         return [tolerance_low, tolerance_high]
-
-    def __series_by_group(self) -> Dict:
-        series_group = defaultdict(list)
-        for s in self.series:
-            series_group[s.series].append(s)
-
-        return series_group
 
 
 class Profile:
@@ -149,7 +150,7 @@ class Profile:
                 self.levels.append(level)
 
     def calculate(self, tolerance_limit: int = DEFAULT_TOLERANCE, acceptance_limit: int = DEFAULT_ACCEPTANCE):
-        self.acceptance_interval = [(1-(acceptance_limit/100))*100, (1+(acceptance_limit/100))*100]
+        self.acceptance_interval = [(1 - (acceptance_limit / 100)) * 100, (1 + (acceptance_limit / 100)) * 100]
         for level in self.levels:
             level.calculate(tolerance_limit)
 
@@ -158,12 +159,14 @@ class Profile:
         ax.axis["bottom", "top", "right"].set_visible(False)
         ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
         ax.plot(levels_x, [l.recovery for l in self.levels], color="m", linewidth=2.0, marker=".", label="Recovery")
-        ax.plot(levels_x, [l.relative_tolerance[0] for l in self.levels], linewidth=1.0, color="b", label="Max tolerance limit")
-        ax.plot(levels_x, [l.relative_tolerance[1] for l in self.levels], linewidth=1.0, color="g", label= "Min tolerance limit")
+        ax.plot(levels_x, [l.relative_tolerance[0] for l in self.levels], linewidth=1.0, color="b",
+                label="Min tolerance limit")
+        ax.plot(levels_x, [l.relative_tolerance[1] for l in self.levels], linewidth=1.0, color="g",
+                label="Max tolerance limit")
         ax.plot(levels_x, [self.acceptance_interval[0] for _ in self.levels], "k--", label="Acceptance limit")
         ax.plot(levels_x, [self.acceptance_interval[1] for _ in self.levels], "k--")
         results_x = [s.concentration for s in self.series]
-        results_y = [(s.result/s.concentration)*100 for s in self.series]
+        results_y = [(s.result / s.concentration) * 100 for s in self.series]
         ax.scatter(results_x, results_y, alpha=0.5, s=2)
         ax.set_xlabel("Concentration")
         ax.set_ylabel("Recovery (%)")
