@@ -45,8 +45,8 @@ class ProfileLevel:
         self.inter_series_var: float = None
         self.inter_series_std: float = None
         self.intermediate_precision_std: float = None
-        self.absolute_tolerance: List[float] = []
-        self.relative_tolerance: List[float] = []
+        self.abs_tolerance: List[float] = []
+        self.rel_tolerance: List[float] = []
         self.acceptance_interval: List[float] = []
         self.sum_square_error_intra_series: float = None
         self.series_by_group: Dict = {}
@@ -78,8 +78,8 @@ class ProfileLevel:
         self.repeatability_std = np.sqrt(self.repeatability_var)
         self.inter_series_var = self.get_inter_series_var()
         self.inter_series_std = np.sqrt(self.inter_series_var)
-        self.absolute_tolerance = self.get_absolute_tolerance(tolerance_limit)
-        self.relative_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.absolute_tolerance]
+        self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
+        self.rel_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance]
 
     def get_repeatability_var(self) -> float:
         repeatability_var = 0
@@ -135,6 +135,9 @@ class Profile:
         self.series = model.series_calculated
         self.levels: List[ProfileLevel] = []
         self.acceptance_interval: List[float] = []
+        self.min_lq: float = None
+        self.max_lq: float = None
+        self.ld: float = None
 
         self.__split_series_by_levels()
         self.levels.sort(key=attrgetter('index'))
@@ -153,15 +156,75 @@ class Profile:
         self.acceptance_interval = [(1 - (acceptance_limit / 100)) * 100, (1 + (acceptance_limit / 100)) * 100]
         for level in self.levels:
             level.calculate(tolerance_limit)
+        self.min_lq = self.get_min_limit_of_quantification(acceptance_limit)
+        self.max_lq = self.get_max_limit_of_quantification(acceptance_limit, start_level=len(self.levels) - 1)
+        self.ld = self.min_lq / 3.3
+
+    def get_min_limit_of_quantification(self, acceptance_limit: int, start_level: int = 0) -> float:
+        level_a = self.levels[start_level]
+        level_b = self.levels[start_level + 1]
+
+        limits_of_quantification = self.__calculate_both_lq_between_levels(level_a, level_b, acceptance_limit)
+        lq = max(limits_of_quantification)  # The max is the most restrictive limit
+        if lq > level_b.introduced_concentration or lq < level_a.introduced_concentration:
+            new_start_level = start_level + 1
+            if new_start_level == len(self.levels) - 1:
+                return 0
+            return self.get_min_limit_of_quantification(acceptance_limit, start_level=new_start_level)
+
+        return lq
+
+    def get_max_limit_of_quantification(self, acceptance_limit: int, start_level: int) -> float:
+        level_a = self.levels[start_level - 1]
+        level_b = self.levels[start_level]
+
+        limits_of_quantification = self.__calculate_both_lq_between_levels(level_a, level_b, acceptance_limit)
+        lq = min(limits_of_quantification)  # The max is the most restrictive limit
+        if lq > level_b.introduced_concentration or lq < level_a.introduced_concentration:
+            new_start_level = start_level - 1
+            if new_start_level - 1 == 0:
+                # if we didn't find an intersect we return the last level's concentration as limit
+                return self.levels[-1].introduced_concentration
+            return self.get_max_limit_of_quantification(acceptance_limit, start_level=new_start_level)
+
+        return lq
+
+    def __calculate_both_lq_between_levels(self, level_a, level_b, accept_limit: int) -> List[float]:
+        LOWER = 0
+        UPPER = 1
+        limits: List[float] = []
+        for limit_type in [LOWER, UPPER]:
+            level_a_tol = level_a.abs_tolerance[limit_type]
+            level_b_tol = level_b.abs_tolerance[limit_type]
+            if limit_type == LOWER:
+                lambda_accept = 1 - (accept_limit / 100)
+            elif limit_type == UPPER:
+                lambda_accept = 1 + (accept_limit / 100)
+
+            level_a_accept_limit = level_a.introduced_concentration * lambda_accept
+            level_b_accept_limit = level_b.introduced_concentration * lambda_accept
+
+            tol_slope = (level_b_tol - level_a_tol) / (
+                    level_b.introduced_concentration - level_a.introduced_concentration)
+            tol_origin = level_a_tol - tol_slope * level_a.introduced_concentration
+
+            accept_slope = (level_b_accept_limit - level_a_accept_limit) / (
+                    level_b.introduced_concentration - level_a.introduced_concentration)
+            accept_origin = level_a_accept_limit - accept_slope * level_a.introduced_concentration
+
+            lq = (accept_origin - tol_origin) / (tol_slope - accept_slope)
+            limits.append(lq)
+
+        return limits
 
     def make_plot(self, ax):
         levels_x = [l.calculated_concentration for l in self.levels]
         ax.axis["bottom", "top", "right"].set_visible(False)
         ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
         ax.plot(levels_x, [l.recovery for l in self.levels], color="m", linewidth=2.0, marker=".", label="Recovery")
-        ax.plot(levels_x, [l.relative_tolerance[0] for l in self.levels], linewidth=1.0, color="b",
+        ax.plot(levels_x, [l.rel_tolerance[0] for l in self.levels], linewidth=1.0, color="b",
                 label="Min tolerance limit")
-        ax.plot(levels_x, [l.relative_tolerance[1] for l in self.levels], linewidth=1.0, color="g",
+        ax.plot(levels_x, [l.rel_tolerance[1] for l in self.levels], linewidth=1.0, color="g",
                 label="Max tolerance limit")
         ax.plot(levels_x, [self.acceptance_interval[0] for _ in self.levels], "k--", label="Acceptance limit")
         ax.plot(levels_x, [self.acceptance_interval[1] for _ in self.levels], "k--")

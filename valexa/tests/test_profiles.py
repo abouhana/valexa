@@ -116,8 +116,18 @@ class TestProfile:
             assert l.repeatability_std is not None
             assert l.inter_series_var is not None
             assert l.inter_series_std is not None
-            assert l.absolute_tolerance
-            assert l.relative_tolerance
+            assert l.abs_tolerance
+            assert l.rel_tolerance
+
+    def test_calculate_limits_of_quantification_and_detection(self, model_with_rep):
+        tolerance_limit = 80
+        profile = Profile(model_with_rep)
+
+        profile.calculate(tolerance_limit)
+
+        assert profile.min_lq
+        assert profile.max_lq
+        assert profile.ld
 
     def test_plot_function(self, model_with_rep):
         tolerance_limit = 80
