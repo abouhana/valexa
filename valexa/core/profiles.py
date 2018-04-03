@@ -1,4 +1,5 @@
 from collections import defaultdict
+from enum import Enum
 from operator import attrgetter
 from typing import List, Dict
 
@@ -129,6 +130,18 @@ class ProfileLevel:
         return [tolerance_low, tolerance_high]
 
 
+class Direction(Enum):
+    IN = 1
+    OUT = 2
+
+
+class Intersect:
+
+    def __init__(self, value: float, direction: Direction):
+        self.value = value
+        self.direction = direction
+
+
 class Profile:
     LIMIT_LOWER = 0
     LIMIT_UPPER = 1
@@ -164,7 +177,8 @@ class Profile:
             self.min_lq, self.max_lq = self.get_limits_of_quantification(acceptance_limit)
             self.ld = self.min_lq / 3.3
             self.has_limits = True
-        except ValueError:
+        except ValueError as e:
+            print(e)
             self.min_lq = None
             self.max_lq = None
             self.ld = None
@@ -190,7 +204,7 @@ class Profile:
 
         return limits
 
-    def get_intersect_between_levels(self, level_a, level_b, accept_limit: int, limit_type) -> float:
+    def get_intersect_between_levels(self, level_a, level_b, accept_limit: int, limit_type) -> Intersect:
         level_a_tol = level_a.abs_tolerance[limit_type]
         level_b_tol = level_b.abs_tolerance[limit_type]
         if limit_type == self.LIMIT_LOWER:
@@ -211,33 +225,72 @@ class Profile:
                 level_b.introduced_concentration - level_a.introduced_concentration)
         accept_origin = level_a_accept_limit - accept_slope * level_a.introduced_concentration
 
-        lq = (accept_origin - tol_origin) / (tol_slope - accept_slope)
-        if lq > level_b.introduced_concentration or lq < level_a.introduced_concentration:
-            lq = None
+        value = (accept_origin - tol_origin) / (tol_slope - accept_slope)
+        if value > level_b.introduced_concentration or value < level_a.introduced_concentration:
+            return None
 
-        return lq
-
-    def get_limits_from_intersects(self, intersects: List[float], accept_limit: int, limit_type: int) -> (float, float):
-        if limit_type == self.LIMIT_LOWER:
-            accept_limit_rel = (1 - (accept_limit / 100)) * 100
-        elif limit_type == self.LIMIT_UPPER:
-            accept_limit_rel = (1 + (accept_limit / 100)) * 100
+        if level_a_tol >= level_a_accept_limit and level_b_tol < level_b_accept_limit:
+            if limit_type == self.LIMIT_LOWER:
+                direction = Direction.OUT
+            else:
+                direction = Direction.IN
+        elif level_a_tol < level_a_accept_limit and level_b_tol >= level_b_accept_limit:
+            if limit_type == self.LIMIT_LOWER:
+                direction = Direction.IN
+            else:
+                direction = Direction.OUT
         else:
-            raise ValueError("Limit type not valid. Valid options are: Profile.LOWER_LIMIT or Profile.UPPER_LIMIT")
+            raise ValueError("Cannot identify intersect's direction")
 
-        limits = ()
+        return Intersect(value, direction)
+
+    def get_limits_from_intersects(self, intersects: List[Intersect], accept_limit: int, limit_type: int) -> (
+            float, float):
+
         if len(intersects) == 0:
+            low_accept_limit_rel = (1 - (accept_limit / 100)) * 100
+            high_accept_limit_rel = (1 + (accept_limit / 100)) * 100
             mean_tolerance = np.mean([l.rel_tolerance[limit_type] for l in self.levels])
-            if mean_tolerance <= accept_limit_rel:
+            if low_accept_limit_rel <= mean_tolerance <= high_accept_limit_rel:
                 limits = (self.levels[0].introduced_concentration, self.levels[-1].introduced_concentration)
             else:
                 raise ValueError("Not valid limit of quantification detected")
-        elif len(intersects) == 1:
-            limits = (intersects[0], self.levels[-1].introduced_concentration)
-        elif len(intersects) >= 2:
-            limits = tuple(sorted(intersects)[-2:])
+        elif len(intersects) == 1 and intersects[0].direction == Direction.IN:
+            limits = (intersects[0].value, self.levels[-1].introduced_concentration)
+        elif len(intersects) == 1 and intersects[0].direction == Direction.OUT:
+            limits = (self.levels[0].introduced_concentration, intersects[0].value)
+        elif len(intersects) == 2:
+            if intersects[0].direction == Direction.IN and intersects[1].direction == Direction.OUT:
+                limits = (intersects[0].value, intersects[1].value)
+            elif intersects[0].direction == Direction.OUT and intersects[1].direction == Direction.IN:
+                limits = (intersects[1].value, self.levels[-1].introduced_concentration)
+            else:
+                raise ValueError("Intersects pair not valid: possible values (IN, OUT) or (OUT, IN)")
+        elif len(intersects) > 2:
+            in_out_pairs = self.group_intersects_by_in_out(intersects)
+            if len(in_out_pairs) == 1:
+                min_limit = in_out_pairs[0][0].value
+                max_limit = in_out_pairs[0][1].value
+                limits = (min_limit, max_limit)
+            elif len(in_out_pairs) > 1:
+                min_limit = in_out_pairs[-1][0].value
+                max_limit = in_out_pairs[-1][1].value
+                limits = (min_limit, max_limit)
+        else:
+            raise ValueError("Cannot define limits from intersects")
 
         return limits
+
+    def group_intersects_by_in_out(self, intersects: List[Intersect]) -> List:
+        in_out_pairs = []
+        current_in_intersect = None
+        for i in intersects:
+            if i.direction == Direction.IN:
+                current_in_intersect = i
+            elif current_in_intersect and i.direction == Direction.OUT:
+                in_out_pairs.append((current_in_intersect, i))
+                current_in_intersect = None
+        return in_out_pairs
 
     def get_most_restrictive_limits(self, lower_limits, upper_limits) -> (float, float):
         min_limit = max(lower_limits[0], upper_limits[0])

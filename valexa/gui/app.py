@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QIntValidator, QPalette
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, qApp
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, qApp, QVBoxLayout
 from openpyxl.utils.exceptions import InvalidFileException
 
 from valexa.core.profiles import make_profiles, DEFAULT_TOLERANCE, DEFAULT_ACCEPTANCE
@@ -53,6 +53,8 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
         self.file_name_input.setText("")
         self.calibration_data_list_widget.clear()
         self.validation_data_list_widget.clear()
+        for i in reversed(range(self.plot_layout.count())):
+            self.plot_layout.itemAt(i).widget().setParent(None)
 
     def open_data_page(self):
         self.stackedWidget.setCurrentIndex(1)
@@ -81,6 +83,8 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
                 self.state.calib_data = xlsx_handler.get_calibration_data()
                 self.state.valid_data = xlsx_handler.get_validation_data()
 
+                self.calibration_data_list_widget.clear()
+                self.validation_data_list_widget.clear()
                 self.calibration_data_list_widget.addItems([str(r) for r in self.state.calib_data])
                 self.validation_data_list_widget.addItems([str(r) for r in self.state.valid_data])
 
