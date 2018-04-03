@@ -127,7 +127,6 @@ class TestProfile:
         profile.calculate(tolerance_limit)
 
         assert profile.min_lq
-        print(profile.min_lq)
         assert profile.max_lq
         assert round(profile.ld, 3) == round(profile.min_lq / 3.3, 3)
 
