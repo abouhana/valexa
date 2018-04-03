@@ -130,6 +130,9 @@ class ProfileLevel:
 
 
 class Profile:
+    LIMIT_LOWER = 0
+    LIMIT_UPPER = 1
+
     def __init__(self, model: Model):
         self.model = model
         self.series = model.series_calculated
@@ -138,6 +141,7 @@ class Profile:
         self.min_lq: float = None
         self.max_lq: float = None
         self.ld: float = None
+        self.has_limits = False
 
         self.__split_series_by_levels()
         self.levels.sort(key=attrgetter('index'))
@@ -156,66 +160,90 @@ class Profile:
         self.acceptance_interval = [(1 - (acceptance_limit / 100)) * 100, (1 + (acceptance_limit / 100)) * 100]
         for level in self.levels:
             level.calculate(tolerance_limit)
-        self.min_lq = self.get_min_limit_of_quantification(acceptance_limit)
-        self.max_lq = self.get_max_limit_of_quantification(acceptance_limit, start_level=len(self.levels) - 1)
-        self.ld = self.min_lq / 3.3
+        try:
+            self.min_lq, self.max_lq = self.get_limits_of_quantification(acceptance_limit)
+            self.ld = self.min_lq / 3.3
+            self.has_limits = True
+        except ValueError:
+            self.min_lq = None
+            self.max_lq = None
+            self.ld = None
 
-    def get_min_limit_of_quantification(self, acceptance_limit: int, start_level: int = 0) -> float:
-        level_a = self.levels[start_level]
-        level_b = self.levels[start_level + 1]
+    def get_limits_of_quantification(self, acceptance_limit: int) -> (float, float):
+        intersects_low = []
+        intersects_high = []
 
-        limits_of_quantification = self.__calculate_both_lq_between_levels(level_a, level_b, acceptance_limit)
-        lq = max(limits_of_quantification)  # The max is the most restrictive limit
-        if lq > level_b.introduced_concentration or lq < level_a.introduced_concentration:
-            new_start_level = start_level + 1
-            if new_start_level == len(self.levels) - 1:
-                return 0
-            return self.get_min_limit_of_quantification(acceptance_limit, start_level=new_start_level)
+        for l in range(len(self.levels) - 1):
+            level_a = self.levels[l]
+            level_b = self.levels[l + 1]
+            lower_intersect = self.get_intersect_between_levels(level_a, level_b, acceptance_limit, self.LIMIT_LOWER)
+            upper_intersect = self.get_intersect_between_levels(level_a, level_b, acceptance_limit, self.LIMIT_UPPER)
+            if lower_intersect:
+                intersects_low.append(lower_intersect)
+            if upper_intersect:
+                intersects_high.append(upper_intersect)
 
-        return lq
+        lower_limits = self.get_limits_from_intersects(intersects_low, acceptance_limit, self.LIMIT_LOWER)
+        upper_limits = self.get_limits_from_intersects(intersects_high, acceptance_limit, self.LIMIT_UPPER)
 
-    def get_max_limit_of_quantification(self, acceptance_limit: int, start_level: int) -> float:
-        level_a = self.levels[start_level - 1]
-        level_b = self.levels[start_level]
-
-        limits_of_quantification = self.__calculate_both_lq_between_levels(level_a, level_b, acceptance_limit)
-        lq = min(limits_of_quantification)  # The max is the most restrictive limit
-        if lq > level_b.introduced_concentration or lq < level_a.introduced_concentration:
-            new_start_level = start_level - 1
-            if new_start_level - 1 == 0:
-                # if we didn't find an intersect we return the last level's concentration as limit
-                return self.levels[-1].introduced_concentration
-            return self.get_max_limit_of_quantification(acceptance_limit, start_level=new_start_level)
-
-        return lq
-
-    def __calculate_both_lq_between_levels(self, level_a, level_b, accept_limit: int) -> List[float]:
-        LOWER = 0
-        UPPER = 1
-        limits: List[float] = []
-        for limit_type in [LOWER, UPPER]:
-            level_a_tol = level_a.abs_tolerance[limit_type]
-            level_b_tol = level_b.abs_tolerance[limit_type]
-            if limit_type == LOWER:
-                lambda_accept = 1 - (accept_limit / 100)
-            elif limit_type == UPPER:
-                lambda_accept = 1 + (accept_limit / 100)
-
-            level_a_accept_limit = level_a.introduced_concentration * lambda_accept
-            level_b_accept_limit = level_b.introduced_concentration * lambda_accept
-
-            tol_slope = (level_b_tol - level_a_tol) / (
-                    level_b.introduced_concentration - level_a.introduced_concentration)
-            tol_origin = level_a_tol - tol_slope * level_a.introduced_concentration
-
-            accept_slope = (level_b_accept_limit - level_a_accept_limit) / (
-                    level_b.introduced_concentration - level_a.introduced_concentration)
-            accept_origin = level_a_accept_limit - accept_slope * level_a.introduced_concentration
-
-            lq = (accept_origin - tol_origin) / (tol_slope - accept_slope)
-            limits.append(lq)
+        limits = self.get_most_restrictive_limits(lower_limits, upper_limits)
 
         return limits
+
+    def get_intersect_between_levels(self, level_a, level_b, accept_limit: int, limit_type) -> float:
+        level_a_tol = level_a.abs_tolerance[limit_type]
+        level_b_tol = level_b.abs_tolerance[limit_type]
+        if limit_type == self.LIMIT_LOWER:
+            lambda_accept = 1 - (accept_limit / 100)
+        elif limit_type == self.LIMIT_UPPER:
+            lambda_accept = 1 + (accept_limit / 100)
+        else:
+            raise ValueError("Limit type not valid. Valid options are: Profile.LOWER_LIMIT or Profile.UPPER_LIMIT")
+
+        level_a_accept_limit = level_a.introduced_concentration * lambda_accept
+        level_b_accept_limit = level_b.introduced_concentration * lambda_accept
+
+        tol_slope = (level_b_tol - level_a_tol) / (
+                level_b.introduced_concentration - level_a.introduced_concentration)
+        tol_origin = level_a_tol - tol_slope * level_a.introduced_concentration
+
+        accept_slope = (level_b_accept_limit - level_a_accept_limit) / (
+                level_b.introduced_concentration - level_a.introduced_concentration)
+        accept_origin = level_a_accept_limit - accept_slope * level_a.introduced_concentration
+
+        lq = (accept_origin - tol_origin) / (tol_slope - accept_slope)
+        if lq > level_b.introduced_concentration or lq < level_a.introduced_concentration:
+            lq = None
+
+        return lq
+
+    def get_limits_from_intersects(self, intersects: List[float], accept_limit: int, limit_type: int) -> (float, float):
+        if limit_type == self.LIMIT_LOWER:
+            accept_limit_rel = (1 - (accept_limit / 100)) * 100
+        elif limit_type == self.LIMIT_UPPER:
+            accept_limit_rel = (1 + (accept_limit / 100)) * 100
+        else:
+            raise ValueError("Limit type not valid. Valid options are: Profile.LOWER_LIMIT or Profile.UPPER_LIMIT")
+
+        limits = ()
+        if len(intersects) == 0:
+            mean_tolerance = np.mean([l.rel_tolerance[limit_type] for l in self.levels])
+            if mean_tolerance <= accept_limit_rel:
+                limits = (self.levels[0].introduced_concentration, self.levels[-1].introduced_concentration)
+            else:
+                raise ValueError("Not valid limit of quantification detected")
+        elif len(intersects) == 1:
+            limits = (intersects[0], self.levels[-1].introduced_concentration)
+        elif len(intersects) >= 2:
+            limits = tuple(sorted(intersects)[-2:])
+
+        return limits
+
+    def get_most_restrictive_limits(self, lower_limits, upper_limits) -> (float, float):
+        min_limit = max(lower_limits[0], upper_limits[0])
+        max_limit = min(lower_limits[1], upper_limits[1])
+
+        return min_limit, max_limit
 
     def make_plot(self, ax):
         levels_x = [l.calculated_concentration for l in self.levels]

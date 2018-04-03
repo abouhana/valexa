@@ -42,7 +42,8 @@ def test_make_profiles_returns_profiles(calib_data, valid_data):
     assert profiles
 
 
-def test_make_profiles_calls_profile_calculate_with_tolerance_limit_and_acceptance_limit(calib_data, valid_data, mocker):
+def test_make_profiles_calls_profile_calculate_with_tolerance_limit_and_acceptance_limit(calib_data, valid_data,
+                                                                                         mocker):
     tolerance_limit = 80
     acceptance_limit = 20
     calculate_mock: Mock = mocker.patch('valexa.core.profiles.Profile.calculate')
@@ -126,8 +127,30 @@ class TestProfile:
         profile.calculate(tolerance_limit)
 
         assert profile.min_lq
+        print(profile.min_lq)
         assert profile.max_lq
-        assert profile.ld
+        assert round(profile.ld, 3) == round(profile.min_lq / 3.3, 3)
+
+    def test_get_limits_from_intersects(self, model_with_rep):
+        accept_limit = 20
+        profile = Profile(model_with_rep)
+        intersects_low = [2, 3, 6, 8]
+        intersects_high = [2, 3, 4, 6]
+
+        lower_limits = profile.get_limits_from_intersects(intersects_low, accept_limit, Profile.LIMIT_LOWER)
+        upper_limits = profile.get_limits_from_intersects(intersects_high, accept_limit, Profile.LIMIT_UPPER)
+
+        assert lower_limits == (6, 8)
+        assert upper_limits == (4, 6)
+
+    def test_get_most_restrictive_limits(self, model_with_rep):
+        profile = Profile(model_with_rep)
+        lower_limits = (2, 4)
+        upper_limits = (3, 6)
+
+        limits = profile.get_most_restrictive_limits(lower_limits, upper_limits)
+
+        assert limits == (3, 4)
 
     def test_plot_function(self, model_with_rep):
         tolerance_limit = 80
