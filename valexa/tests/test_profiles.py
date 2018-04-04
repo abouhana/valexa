@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import mpl_toolkits.axisartist as AA
 from unittest.mock import Mock
 
-from valexa.core.profiles import make_profiles, Profile
+from valexa.core.profiles import make_profiles, Profile, Intersect, Direction
 from valexa.core.models import Result, Model
 
 
@@ -42,7 +42,8 @@ def test_make_profiles_returns_profiles(calib_data, valid_data):
     assert profiles
 
 
-def test_make_profiles_calls_profile_calculate_with_tolerance_limit_and_acceptance_limit(calib_data, valid_data, mocker):
+def test_make_profiles_calls_profile_calculate_with_tolerance_limit_and_acceptance_limit(calib_data, valid_data,
+                                                                                         mocker):
     tolerance_limit = 80
     acceptance_limit = 20
     calculate_mock: Mock = mocker.patch('valexa.core.profiles.Profile.calculate')
@@ -116,8 +117,58 @@ class TestProfile:
             assert l.repeatability_std is not None
             assert l.inter_series_var is not None
             assert l.inter_series_std is not None
-            assert l.absolute_tolerance
-            assert l.relative_tolerance
+            assert l.abs_tolerance
+            assert l.rel_tolerance
+
+    def test_calculate_limits_of_quantification_and_detection(self, model_with_rep):
+        tolerance_limit = 80
+        profile = Profile(model_with_rep)
+
+        profile.calculate(tolerance_limit)
+
+        assert profile.min_lq
+        assert profile.max_lq
+        assert round(profile.ld, 3) == round(profile.min_lq / 3.3, 3)
+
+    def test_get_limits_from_intersects(self, model_with_rep):
+        accept_limit = 20
+        profile = Profile(model_with_rep)
+        intersects_low = [
+            Intersect(2, Direction.IN),
+            Intersect(3, Direction.OUT),
+            Intersect(6, Direction.IN)
+        ]
+        intersects_high = [
+            Intersect(2, Direction.OUT),
+            Intersect(3, Direction.IN),
+            Intersect(4, Direction.OUT)
+        ]
+
+        lower_limits = profile.get_limits_from_intersects(intersects_low, accept_limit, Profile.LIMIT_LOWER)
+        upper_limits = profile.get_limits_from_intersects(intersects_high, accept_limit, Profile.LIMIT_UPPER)
+
+        assert lower_limits == (2, 3)
+        assert upper_limits == (3, 4)
+
+    def test_group_intersect_by_in_out(self, model_with_rep):
+        profile = Profile(model_with_rep)
+        in1 = Intersect(2, Direction.OUT)
+        in2 = Intersect(3, Direction.IN)
+        in3 = Intersect(4, Direction.OUT)
+        intersects_high = [in1, in2, in3]
+
+        expected = profile.group_intersects_by_in_out(intersects_high)
+
+        assert expected == [(in2, in3)]
+
+    def test_get_most_restrictive_limits(self, model_with_rep):
+        profile = Profile(model_with_rep)
+        lower_limits = (2, 4)
+        upper_limits = (3, 6)
+
+        limits = profile.get_most_restrictive_limits(lower_limits, upper_limits)
+
+        assert limits == (3, 4)
 
     def test_plot_function(self, model_with_rep):
         tolerance_limit = 80

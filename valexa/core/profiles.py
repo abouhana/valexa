@@ -1,4 +1,5 @@
 from collections import defaultdict
+from enum import Enum
 from operator import attrgetter
 from typing import List, Dict
 
@@ -45,8 +46,8 @@ class ProfileLevel:
         self.inter_series_var: float = None
         self.inter_series_std: float = None
         self.intermediate_precision_std: float = None
-        self.absolute_tolerance: List[float] = []
-        self.relative_tolerance: List[float] = []
+        self.abs_tolerance: List[float] = []
+        self.rel_tolerance: List[float] = []
         self.acceptance_interval: List[float] = []
         self.sum_square_error_intra_series: float = None
         self.series_by_group: Dict = {}
@@ -78,8 +79,8 @@ class ProfileLevel:
         self.repeatability_std = np.sqrt(self.repeatability_var)
         self.inter_series_var = self.get_inter_series_var()
         self.inter_series_std = np.sqrt(self.inter_series_var)
-        self.absolute_tolerance = self.get_absolute_tolerance(tolerance_limit)
-        self.relative_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.absolute_tolerance]
+        self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
+        self.rel_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance]
 
     def get_repeatability_var(self) -> float:
         repeatability_var = 0
@@ -129,12 +130,31 @@ class ProfileLevel:
         return [tolerance_low, tolerance_high]
 
 
+class Direction(Enum):
+    IN = 1
+    OUT = 2
+
+
+class Intersect:
+
+    def __init__(self, value: float, direction: Direction):
+        self.value = value
+        self.direction = direction
+
+
 class Profile:
+    LIMIT_LOWER = 0
+    LIMIT_UPPER = 1
+
     def __init__(self, model: Model):
         self.model = model
         self.series = model.series_calculated
         self.levels: List[ProfileLevel] = []
         self.acceptance_interval: List[float] = []
+        self.min_lq: float = None
+        self.max_lq: float = None
+        self.ld: float = None
+        self.has_limits = False
 
         self.__split_series_by_levels()
         self.levels.sort(key=attrgetter('index'))
@@ -153,15 +173,139 @@ class Profile:
         self.acceptance_interval = [(1 - (acceptance_limit / 100)) * 100, (1 + (acceptance_limit / 100)) * 100]
         for level in self.levels:
             level.calculate(tolerance_limit)
+        try:
+            self.min_lq, self.max_lq = self.get_limits_of_quantification(acceptance_limit)
+            self.ld = self.min_lq / 3.3
+            self.has_limits = True
+        except ValueError as e:
+            print(e)
+            self.min_lq = None
+            self.max_lq = None
+            self.ld = None
+
+    def get_limits_of_quantification(self, acceptance_limit: int) -> (float, float):
+        intersects_low = []
+        intersects_high = []
+
+        for l in range(len(self.levels) - 1):
+            level_a = self.levels[l]
+            level_b = self.levels[l + 1]
+            lower_intersect = self.get_intersect_between_levels(level_a, level_b, acceptance_limit, self.LIMIT_LOWER)
+            upper_intersect = self.get_intersect_between_levels(level_a, level_b, acceptance_limit, self.LIMIT_UPPER)
+            if lower_intersect:
+                intersects_low.append(lower_intersect)
+            if upper_intersect:
+                intersects_high.append(upper_intersect)
+
+        lower_limits = self.get_limits_from_intersects(intersects_low, acceptance_limit, self.LIMIT_LOWER)
+        upper_limits = self.get_limits_from_intersects(intersects_high, acceptance_limit, self.LIMIT_UPPER)
+
+        limits = self.get_most_restrictive_limits(lower_limits, upper_limits)
+
+        return limits
+
+    def get_intersect_between_levels(self, level_a, level_b, accept_limit: int, limit_type) -> Intersect:
+        level_a_tol = level_a.abs_tolerance[limit_type]
+        level_b_tol = level_b.abs_tolerance[limit_type]
+        if limit_type == self.LIMIT_LOWER:
+            lambda_accept = 1 - (accept_limit / 100)
+        elif limit_type == self.LIMIT_UPPER:
+            lambda_accept = 1 + (accept_limit / 100)
+        else:
+            raise ValueError("Limit type not valid. Valid options are: Profile.LOWER_LIMIT or Profile.UPPER_LIMIT")
+
+        level_a_accept_limit = level_a.introduced_concentration * lambda_accept
+        level_b_accept_limit = level_b.introduced_concentration * lambda_accept
+
+        tol_slope = (level_b_tol - level_a_tol) / (
+                level_b.introduced_concentration - level_a.introduced_concentration)
+        tol_origin = level_a_tol - tol_slope * level_a.introduced_concentration
+
+        accept_slope = (level_b_accept_limit - level_a_accept_limit) / (
+                level_b.introduced_concentration - level_a.introduced_concentration)
+        accept_origin = level_a_accept_limit - accept_slope * level_a.introduced_concentration
+
+        value = (accept_origin - tol_origin) / (tol_slope - accept_slope)
+        if value > level_b.introduced_concentration or value < level_a.introduced_concentration:
+            return None
+
+        if level_a_tol >= level_a_accept_limit and level_b_tol < level_b_accept_limit:
+            if limit_type == self.LIMIT_LOWER:
+                direction = Direction.OUT
+            else:
+                direction = Direction.IN
+        elif level_a_tol < level_a_accept_limit and level_b_tol >= level_b_accept_limit:
+            if limit_type == self.LIMIT_LOWER:
+                direction = Direction.IN
+            else:
+                direction = Direction.OUT
+        else:
+            raise ValueError("Cannot identify intersect's direction")
+
+        return Intersect(value, direction)
+
+    def get_limits_from_intersects(self, intersects: List[Intersect], accept_limit: int, limit_type: int) -> (
+            float, float):
+
+        if len(intersects) == 0:
+            low_accept_limit_rel = (1 - (accept_limit / 100)) * 100
+            high_accept_limit_rel = (1 + (accept_limit / 100)) * 100
+            mean_tolerance = np.mean([l.rel_tolerance[limit_type] for l in self.levels])
+            if low_accept_limit_rel <= mean_tolerance <= high_accept_limit_rel:
+                limits = (self.levels[0].introduced_concentration, self.levels[-1].introduced_concentration)
+            else:
+                raise ValueError("Not valid limit of quantification detected")
+        elif len(intersects) == 1 and intersects[0].direction == Direction.IN:
+            limits = (intersects[0].value, self.levels[-1].introduced_concentration)
+        elif len(intersects) == 1 and intersects[0].direction == Direction.OUT:
+            limits = (self.levels[0].introduced_concentration, intersects[0].value)
+        elif len(intersects) == 2:
+            if intersects[0].direction == Direction.IN and intersects[1].direction == Direction.OUT:
+                limits = (intersects[0].value, intersects[1].value)
+            elif intersects[0].direction == Direction.OUT and intersects[1].direction == Direction.IN:
+                limits = (intersects[1].value, self.levels[-1].introduced_concentration)
+            else:
+                raise ValueError("Intersects pair not valid: possible values (IN, OUT) or (OUT, IN)")
+        elif len(intersects) > 2:
+            in_out_pairs = self.group_intersects_by_in_out(intersects)
+            if len(in_out_pairs) == 1:
+                min_limit = in_out_pairs[0][0].value
+                max_limit = in_out_pairs[0][1].value
+                limits = (min_limit, max_limit)
+            elif len(in_out_pairs) > 1:
+                min_limit = in_out_pairs[-1][0].value
+                max_limit = in_out_pairs[-1][1].value
+                limits = (min_limit, max_limit)
+        else:
+            raise ValueError("Cannot define limits from intersects")
+
+        return limits
+
+    def group_intersects_by_in_out(self, intersects: List[Intersect]) -> List:
+        in_out_pairs = []
+        current_in_intersect = None
+        for i in intersects:
+            if i.direction == Direction.IN:
+                current_in_intersect = i
+            elif current_in_intersect and i.direction == Direction.OUT:
+                in_out_pairs.append((current_in_intersect, i))
+                current_in_intersect = None
+        return in_out_pairs
+
+    def get_most_restrictive_limits(self, lower_limits, upper_limits) -> (float, float):
+        min_limit = max(lower_limits[0], upper_limits[0])
+        max_limit = min(lower_limits[1], upper_limits[1])
+
+        return min_limit, max_limit
 
     def make_plot(self, ax):
         levels_x = [l.calculated_concentration for l in self.levels]
         ax.axis["bottom", "top", "right"].set_visible(False)
         ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
         ax.plot(levels_x, [l.recovery for l in self.levels], color="m", linewidth=2.0, marker=".", label="Recovery")
-        ax.plot(levels_x, [l.relative_tolerance[0] for l in self.levels], linewidth=1.0, color="b",
+        ax.plot(levels_x, [l.rel_tolerance[0] for l in self.levels], linewidth=1.0, color="b",
                 label="Min tolerance limit")
-        ax.plot(levels_x, [l.relative_tolerance[1] for l in self.levels], linewidth=1.0, color="g",
+        ax.plot(levels_x, [l.rel_tolerance[1] for l in self.levels], linewidth=1.0, color="g",
                 label="Max tolerance limit")
         ax.plot(levels_x, [self.acceptance_interval[0] for _ in self.levels], "k--", label="Acceptance limit")
         ax.plot(levels_x, [self.acceptance_interval[1] for _ in self.levels], "k--")

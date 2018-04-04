@@ -1,7 +1,7 @@
+import mpl_toolkits.axisartist as AA
 from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import mpl_toolkits.axisartist as AA
 
 
 class ProfilePlotCanvas(FigureCanvas):
@@ -23,4 +23,3 @@ class ProfilePlotCanvas(FigureCanvas):
         super().updateGeometry()
 
         profile.make_plot(self.axes)
-
