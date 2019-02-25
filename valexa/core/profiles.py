@@ -8,7 +8,6 @@ from scipy.stats import t
 import math
 import numpy as np
 
-import io
 
 from valexa.core.standard import Standard
 from valexa.core.models import Result, ModelHandler, Model
@@ -191,13 +190,12 @@ class Profile:
             self.ld = self.min_lq / 3.3
             self.has_limits = True
         except ValueError as e:
-            print(e)
             self.min_lq = None
             self.max_lq = None
             self.ld = None
 
     def get_limits_of_quantification(self, acceptance_limit: int) -> (float, float):
-        print('LOQ START')
+
         intersects_low = []
         intersects_high = []
 
@@ -212,14 +210,10 @@ class Profile:
                 intersects_high.append(upper_intersect)
 
         lower_limits = self.get_limits_from_intersects(intersects_low, acceptance_limit, self.LIMIT_LOWER)
-        print('LINTER MID')
         upper_limits = self.get_limits_from_intersects(intersects_high, acceptance_limit, self.LIMIT_UPPER)
 
-        print('LINTER END')
         limits = self.get_most_restrictive_limits(lower_limits, upper_limits)
 
-        print('LIMIT PASS')
-        print('LOQ')
         return limits
 
     def get_intersect_between_levels(self, level_a, level_b, accept_limit: int, limit_type) -> Intersect:
@@ -265,7 +259,6 @@ class Profile:
     def get_limits_from_intersects(self, intersects: List[Intersect], accept_limit: int, limit_type: int) -> (
             float, float):
 
-        print('LINTER START')
         if len(intersects) == 0:
             low_accept_limit_rel = (1 - (accept_limit / 100)) * 100
             high_accept_limit_rel = (1 + (accept_limit / 100)) * 100
@@ -298,7 +291,6 @@ class Profile:
         else:
             raise ValueError("Cannot define limits from intersects")
 
-        print('LINTER')
         return limits
 
     def group_intersects_by_in_out(self, intersects: List[Intersect]) -> List:

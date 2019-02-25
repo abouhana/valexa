@@ -27,4 +27,3 @@ class ProfilePlotCanvas(FigureCanvas):
         profile.image_data = io.BytesIO()
         fig.savefig(profile.image_data, format='png')
 
-

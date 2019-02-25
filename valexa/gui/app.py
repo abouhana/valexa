@@ -4,7 +4,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 
 from valexa.core.profiles import make_profiles, DEFAULT_TOLERANCE, DEFAULT_ACCEPTANCE
 from valexa.core.xlsx import XlsxHandler
-from valexa.core.xlsx import HtmlWriter
+from valexa.core.html import HtmlWriter
 from valexa.gui import Ui_main_window
 from valexa.gui.profile_widget import ProfileWidget
 from valexa.gui.profile_plot_canvas import ProfilePlotCanvas
@@ -64,22 +64,19 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
         self.stackedWidget.setCurrentIndex(1)
 
     def open_model_page(self):
-
         self.scrollArea.setBackgroundRole(QPalette.Dark)
         self.stackedWidget.setCurrentIndex(2)
-        #try:
-        print('try')
-        profiles = make_profiles(self.state.calib_data, self.state.valid_data, self.state.tolerance_limit,
-                                 self.state.acceptance_limit, PurePath(self.file_name_input.text()).name)
-        plot_layout = self.plot_layout
-        for profile in profiles:
+        try:
+            profiles = make_profiles(self.state.calib_data, self.state.valid_data, self.state.tolerance_limit,
+                                     self.state.acceptance_limit, PurePath(self.file_name_input.text()).name)
+            plot_layout = self.plot_layout
+            for profile in profiles:
 
-            profile_widget = ProfileWidget(profile=profile)
-            plot_layout.addWidget(profile_widget)
+                profile_widget = ProfileWidget(profile=profile)
+                plot_layout.addWidget(profile_widget)
 
-        #except Exception as e:
-        #    print(e)
-        #    QMessageBox.critical(self, "Error 1", str(e))
+        except Exception as e:
+            QMessageBox.critical(self, "Error 1", str(e))
 
     def select_file(self):
         filename, _ = QFileDialog.getOpenFileName()
@@ -88,7 +85,7 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
             if filename != "":
                 if os.path.basename(filename) == "batch":
                     self.file_name_input.setText(filename)
-                    self.passive_mode()
+                    self.run_file_batch_mode()
 
                 elif os.path.splitext(filename)[1] == ".xlsx":
                     self.select_xlsx(filename)
@@ -97,7 +94,6 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
             QMessageBox.critical(self, "Error 2", str(e))
 
     def select_xlsx(self, filename):
-
         xlsx_handler = XlsxHandler(filename)
         self.file_name_input.setText(filename)
         self.confirm_data_button.setEnabled(True)
@@ -118,7 +114,7 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
         if text:
             self.state.acceptance_limit = int(text)
 
-    def passive_mode(self):
+    def run_file_batch_mode(self):
         path_of_folder = os.path.split(self.file_name_input.text())[0]
 
         for root, dirs, files in os.walk(path_of_folder):
