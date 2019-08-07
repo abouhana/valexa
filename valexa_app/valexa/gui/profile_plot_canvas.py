@@ -2,7 +2,7 @@ import mpl_toolkits.axisartist as AA
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PyQt5 import QtWidgets
+# from PyQt5 import QtWidgets
 
 
 class ProfilePlotCanvas(FigureCanvas):
@@ -16,10 +16,10 @@ class ProfilePlotCanvas(FigureCanvas):
 
         self.setParent(parent)
 
-        super().setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding,
-            QtWidgets.QSizePolicy.Expanding
-        )
+        # super().setSizePolicy(
+        #     QtWidgets.QSizePolicy.Expanding,
+        #     QtWidgets.QSizePolicy.Expanding
+        # )
 
         super().updateGeometry()
 
