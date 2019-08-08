@@ -10,17 +10,16 @@ matplotlib = "*"
 numpy = "*"
 scipy = "*"
 django = "*"
-djangorestframework = "*"
-pylint-django = "*"
 mpld3 = "*"
 jinja2 = "*"
-transcrypt = "*"
 
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
 pyinstaller = "*"
 pytest-mock = "*"
+transcrypt = "*"
+pylint-django = "*"
 
 [requires]
 python_version = "3.6"
