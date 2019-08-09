@@ -1,15 +1,11 @@
-import mpld3
-from openpyxl.utils.exceptions import InvalidFileException
 from PyQt5.QtGui import QIntValidator, QPalette
-from PyQt5.QtWidgets import (QFileDialog, QMainWindow, QMessageBox,
-                             QVBoxLayout, qApp)
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, qApp, QVBoxLayout
+from openpyxl.utils.exceptions import InvalidFileException
 
-from valexa.core.profiles import (DEFAULT_ACCEPTANCE, DEFAULT_TOLERANCE,
-                                  make_profiles)
+from valexa.core.profiles import make_profiles, DEFAULT_TOLERANCE, DEFAULT_ACCEPTANCE
 from valexa.core.xlsx import XlsxHandler
 from valexa.gui import Ui_main_window
 from valexa.gui.profile_widget import ProfileWidget
-from valexa.gui.profile_plot_canvas import ProfilePlotCanvas
 
 
 class AppState:
@@ -70,13 +66,8 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
             profiles = make_profiles(self.state.calib_data, self.state.valid_data, self.state.tolerance_limit,
                                      self.state.acceptance_limit)
             plot_layout = self.plot_layout
-            for i, profile in enumerate(profiles):
+            for profile in profiles:
                 profile_widget = ProfileWidget(profile=profile)
-                mpld3_html = mpld3.fig_to_json(
-                        ProfilePlotCanvas(profile=profile).figure
-                    )
-                with open(f"C:/Users/a.cox/Desktop/plot{i}.html", "w") as fileobj:
-                    fileobj.write(mpld3_html)
                 plot_layout.addWidget(profile_widget)
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))

@@ -12,6 +12,7 @@ scipy = "*"
 django = "*"
 mpld3 = "*"
 jinja2 = "*"
+plotly = "*"
 
 [dev-packages]
 pytest = "*"

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- xlsx.js (C) 2013-present  SheetJS http://sheetjs.com -->
+<!-- vim: set ts=2: -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>SheetJS Live Demo</title>
+<style>
+#drop{
+	border:2px dashed #bbb;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	border-radius:5px;
+	padding:25px;
+	text-align:center;
+	font:20pt bold,"Vollkorn";color:#bbb
+}
+a { text-decoration: none }
+</style>
+<!-- TODO use production CDN -->
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+<script src="https://mpld3.github.io/js/d3.v3.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<!-- dev mpld3 lib -->
+<script src="/static/valexa_app/libs/mpld3.v0.3.1.dev1.js"></script>
+<!-- <script src="https://mpld3.github.io/js/mpld3.v0.3.js"></script> -->
+</head>
+<body>
+<div id="valexa_app">
+		{% csrf_token %}
+		<div id="drop">Drop a spreadsheet file here to see sheet data</div>
+		<input type="file" v-on:change="uploadFile" id="file" ref="file" /> ... or click here to select a file
+
+		<div v-bind:id="plot_id"></div>
+</div>
+
+<script type="module" src="/static/valexa_app/app/main.js"></script>
+
+</body>
+</html>

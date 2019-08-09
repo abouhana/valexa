@@ -33,7 +33,7 @@ wheels/
 
 # VSCode
 *.vscode/
-*.work-space
+*.code-workspace
 
 # Installer logs
 pip-log.txt
