@@ -298,6 +298,7 @@ class Profile:
 
         return min_limit, max_limit
 
+    #TODO remove and update test
     def make_plot(self, ax):
         levels_x = [l.calculated_concentration for l in self.levels]
         ax.axis["bottom", "top", "right"].set_visible(False)
@@ -315,3 +316,5 @@ class Profile:
         ax.set_xlabel("Concentration")
         ax.set_ylabel("Recovery (%)")
         ax.legend(loc=1)
+
+        
