@@ -1,4 +1,5 @@
 //import Cookies from 'js-cookie';
+import {ProfilePlotCanvas} from "./__target__/canvas.js";
 
 var vm = new Vue({
     el: "#valexa_app",
@@ -24,21 +25,11 @@ var vm = new Vue({
             .then(function(response){
                 if (!response.data) {
                     alert("File not uploaded");
-                } else if (!response.data.figures) {
-                    alert("No results");
                 } else {
-                    let fig = response.data.figures[0];
+                    //let fig = response.data.figures[0];
+                    let profile = response.data.profiles[0]
+                    let fig = ProfilePlotCanvas(profile).figure;
                     Plotly.newPlot(plot_id, fig["data"], fig["layout"], {responsive: true});
-                    // let figid = plot_id;
-                    // let fig_spec = response.data.figures[0];
-                    // var element = document.getElementById(figid);
-                    // if (element === null) {
-                    //     throw figid + " is not a valid id";
-                    // }
-                    // var fig = new mpld3.Figure(figid, fig_spec);
-                    // mpld3.figures.push(fig);
-                    // fig.draw();
-                    // return fig;
                 }
             })
             .catch(function(error){
