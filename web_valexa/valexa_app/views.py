@@ -4,8 +4,10 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import FormView
 
-from valexa.core.ploters import ProfilePloter, PloterData
-from valexa.core.encoders import NumpyEncoder, PlotlyJSONEncoder
+from valexa.ploting.ploters import ProfilePloter, PloterData
+from valexa.ploting.encoders import PlotlyJSONEncoder
+from valexa.ploting.utils import profile_to_dict
+from valexa.ploting.plotly.canvas import ProfilePlotCanvas
 
 from .forms import UploadFileForm
 from .decorators import ajax
@@ -20,5 +22,8 @@ class ValexaView(FormView):
 
     def form_valid(self, form):
         data = PloterData(form.files["file"].file)
-        return {"figures": ProfilePloter(data).figures,}
+        plots = [ProfilePlotCanvas(p) for p in data.profiles]
+        return {
+            "figures": [p.figure for p in plots],
+        }
 
