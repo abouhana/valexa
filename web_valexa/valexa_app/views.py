@@ -17,13 +17,17 @@ from .decorators import ajax
 @method_decorator(ajax(encoder=PlotlyJSONEncoder), name="post")
 class ValexaView(FormView):
 
-    template_name = "valexa_app/index.html"
-    form_class = UploadFileForm
 
-    def form_valid(self, form):
-        data = PloterData(form.files["file"].file)
-        # plots = [ProfilePlotCanvas(p) for p in data.profiles]
-        return {
-            "profiles": [profile_to_dict(p) for p in data.profiles],
-        }
+    def post(self, request, *args, **kwargs):
+        
+        form = UploadFileForm(request.data)
+        if form.is_valid():
+            data = PloterData(form.files["file"].file)
+            # plots = [ProfilePlotCanvas(p) for p in data.profiles]
+            return {
+                "profiles": [profile_to_dict(p) for p in data.profiles],
+            }
+        else:
+            return {}
+        
 

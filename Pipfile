@@ -10,9 +10,12 @@ matplotlib = "*"
 numpy = "*"
 scipy = "*"
 django = "*"
+django-cors-headers = "*"
 mpld3 = "*"
 jinja2 = "*"
 plotly = "*"
+Flask = "*"
+Flask-Cors = "*"
 
 [dev-packages]
 pytest = "*"

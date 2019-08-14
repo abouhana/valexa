@@ -60,7 +60,7 @@ class ProfilePlotCanvas:
         )
         fig.update_xaxes(
             title_text="Concentration",
-            position=0.465, 
+            position=0.50, 
             showline=True, linecolor="black", 
             ticks="inside", tickwidth=1, tickcolor="black", ticklen=4,
         )

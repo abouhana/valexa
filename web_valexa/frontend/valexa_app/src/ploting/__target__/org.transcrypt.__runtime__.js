@@ -1,4 +1,5 @@
-// Transcrypt'ed from Python, 2019-08-12 15:16:01
+// Transcrypt'ed from Python, 2019-08-13 10:25:57
+/* eslint-disable */
 var __name__ = 'org.transcrypt.__runtime__';
 export var __envir__ = {};
 __envir__.interpreter_name = 'python';

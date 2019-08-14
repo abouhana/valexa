@@ -26,7 +26,10 @@ a { text-decoration: none }
 <div id="valexa_app">
 		{% csrf_token %}
 		<div id="drop">Drop a spreadsheet file here to see sheet data</div>
-		<input type="file" v-on:change="uploadFile" id="file" ref="file" /> ... or click here to select a file
+		<input type="file" id="file" ref="file" 
+			v-on:change="uploadFile" 
+			v-on:click="this.innerText=''"
+		/> ... or click here to select a file
 
 		<div v-bind:id="plot_id"></div>
 </div>
