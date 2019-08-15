@@ -20,7 +20,7 @@ CORS(app, resources={r'/*': {'origins': '*'}})
 
 
 # sanity check route
-@app.route('/valexa/compute/', methods=['POST'])
+@app.route('/valexa_app/compute/', methods=['POST'])
 def compute():
     response_object = {'status': 'success'}
     if request.method == 'POST':

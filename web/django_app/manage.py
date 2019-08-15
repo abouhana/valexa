@@ -3,8 +3,8 @@
 import os
 import sys
 
-
 def main():
+    sys.path.insert(0, os.path.abspath("../"))
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_valexa.settings')
     try:
         from django.core.management import execute_from_command_line

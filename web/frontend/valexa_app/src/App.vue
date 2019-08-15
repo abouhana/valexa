@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <file-upload 
-      url="http://127.0.0.1:5000/valexa/compute/"
+      url="http://127.0.0.1:5000/valexa_app/compute/"
       v-on:fileupload-success="updatePloter($event)">
     </file-upload>
     <profile-ploter v-bind:ploterData="ploterData"></profile-ploter>
