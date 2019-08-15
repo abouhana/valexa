@@ -63,6 +63,13 @@ local_settings.py
 instance/
 .webassets-cache
 
+# Node stuff:
+node_modules/
+
+# VSCode stuff:
+*.vscode
+*.code-workspace
+
 # Scrapy stuff:
 .scrapy
 
