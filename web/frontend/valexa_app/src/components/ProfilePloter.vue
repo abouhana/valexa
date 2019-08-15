@@ -9,7 +9,7 @@
 
 <script>
 import { ProfilePlotCanvas } from "../ploting/__target__/canvas.js";
-import Plotly from "plotly.js-basic-dist";
+import Plotly from "plotly.js";
 import ProfileTable from "./ProfileTable";
 
 export default {

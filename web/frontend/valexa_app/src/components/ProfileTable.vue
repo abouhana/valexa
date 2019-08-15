@@ -61,8 +61,7 @@ export default {
 				return newValue;
 			} else {
 				return Number(Math.round(value +'e'+ decimals) +'e-'+ decimals).toFixed(decimals);
-			}
-    	
+			}   	
 		}
 	}
 };
