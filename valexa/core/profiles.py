@@ -156,6 +156,9 @@ class Profile:
         self.ld: float = None
         self.has_limits = False
 
+        self.acceptance_limit: int = DEFAULT_ACCEPTANCE
+        self.tolerance_limit: int = DEFAULT_TOLERANCE
+
         self.__split_series_by_levels()
         self.levels.sort(key=attrgetter('index'))
 
@@ -170,6 +173,8 @@ class Profile:
                 self.levels.append(level)
 
     def calculate(self, tolerance_limit: int = DEFAULT_TOLERANCE, acceptance_limit: int = DEFAULT_ACCEPTANCE):
+        self.tolerance_limit = tolerance_limit
+        self.acceptance_limit = acceptance_limit
         self.acceptance_interval = [(1 - (acceptance_limit / 100)) * 100, (1 + (acceptance_limit / 100)) * 100]
         for level in self.levels:
             level.calculate(tolerance_limit)
