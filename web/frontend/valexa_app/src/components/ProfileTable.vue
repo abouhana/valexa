@@ -1,33 +1,65 @@
 <template>
-<div class="divTable greyGridTable">
-	<div class="divTableHeading">
-		<div class="divTableRow">
-			<div class="divTableHead" v-for="(header, name) in headers" v-bind:key="name">{{header}}</div>
-		</div>
-	</div>
-	<div class="divTableBody">
-		<div class="divTableRow" v-for="(level, i) in levels" v-bind:key="i">
-			<div class="divTableCell">
-				{{ round(level["introduced_concentration"], 3) }}
-			</div>
-			<div class="divTableCell">
-				{{ round(level["calculated_concentration"], 3) }}
-			</div>
-			<div class="divTableCell">
-				{{ round(level["bias"], 3) }}
-			</div>
-			<div class="divTableCell">
-				{{ round(level["relative_bias"], 2) }}
-			</div>
-			<div class="divTableCell">
-				{{ round(level["recovery"], 1) }}
-			</div>
-			<div class="divTableCell">
-				{{ round(level["abs_tolerance"], 2) }}
-			</div>
-		</div>
-	</div>
-</div>
+<table>
+	<tbody>
+		<tr>
+			<th>File name</th>
+			<th colspan="7" style="text-align: center;">static Bifenthrin Level 01 to 5.xlsx static</th>
+		</tr>
+		<tr>
+			<td>Modèle</td>
+			<td colspan="3">{{profile.model.name}}</td>
+			<td>beta</td>
+			<td>{{ profile.tolerance_limit }}</td>
+			<td>t</td>
+			<td>{{ profile.acceptance_limit }}</td>
+		</tr>
+		<tr>
+			<td>LOQ Min</td>
+			<td colspan="3">{{ profile.min_lq }}</td>
+			<td>LOQ Max</td>
+			<td colspan="3">{{ profile.max_lq }}</td>
+		</tr>
+		<tr>
+			<td>LOD</td>
+			<td colspan="3">{{ profile.ld }}</td>
+			<td>Corr. Factor.</td>
+			<td>{{ profile.model.correction_factor }}</td>
+			<td>Recovery</td>
+			<td>static 1428.5714285714284 static</td>
+		</tr>
+		<tr>
+			<td colspan="8"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Concentration</td>
+			<td rowspan="2">Mesuré</td>
+			<td colspan="2">Exactitude</td>
+			<td colspan="2">Précision</td>
+			<td colspan="2">Justesse</td>
+		</tr>
+		<tr>
+			<td>Biais absolue</td>
+			<td>Biais relatif</td>
+			<td>Répétabilité (%%RSD)</td>
+			<td>Intermédiaire (%%RSD)</td>
+			<td>Limite de tolérance</td>
+			<td>Limite relative</td>
+		</tr>
+		<tr v-for="(level, i) in profile.levels" v-bind:key="i"> 
+			<td>{{round(level["introduced_concentration"], 3)}}</td>
+			<td>{{round(level["calculated_concentration"], 3)}}</td>
+			<td>{{round(level["bias"], 3)}}</td>
+			<td>{{round(level["relative_bias"], 2)}}</td>
+			<td>{{round(level["repeatability_var"], 3)}}</td>
+			<td>{{round(level["repeatability_std"], 3)}}</td>
+			<td>{{round(level["abs_tolerance"], 2)}}</td>
+			<td>{{round(level["rel_tolerance"], 2)}}</td>
+		</tr>
+		<tr>
+			<td colspan="8"></td>
+		</tr>
+	</tbody>
+</table>
 </template>
 
 <script>
@@ -36,19 +68,11 @@ export default {
 	name: "ProfileTable",
 	//TODO stricter type control 
   props: {
-    levels: Array
+    profile: Object,
   },
   data() {
     return {
-			"headers":{
-				"introduced_concentration": "Concentration",
-				"calculated_concentration": "Calculated concentration",
-				"bias": "Absolute bias",
-				"relative_bias": "Relative biais (%)",
-				"recovery": "Recovery (%)",
-				"abs_tolerance": "Tolerance Interval",
 
-			}
     };
 	},
 	methods: {
@@ -68,48 +92,40 @@ export default {
 </script>
 
 <style scoped>
-div.greyGridTable {
-  border: 2px solid #FFFFFF;
-  width: 100%;
-  text-align: center;
+table {
+  border: 2px solid #000000;
+  text-align: left;
   border-collapse: collapse;
 }
-.divTable.greyGridTable .divTableCell, .divTable.greyGridTable .divTableHead {
-  border: 1px solid #FFFFFF;
-  padding: 3px 4px;
+table td, th {
+  border: 1px solid #000000;
+  padding: 5px 4px;
 }
-.divTable.greyGridTable .divTableBody .divTableCell {
+table tbody td {
   font-size: 13px;
 }
-.divTable.greyGridTable .divTableCell:nth-child(even) {
-  background: #EBEBEB;
+table thead {
+  background: #CFCFCF;
+  background: -moz-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+  background: -webkit-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+  background: linear-gradient(to bottom, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+  border-bottom: 3px solid #000000;
 }
-.divTable.greyGridTable .divTableHeading {
-  background: #FFFFFF;
-  border-bottom: 4px solid #333333;
-}
-.divTable.greyGridTable .divTableHeading .divTableHead {
+table thead th {
   font-size: 15px;
   font-weight: bold;
-  color: #333333;
-  text-align: center;
-  border-left: 2px solid #333333;
+  color: #000000;
+  text-align: left;
 }
-.divTable.greyGridTable .divTableHeading .divTableHead:first-child {
-  border-left: none;
+table tfoot {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000000;
+  border-top: 3px solid #000000;
 }
-
-.greyGridTable .tableFootStyle {
+table tfoot td {
   font-size: 14px;
 }
-
-.divTable{ display: table; }
-.divTableRow { display: table-row; }
-.divTableHeading { display: table-header-group;}
-.divTableCell, .divTableHead { display: table-cell;}
-.divTableHeading { display: table-header-group;}
-.divTableFoot { display: table-footer-group;}
-.divTableBody { display: table-row-group;}
 </style>
 
 

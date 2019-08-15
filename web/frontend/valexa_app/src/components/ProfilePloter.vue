@@ -1,8 +1,9 @@
 <template>
   <div id="plots">
     <div class="profile" v-for="(profile, i) in ploterData" v-bind:key="i">
-      <profile-table v-bind:levels="profile.levels"></profile-table>
+      <profile-table v-bind:profile="profile"></profile-table>
       <div v-bind:id="plot_suffix+i" class="plot"></div>
+      <img v-bind:id="'export'+i">
     </div>
   </div>
 </template>
@@ -26,12 +27,27 @@ export default {
     };
   },
   updated() {
-    let i = 0;
+    var i = -1;
+
     for (const profile of this.ploterData) {
-      let fig = ProfilePlotCanvas(profile).figure;
-      fig.config = { responsive: true };
-      Plotly.react(this.plot_suffix + i, fig);
       i += 1;
+      let fig = ProfilePlotCanvas(profile).figure;
+      let img_jpg = document.getElementById('export' + i);
+      fig.config = { responsive: true };
+      Plotly.react(
+        this.plot_suffix + i, fig
+      )
+      .then(function(gd) {
+        Plotly.toImage(
+          gd, 
+          {height: gd.offsetHeight, width: gd.offsetWidth}
+        )
+        .then(function(url) {
+              img_jpg.src = url;
+              gd.innerHTML = "";
+              //return Plotly.toImage(gd,{format:'jpeg',height:400,width:400});
+          })
+      });
     }
   }
 };
