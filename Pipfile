@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"pyqt5" = "*"
+openpyxl = "*"
+matplotlib = "*"
+numpy = "*"
+scipy = "*"
+django = "*"
+django-cors-headers = "*"
+mpld3 = "*"
+plotly = "*"
+Flask = "*"
+Flask-Cors = "*"
+jinja2 = "*"
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+pyinstaller = "*"
+pytest-mock = "*"
+transcrypt = "*"
+pylint-django = "*"
+
+[requires]
+python_version = "3.6"
