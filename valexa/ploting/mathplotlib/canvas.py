@@ -9,9 +9,9 @@ class ProfilePlotCanvas:
     def __init__(self, profile, parent=None, width=5, height=5, dpi=100):
         
         self.profile = profile
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = AA.Subplot(fig, 111)
-        fig.add_subplot(self.axes)
+        self.figure = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = AA.Subplot(self.figure, 111)
+        self.figure.add_subplot(self.axes)
 
         self._make_plot()
 

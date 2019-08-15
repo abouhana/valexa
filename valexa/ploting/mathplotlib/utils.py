@@ -4,6 +4,7 @@ from matplotlib.figure import Figure
 from mpld3.mpld3renderer import MPLD3Renderer
 from mpld3.mplexporter import Exporter
 
+from ..encoders import NumpyEncoder
 
 def fig_to_dict(fig: Figure, **kwargs) -> dict:
     """Output json-serializable dictionary representation of the figure
