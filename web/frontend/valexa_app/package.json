@@ -36,9 +36,10 @@
     "overrides": [
       {
         "files": [
-          "src/ploting/"
+          "src/ploting/__target__/*.js"
         ],
         "rules": {
+          "strict": "off",
           "no-unused-expressions": "off",
           "no-mixed-spaces-and-tabs": "off",
           "no-unused-vars": "off"
