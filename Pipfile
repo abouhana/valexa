@@ -15,6 +15,7 @@ mpld3 = "*"
 plotly = "*"
 Flask = "*"
 Flask-Cors = "*"
+jinja2 = "*"
 
 [dev-packages]
 pytest = "*"
