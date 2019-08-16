@@ -22,3 +22,4 @@ def fig_to_json(fig: Figure, encoder=PlotlyJSONEncoder) -> str:
     """Converts a matplotlib Figure to a Json string"""
 
     return json.dumps(fig_to_dict(fig), cls=encoder)
+    

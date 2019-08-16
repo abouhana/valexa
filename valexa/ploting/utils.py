@@ -12,3 +12,4 @@ def profile_to_dict(profile: Profile):
         "result": s.result,
     } for s in p["series"]]
     return p
+    

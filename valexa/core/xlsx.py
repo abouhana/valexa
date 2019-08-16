@@ -1,8 +1,6 @@
 from enum import Enum
 
 import openpyxl
-# import error
-# from openpyxl.worksheet import Worksheet
 from openpyxl.worksheet.worksheet import Worksheet
 
 CALIBRATION_SHEET_NAME = "Calibration_STD"
