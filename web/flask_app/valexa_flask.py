@@ -5,21 +5,14 @@ from valexa.ploting.ploters import PloterData
 from plotly.utils import PlotlyJSONEncoder
 from valexa.ploting.utils import profile_to_dict
 
-
-
-# configuration
 DEBUG = True
 
-# instantiate the app
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.json_encoder = PlotlyJSONEncoder
 
-# enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
 
-
-# sanity check route
 @app.route('/valexa_app/compute/', methods=['POST'])
 def compute():
     response_object = {'status': 'success'}
@@ -34,3 +27,4 @@ def compute():
 
 if __name__ == '__main__':
     app.run()
+    
