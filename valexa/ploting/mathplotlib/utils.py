@@ -4,7 +4,7 @@ from matplotlib.figure import Figure
 from mpld3.mpld3renderer import MPLD3Renderer
 from mpld3.mplexporter import Exporter
 
-from ..encoders import NumpyEncoder
+from plotly.utils import PlotlyJSONEncoder
 
 def fig_to_dict(fig: Figure, **kwargs) -> dict:
     """Output json-serializable dictionary representation of the figure
@@ -18,7 +18,7 @@ def fig_to_dict(fig: Figure, **kwargs) -> dict:
     return figure_dict
 
     
-def fig_to_json(fig: Figure, encoder=NumpyEncoder) -> str:
+def fig_to_json(fig: Figure, encoder=PlotlyJSONEncoder) -> str:
     """Converts a matplotlib Figure to a Json string"""
 
     return json.dumps(fig_to_dict(fig), cls=encoder)

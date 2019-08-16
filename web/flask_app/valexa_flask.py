@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from valexa.ploting.ploters import PloterData
-from valexa.ploting.encoders import PlotlyJSONEncoder
+from plotly.utils import PlotlyJSONEncoder
 from valexa.ploting.utils import profile_to_dict
 
 

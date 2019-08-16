@@ -3,8 +3,9 @@ import os
 
 import pytest
 
+from plotly.utils import PlotlyJSONEncoder
+
 from valexa.core.xlsx import XlsxHandler
-from valexa.ploting.encoders import NumpyEncoder, PlotlyJSONEncoder
 from valexa.ploting.ploters import PloterData
 import valexa.ploting.plotly.canvas as plotly_canvas
 import valexa.ploting.mathplotlib.canvas as mpl_canvas
@@ -81,15 +82,10 @@ class TestPlotingUtils:
             attr = getattr(profile, key, False)
             assert attr
 
-    def test_NumpyEncoder(self, profile):
-        string = json.dumps(profile_to_dict(profile), cls=NumpyEncoder)
-        assert isinstance(string, str)
-        assert len(string) > 0
-
     def test_serialize_mpl_figure(self, profile):
         mpl_figure = mpl_canvas.ProfilePlotCanvas(profile).figure
         string = json.dumps(
-            fig_to_dict(mpl_figure), cls=NumpyEncoder
+            fig_to_dict(mpl_figure), cls=PlotlyJSONEncoder
         )
         assert isinstance(string, str)
         assert len(string) > 0
