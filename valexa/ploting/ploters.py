@@ -15,8 +15,6 @@ class PloterData:
     acceptance_limit = DEFAULT_ACCEPTANCE
 
     def __init__(self, file: str or File, **kwargs):
-        self.load_data(file)
-
         for key, value in kwargs.items():
             if not hasattr(self, key):
                 raise TypeError("%s() received an invalid keyword %r. Only "
@@ -24,6 +22,8 @@ class PloterData:
                                 "class are accepted." % (self.__name__, key))
             else:
                 setattr(self, key, value)
+
+        self.load_data(file)
 
     def load_data(self, file: str or File) -> None:
         handler = self.handler(file)
