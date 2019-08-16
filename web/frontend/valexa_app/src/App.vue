@@ -2,7 +2,8 @@
   <div id="app">
     <file-upload 
       url="http://127.0.0.1:5000/valexa_app/compute/"
-      v-on:fileupload-success="updatePloter($event)">
+      @fileupload-success="updatePloter($event)"
+      @fileupload-error="alert($event.data)">
     </file-upload>
     <profile-ploter v-bind:ploterData="ploterData"></profile-ploter>
   </div>
@@ -34,6 +35,7 @@ export default {
     }
   }
 }
+
 </script>
 
 <style>
