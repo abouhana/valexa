@@ -3,7 +3,7 @@ node_modules
 /dist
 
 #Transcrypt stuff
-__target__/*
+__target__/
 
 # local env files
 .env.local
