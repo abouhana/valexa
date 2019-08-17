@@ -2,6 +2,9 @@
 node_modules
 /dist
 
+#Transcrypt stuff
+__target__/
+
 # local env files
 .env.local
 .env.*.local

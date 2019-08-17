@@ -10,7 +10,6 @@
   "dependencies": {
     "axios": "^0.19.0",
     "core-js": "^2.6.5",
-    "js-cookie": "^2.2.1",
     "plotly.js": "^1.49.2",
     "vue": "^2.6.10"
   },
@@ -33,19 +32,6 @@
       "eslint:recommended"
     ],
     "rules": {},
-    "overrides": [
-      {
-        "files": [
-          "src/ploting/__target__/*.js"
-        ],
-        "rules": {
-          "strict": "off",
-          "no-unused-expressions": "off",
-          "no-mixed-spaces-and-tabs": "off",
-          "no-unused-vars": "off"
-        }
-      }
-    ],
     "parserOptions": {
       "parser": "babel-eslint"
     }

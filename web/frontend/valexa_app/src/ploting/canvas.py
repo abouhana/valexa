@@ -20,7 +20,11 @@ class ProfilePlotCanvas:
         self.figure = {
             "layout": {
                 "width": width,
-                "height": height
+                "height": height,
+                "legend": {
+                    "x": 0.8,
+                    "y": 1.3,
+                }
             }
         }
         self._make_plot()

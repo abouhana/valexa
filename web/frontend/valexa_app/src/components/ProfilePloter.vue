@@ -45,7 +45,6 @@ export default {
         .then(function(url) {
               img_jpg.src = url;
               gd.innerHTML = "";
-              //return Plotly.toImage(gd,{format:'jpeg',height:400,width:400});
           })
       });
     }
