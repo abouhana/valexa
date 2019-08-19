@@ -3,9 +3,12 @@
     <file-upload 
       url="http://127.0.0.1:5000/valexa_app/compute/"
       @fileupload-success="updatePloter($event)"
-      @fileupload-error="alert($event.data)">
+      @fileupload-error="failedUpload">
     </file-upload>
-    <profile-ploter v-bind:ploterData="ploterData"></profile-ploter>
+    <profile-ploter 
+      v-bind:ploterData="ploterData"
+      v-bind:filename="filename">
+    </profile-ploter>
   </div>
 </template>
 
@@ -18,6 +21,7 @@ export default {
   data() {
     return {
       ploterData: [],
+      filename: "",
     }
   },
   components: {
@@ -26,13 +30,16 @@ export default {
   },
   methods: {
     updatePloter(event){
-      var data = event.data
-      if (!data) {
+      if (!event.data) {
           alert("No data");
       } else {
-        this.ploterData = data.profiles;
+        this.ploterData = event.data.profiles;
+        this.filename = event.filename;
       }
-    }
+    },
+    failedUpload(event) {
+      alert($event.data);
+    },
   }
 }
 

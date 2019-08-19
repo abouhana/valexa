@@ -3,7 +3,7 @@
 	<tbody>
 		<tr>
 			<th>File name</th>
-			<th colspan="7" style="text-align: center;">static Bifenthrin Level 01 to 5.xlsx static</th>
+			<th colspan="7" style="text-align: center;">{{filename}}</th>
 		</tr>
 		<tr>
 			<td>Modèle</td>
@@ -46,14 +46,14 @@
 			<td>Limite relative</td>
 		</tr>
 		<tr v-for="(level, i) in profile.levels" v-bind:key="i"> 
-			<td>{{round(level["introduced_concentration"], 3)}}</td>
-			<td>{{round(level["calculated_concentration"], 3)}}</td>
-			<td>{{round(level["bias"], 3)}}</td>
-			<td>{{round(level["relative_bias"], 2)}}</td>
-			<td>{{round(level["repeatability_var"], 3)}}</td>
-			<td>{{round(level["repeatability_std"], 3)}}</td>
-			<td>{{round(level["abs_tolerance"], 2)}}</td>
-			<td>{{round(level["rel_tolerance"], 2)}}</td>
+			<td>{{roundUp(level["introduced_concentration"], 3)}}</td>
+			<td>{{roundUp(level["calculated_concentration"], 3)}}</td>
+			<td>{{roundUp(level["bias"], 3)}}</td>
+			<td>{{roundUp(level["relative_bias"], 2)}}</td>
+			<td>{{roundUp(level["repeatability_var"], 3)}}</td>
+			<td>{{roundUp(level["repeatability_std"], 3)}}</td>
+			<td>{{roundUp(level["abs_tolerance"], 2)}}</td>
+			<td>{{roundUp(level["rel_tolerance"], 2)}}</td>
 		</tr>
 		<tr>
 			<td colspan="8"></td>
@@ -63,30 +63,22 @@
 </template>
 
 <script>
+import {fixedDecimals} from "../js/math_utils"
 
 export default {
 	name: "ProfileTable",
 	//TODO stricter type control 
   props: {
+		filename: String,
     profile: Object,
   },
   data() {
-    return {
-
-    };
+    return {};
 	},
 	methods: {
-		round(value, decimals) {
-			if (typeof value === "object") {
-				let newValue = [];
-				for (let v of value) {
-					newValue.push(+Number(Math.round(v +'e'+ decimals) +'e-'+ decimals).toFixed(decimals));
-				}
-				return newValue;
-			} else {
-				return Number(Math.round(value +'e'+ decimals) +'e-'+ decimals).toFixed(decimals);
-			}   	
-		}
+		roundUp() { 
+			return fixedDecimals(...arguments); 
+		},
 	}
 };
 </script>
@@ -96,6 +88,8 @@ table {
   border: 2px solid #000000;
   text-align: left;
   border-collapse: collapse;
+	margin-left: auto;
+  margin-right: auto;
 }
 table td, th {
   border: 1px solid #000000;
