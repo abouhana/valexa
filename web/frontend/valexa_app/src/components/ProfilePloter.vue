@@ -1,21 +1,27 @@
 <template>
   <div id="plots">
     <div class="profile" v-for="(profile, i) in ploterData" v-bind:key="i">
-      <profile-table v-bind:profile="profile"></profile-table>
-      <div v-bind:id="plot_suffix+i" class="plot"></div>
-      <img v-bind:id="'export'+i">
+      <profile-table 
+        v-bind:profile="profile"
+        v-bind:filename="filename">
+      </profile-table>
+      <div v-bind:id="plot_suffix+filename+i" class="plot"></div>
+      <div v-bind:id="'linearity_'+filename+i" class="plot"></div>
+      <img v-bind:id="plot_suffix+filename+i+'_export'">
+      <img v-bind:id="'linearity_'+filename+i+'_export'">
     </div>
   </div>
 </template>
 
 <script>
-import { ProfilePlotCanvas } from "../ploting/__target__/canvas.js";
+import { ProfilePlot, ProfileLinearity } from "../ploting/__target__/canvas.js";
 import Plotly from "plotly.js";
 import ProfileTable from "./ProfileTable";
 
 export default {
   name: "ProfilePloter",
   props: {
+    filename: String,
     ploterData: Array
   },
   components: {
@@ -31,22 +37,30 @@ export default {
 
     for (const profile of this.ploterData) {
       i += 1;
-      let fig = ProfilePlotCanvas(profile).figure;
-      let img_jpg = document.getElementById('export' + i);
-      fig.config = { responsive: true };
-      Plotly.react(
-        this.plot_suffix + i, fig
-      )
-      .then(function(gd) {
-        Plotly.toImage(
-          gd, 
-          {height: gd.offsetHeight, width: gd.offsetWidth}
-        )
-        .then(function(url) {
-              img_jpg.src = url;
-              gd.innerHTML = "";
-          })
-      });
+      let fig_validity = ProfilePlot(profile).figure;
+      fig_validity.config = { responsive: true };
+      Plotly.newPlot(
+        this.plot_suffix + this.filename + i, fig_validity
+      );
+
+      let fig_linearity = ProfileLinearity(profile).figure
+      fig_linearity.config = { responsive: true };
+      Plotly.newPlot(
+        "linearity_" + this.filename + i, fig_linearity
+      );
+
+      /**Image export code for possible future use */
+      // let img_jpg = document.getElementById('export_'+this.filename + i);
+      // .then(function(gd) {
+      //   Plotly.toImage(
+      //     gd, 
+      //     {height: gd.offsetHeight, width: gd.offsetWidth}
+      //   )
+      //   .then(function(url) {
+      //         img_jpg.src = url;
+      //         gd.innerHTML = "";
+      //     })
+      // });
     }
   }
 };
