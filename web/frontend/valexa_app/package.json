@@ -11,6 +11,7 @@
     "axios": "^0.19.0",
     "core-js": "^2.6.5",
     "plotly.js": "^1.49.2",
+    "vee-validate": "^2.2.15",
     "vue": "^2.6.10"
   },
   "devDependencies": {
