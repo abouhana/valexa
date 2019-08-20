@@ -32,20 +32,20 @@ export default {
       plot_suffix: "plot_"
     };
   },
-  updated() {
+  mounted() {
     var i = -1;
 
     for (const profile of this.ploterData) {
       i += 1;
       let fig_validity = ProfilePlot(profile).figure;
       fig_validity.config = { responsive: true };
-      Plotly.newPlot(
+      Plotly.react(
         this.plot_suffix + this.filename + i, fig_validity
       );
 
       let fig_linearity = ProfileLinearity(profile).figure
       fig_linearity.config = { responsive: true };
-      Plotly.newPlot(
+      Plotly.react(
         "linearity_" + this.filename + i, fig_linearity
       );
 

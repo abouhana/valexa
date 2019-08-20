@@ -1,35 +1,43 @@
 <template>
   <div id="file-upload">
-    <form @submit.prevent="uploadFile">
+    <form @submit.prevent="requestProfiles">
       <div class="container">
-        <div id="drop" 
-          @dragenter="handleDragover" 
-          @dragover="handleDragover"
-          @drop="handleDrop">
-            <div v-if="!files">Drop a spreadsheet here</div>
-            <div v-else>Ready</div>
+        <div id="drop" @dragenter="handleDragover" @dragover="handleDragover" @drop="handleDrop">
+          <div v-if="files.length < 1">Drop a spreadsheet here</div>
+          <div v-else>Ready</div>
         </div>
         <div class="btn-file">
           <label for="file" class="file-input">
-            <p v-if="!files">Or select a file</p> 
-            <p v-else>{{$refs.file.files[0].name}}</p> 
-            <input type="file" id="file" ref="file" required
-            @change="files = $event.target.files">
+            <p v-if="files.length < 1">Or select a file</p>
+            <p v-else>{{files[0].name}}</p>
           </label>
+          <input
+            type="file"
+            id="file"
+            name="filefield"
+            multiple="multiple"
+            ref="file"
+            @change="save($event)"
+          />
         </div>
         <div class="spacer"></div>
         <div id="profile-parameters" class="container">
           <div class="parameter">
-            <input type="text" v-model="acceptance"> Acceptance limit
+            <input
+              type="text"
+              name="acceptance"
+              v-model="acceptance"
+            /> Acceptance limit
           </div>
           <div class="parameter">
-            <input type="text" v-model="tolerance"> Tolerance limit
+            <input type="text" name="tolerance" v-model="tolerance" /> Tolerance limit
           </div>
           <div class="parameter">
-            <input type="text" v-model="coumpound_name"> Coumpound name
-          </div>
-          <div class="parameter">
-            <button type="submit">evaluate</button>
+            <button type="submit" v-bind:disabled="errors.any()">evaluate</button>
+            <p
+              class="help is-danger"
+              v-show="errors.has('filefield')"
+            >{{ errors.first('filefield') }}</p>
           </div>
         </div>
       </div>
@@ -41,137 +49,152 @@
 import axios from "axios";
 
 export default {
-  name: 'FileUpload',
+  name: "FileUpload",
   props: {
-    url: String,
+    url: String
   },
   data() {
     return {
-      "files": null,
-      "acceptance": 20,
-      "tolerance": 80,
-      "coumpound_name": "",
+      files: [],
+      acceptance: 20,
+      tolerance: 80
     };
   },
-  methods:{
-        handleDrop(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          this.$refs.file.files = e.dataTransfer.files;
-          this.files = e.dataTransfer.files;
+  methods: {
+    handleDrop(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      this.save(e);
+    },
+    handleDragover(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    },
+    save(e) {
+      if (e.dataTransfer) {
+        this.$refs.file.files = e.dataTransfer.files;
+        this.files = e.dataTransfer.files;
+      } else {
+        this.files = e.target.files;
+      }
+      this.$emit("file-save");
+    },
+    requestProfiles() {
+      for (const file of this.files) {
+        let formData = new FormData();
+        formData.append("file", file);
+        formData.append("acceptance", this.acceptance);
+        formData.append("tolerance", this.tolerance);
+
+        this.uploadFile(formData);
+      }
+      this.files = [];
+      this.$refs.file.value = "";
+    },
+    uploadFile: function(formData) {
+      var vm = this;
+      axios({
+        method: "POST",
+        url: vm.url,
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data"
         },
-        handleDragover(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'copy';
-        },
-        uploadFile: function(){
-            let file = this.files[0];
-            var vm = this;
-            let formData = new FormData();
-            formData.append("file", file);
-            formData.append("acceptance", this.acceptance);
-            formData.append("tolerance", this.tolerance);
-            axios({
-                method: "POST",
-                url: vm.url,
-                data: formData,
-                headers: {
-                    "Content-Type": "multipart/form-data"
-                },
-                responseType: 'json'
-            })
-            .then(function(response){
-                vm.$emit(
-                  "fileupload-success",
-                  { "data": response.data,
-                    "filename": file.name,
-                  }
-                );
-            })
-            .catch(function(error){
-                vm.$emit("fileupload-error", error);
-            })
-            .finally(function(){
-                vm.$refs.file.value = "";
-                vm.$refs.file.files = null;
-                vm.files = null;
-            })
-        }
+        responseType: "json"
+      })
+        .then(function(response) {
+          vm.$emit("fileupload-success", {
+            data: response.data,
+            filename: formData.get("file").name
+          });
+        })
+        .catch(function(error) {
+          vm.$emit("fileupload-error", {
+            error: error,
+            filename: formData.get("file").name
+          });
+        })
+        .finally(function() {});
     }
-}
+  }
+};
 </script>
 
 <style scoped>
-.container{
+.container {
   display: grid;
   max-width: 1000px;
   margin: auto;
 }
 
-.spacer{
+.spacer {
   height: 5vh;
   width: 100%;
 }
 
-a { 
-  text-decoration: none 
+a {
+  text-decoration: none;
 }
 
-#file-upload{
-  text-align:center;
+#file-upload {
+  text-align: center;
 }
 
-#drop{
-	border:2px dashed #bbb;
-	-moz-border-radius:5px;
-	-webkit-border-radius:5px;
-	border-radius:5px;
-	padding:25px;
-	text-align:center;
-	font:20pt bold,"Vollkorn";
-  color:#bbb;
+#drop {
+  border: 2px dashed #bbb;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  padding: 25px;
+  text-align: center;
+  font: 20pt bold, "Vollkorn";
+  color: #bbb;
   grid-row-start: 1;
 }
 
-.btn-file{
+.btn-file {
   grid-row-start: 2;
   grid-column-start: 1;
   width: 60%;
   margin: auto;
 }
-.file-input{
+.file-input {
   margin: auto;
   align-items: center;
   width: 100%;
   height: 5vh;
-  background-color: rgb(230,230,230);
+  background-color: rgb(230, 230, 230);
   border-style: solid;
   border-radius: 5px;
   display: flex;
 }
-.file-input p{
+.file-input p {
   margin: auto;
 }
-.file-input input{
-  display:none;
+.file-input input {
+  display: none;
 }
 
-#profile-parameters{
+#profile-parameters {
   display: flexbox;
   margin: 0;
 }
-.parameter{
+.parameter {
   display: inline-flex;
 }
-.parameter input{
+.parameter input {
   border: 1px solid;
   border-style: solid;
   border-radius: 5px;
   margin-right: 1vw;
   text-align: center;
+  outline: none;
 }
-.parameter button{
+.parameter input.invalid {
+  border-color: crimson;
+}
+.parameter button {
   width: 171px;
   margin-top: 1vh;
 }

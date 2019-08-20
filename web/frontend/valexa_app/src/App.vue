@@ -2,12 +2,13 @@
   <div id="app">
     <file-upload 
       url="http://127.0.0.1:5000/valexa_app/compute/"
+      @file-save="ploterData = []"
       @fileupload-success="updatePloter($event)"
       @fileupload-error="failedUpload">
     </file-upload>
-    <profile-ploter 
-      v-bind:ploterData="ploterData"
-      v-bind:filename="filename">
+    <profile-ploter v-for="data in ploterData" v-bind:key="data.filename"
+      v-bind:ploterData="data.profiles"
+      v-bind:filename="data.filename">
     </profile-ploter>
   </div>
 </template>
@@ -20,8 +21,10 @@ export default {
   name: 'app',
   data() {
     return {
-      ploterData: [],
-      filename: "",
+      ploterData: [{
+        filename: "",
+        profiles: [],
+      }],
     }
   },
   components: {
@@ -33,12 +36,14 @@ export default {
       if (!event.data) {
           alert("No data");
       } else {
-        this.ploterData = event.data.profiles;
-        this.filename = event.filename;
+        this.ploterData.push({
+          "profiles": event.data.profiles,
+          "filename": event.filename
+          });
       }
     },
     failedUpload(event) {
-      alert($event.data);
+      alert(event.data);
     },
   }
 }
