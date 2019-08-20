@@ -25,7 +25,7 @@
 			<td>Corr. Factor.</td>
 			<td>{{ profile.model.correction_factor }}</td>
 			<td>Recovery</td>
-			<td>static 1428.5714285714284 static</td>
+			<td>{{(1 / profile.model.correction_factor) * 100}}</td>
 		</tr>
 		<tr>
 			<td colspan="8"></td>
@@ -40,8 +40,8 @@
 		<tr>
 			<td>Biais absolue</td>
 			<td>Biais relatif</td>
-			<td>Répétabilité (%%RSD)</td>
-			<td>Intermédiaire (%%RSD)</td>
+			<td>Répétabilité (% RSD)</td>
+			<td>Intermédiaire (% RSD)</td>
 			<td>Limite de tolérance</td>
 			<td>Limite relative</td>
 		</tr>
@@ -76,8 +76,16 @@ export default {
     return {};
 	},
 	methods: {
-		roundUp() { 
-			return fixedDecimals(...arguments); 
+		roundUp(value, decimals) { 
+			if (typeof value === "object") {
+				var newVal = [];
+				for (const val of value) {
+					newVal.push(+fixedDecimals(val, decimals));
+				}
+				return newVal;
+			} else {
+				return fixedDecimals(value, decimals); 
+			}
 		},
 	}
 };
