@@ -10,7 +10,7 @@ from valexa.ploting.plotly.canvas import ProfilePlotCanvas
 class PloterData:
 
     def __init__(self, file: str or File, handler=XlsxHandler, 
-            tolerance_limit=TOLERANCE, acceptance_limit=ACCEPTANCE):
+            tolerance_limit: int=TOLERANCE, acceptance_limit: int=ACCEPTANCE):
         
         self.tolerance_limit = tolerance_limit
         self.acceptance_limit = acceptance_limit

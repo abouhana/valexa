@@ -1,5 +1,3 @@
-// vue.config.js
-
 //This will run transcrypt on serve or build
 const child_process = require('child_process');
 const path = require('path')
@@ -7,7 +5,7 @@ const path = require('path')
 let cmd_parts = [
     'python -m transcrypt',
     '--nomin',
-    '--map',
+    //'--map',
     'canvas'
 ];
 let cmd_options = {

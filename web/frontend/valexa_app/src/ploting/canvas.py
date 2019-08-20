@@ -112,7 +112,6 @@ class ProfilePlot:
         
         fig.layout.xaxis = {
             "title": {"text": "Concentration"},
-            #"position": 0.462, 
             "showline": True,
             "linecolor": "black", 
             "ticks": "inside", 
@@ -228,7 +227,6 @@ class ProfileLinearity:
         fig.layout.xaxis = {
             "title": {"text": "Introduced Concentration"},
             "rangemode": "tozero",
-            #"position": 0.462, 
             "showline": True,
             "linecolor": "black", 
             "ticks": "inside", 
