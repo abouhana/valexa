@@ -177,7 +177,8 @@ class ProfileLinearity:
             "type": "scatter",
             "mode": "lines",
             "x":  levels_x,
-            "y": [l.calculated_concentration + l.calculated_concentration*0.15 for l in p.levels],
+            "y": [l.calculated_concentration * (1 + p.acceptance_limit/100) \
+                    for l in p.levels],
             "name": "Acceptance limit",
             "line": {"dash":"dash"},
             "marker": {"color": "black"},
@@ -187,7 +188,8 @@ class ProfileLinearity:
             "mode": "lines",
             "showlegend": False,
             "x":  levels_x,
-            "y": [l.calculated_concentration - l.calculated_concentration*0.15 for l in p.levels],
+            "y": [l.calculated_concentration / (1 + p.acceptance_limit/100) \
+                    for l in p.levels],
             "name": "Acceptance limit",
             "line": {"dash":"dash"},
             "marker": {"color": "black"},
