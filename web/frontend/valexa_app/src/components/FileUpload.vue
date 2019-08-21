@@ -1,47 +1,45 @@
 <template>
   <div id="file-upload">
-    <form @submit.prevent="requestProfiles">
       <div class="container">
         <div id="drop" @dragenter="handleDragover" @dragover="handleDragover" @drop="handleDrop">
-          <div v-if="files.length < 1">Drop a spreadsheet here</div>
+          <div v-if="!isReady">Drop a spreadsheet here</div>
           <div v-else>Ready</div>
         </div>
-        <div class="btn-file">
-          <label for="file" class="file-input">
-            <p v-if="files.length < 1">Or select a file</p>
-            <p v-else>{{files[0].name}}</p>
-          </label>
-          <input
-            type="file"
-            id="file"
-            name="filefield"
-            multiple="multiple"
-            ref="file"
-            @change="save($event)"
-          />
-        </div>
-        <div class="spacer"></div>
-        <div id="profile-parameters" class="container">
-          <div class="parameter">
+        <form @submit.prevent="requestProfiles">
+          <div id="file-btn">
+            <label for="file">
+              <p v-if="!isReady">Or select a file</p>
+              <p v-else>{{files[0].name}}</p>
+            </label>
             <input
-              type="text"
-              name="acceptance"
-              v-model="acceptance"
-            /> Acceptance limit
+              type="file"
+              id="file"
+              name="file"
+              multiple="multiple"
+              ref="file"
+              v-validate="'ext:xlsx'"
+              @change="save($event)"
+            />
           </div>
-          <div class="parameter">
-            <input type="text" name="tolerance" v-model="tolerance" /> Tolerance limit
+          <div class="spacer"></div>
+          <div id="profile-parameters" class="container">
+            <div class="parameter">
+              <input
+                type="text"
+                name="acceptance"
+                v-model="acceptance"
+                v-validate="'required|numeric'"
+              /> Acceptance limit
+            </div>
+            <div class="parameter">
+              <input type="text" name="tolerance" v-model="tolerance" v-validate="'required|numeric'" /> Tolerance limit
+            </div>
+            <div class="parameter">
+              <button type="submit" v-bind:disabled="errors.any() || !isReady">evaluate</button>
+            </div>
           </div>
-          <div class="parameter">
-            <button type="submit" v-bind:disabled="errors.any()">evaluate</button>
-            <p
-              class="help is-danger"
-              v-show="errors.has('filefield')"
-            >{{ errors.first('filefield') }}</p>
-          </div>
-        </div>
+        </form>
       </div>
-    </form>
   </div>
 </template>
 
@@ -59,6 +57,11 @@ export default {
       acceptance: 20,
       tolerance: 80
     };
+  },
+  computed: {
+    isReady() {
+      return this.files.length > 0;
+    }
   },
   methods: {
     handleDrop(e) {
@@ -153,13 +156,16 @@ a {
   grid-row-start: 1;
 }
 
-.btn-file {
+#file-btn {
   grid-row-start: 2;
   grid-column-start: 1;
   width: 60%;
   margin: auto;
 }
-.file-input {
+#file-btn input {
+  display: none;
+}
+#file-btn label {
   margin: auto;
   align-items: center;
   width: 100%;
@@ -169,11 +175,8 @@ a {
   border-radius: 5px;
   display: flex;
 }
-.file-input p {
+#file-btn label p {
   margin: auto;
-}
-.file-input input {
-  display: none;
 }
 
 #profile-parameters {
