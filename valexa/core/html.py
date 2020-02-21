@@ -27,8 +27,8 @@ class HtmlWriter:
 
         file.write(f'''<table style="border: 1px solid black">
               <tr style="border: 1px solid black">
-                <th>File name</th>
-                <th colspan="7">{self.__format_value(self.profile.name_of_file)}</th>
+                <th>Composé</th>
+                <th colspan="7">{self.__format_value(self.profile.name_of_file.replace('.xlsx',''))}</th>
               </tr>
               <tr style="border: 1px solid black">
                 <td>Modèle</td>
@@ -65,8 +65,8 @@ class HtmlWriter:
               <tr style="border: 1px solid black">
                 <td>Biais absolue</td>
                 <td>Biais relatif</td>
-                <td>Répétabilité (%%RSD)</td>
-                <td>Intermédiaire (%%RSD)</td>
+                <td>Répétabilité (%RSD)</td>
+                <td>Intermédiaire (%RSD)</td>
                 <td>Limite de tolérance</td>
                 <td>Limite relative</td>
               </tr>''')

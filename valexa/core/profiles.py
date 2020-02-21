@@ -8,7 +8,6 @@ from scipy.stats import t
 import math
 import numpy as np
 
-
 from valexa.core.standard import Standard
 from valexa.core.models import Result, ModelHandler, Model
 
@@ -60,6 +59,15 @@ class ProfileLevel:
         self.nb_series: int = None
         self.nb_measures: int = None
         self.nb_rep: int = None
+        self.fidelity_var: float = None
+        self.fidelity_std: float = None
+        self.ratio_var: float = None
+        self.b_coefficient: float = None
+        self.degree_of_freedom: float = None
+        self.tolerance_std: float = None
+        self.abs_uncertainty: float = None
+        self.rel_uncertainty: float = None
+        self.pc_uncertainty: float = None
 
     def __series_by_group(self) -> Dict:
         series_group = defaultdict(list)
@@ -83,12 +91,23 @@ class ProfileLevel:
         self.recovery = (self.calculated_concentration / self.introduced_concentration) * 100
         self.repeatability_var = self.get_repeatability_var()
         self.repeatability_std = np.sqrt(self.repeatability_var)
-        self.repeatability_std_pc = self.repeatability_std/self.calculated_concentration * 100
+        self.repeatability_std_pc = self.repeatability_std / self.calculated_concentration * 100
         self.inter_series_var = self.get_inter_series_var()
         self.inter_series_std = np.sqrt(self.inter_series_var)
         self.inter_series_std_pc = self.inter_series_std / self.calculated_concentration * 100
+        self.fidelity_var = np.sum([self.repeatability_var, self.inter_series_var])
+        self.fidelity_std = np.sqrt(self.fidelity_var)
+        self.ratio_var = self.get_ratio_var()
+        self.b_coefficient = (self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1)
+        self.degree_of_freedom = (self.ratio_var + 1) ** 2 / ((self.ratio_var + (1 / self.nb_rep)) ** 2 /
+                                                              (self.nb_series - 1) + (
+                                                                          1 - (1 / self.nb_rep)) / self.nb_measures)
+        self.tolerance_std = self.fidelity_std * (np.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient))))
         self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
         self.rel_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance]
+        self.abs_uncertainty = self.tolerance_std * 2
+        self.rel_uncertainty = self.abs_uncertainty/self.calculated_concentration
+        self.pc_uncertainty = self.abs_uncertainty/self.introduced_concentration
 
     def get_repeatability_var(self) -> float:
         repeatability_var = 0
@@ -116,24 +135,22 @@ class ProfileLevel:
 
         return inter_series_var
 
-    def get_absolute_tolerance(self, tolerance_limit: int) -> List[float]:
-        fidelity_var = np.sum([self.repeatability_var, self.inter_series_var])
-        fidelity_std = np.sqrt(fidelity_var)
+    def get_ratio_var(self) -> float:
         if self.inter_series_var == 0 or self.repeatability_var == 0:
             ratio_var = 0
         else:
             ratio_var = self.inter_series_var / self.repeatability_var
 
-        b_coefficient = (ratio_var + 1) / (self.nb_rep * ratio_var + 1)
-        degree_of_freedom = (ratio_var + 1) ** 2 / ((ratio_var + (1 / self.nb_rep)) ** 2 / (self.nb_series - 1) + (
-                1 - (1 / self.nb_rep)) / self.nb_measures)
-        student_low = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.floor(degree_of_freedom))
-        student_high = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.ceil(degree_of_freedom))
+        return ratio_var
 
-        cover_factor = student_low - (student_low - student_high) * (degree_of_freedom - math.floor(degree_of_freedom))
-        tolerance_std = fidelity_std * (np.sqrt(1 + (1 / (self.nb_measures * b_coefficient))))
-        tolerance_low = self.calculated_concentration - cover_factor * tolerance_std
-        tolerance_high = self.calculated_concentration + cover_factor * tolerance_std
+    def get_absolute_tolerance(self, tolerance_limit: int) -> List[float]:
+
+        student_low = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.floor(self.degree_of_freedom))
+        student_high = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.ceil(self.degree_of_freedom))
+
+        cover_factor = student_low - (student_low - student_high) * (self.degree_of_freedom - math.floor(self.degree_of_freedom))
+        tolerance_low = self.calculated_concentration - cover_factor * self.tolerance_std
+        tolerance_high = self.calculated_concentration + cover_factor * self.tolerance_std
 
         return [tolerance_low, tolerance_high]
 
@@ -327,4 +344,3 @@ class Profile:
         ax.set_xlabel("Concentration")
         ax.set_ylabel("Recovery (%)")
         ax.legend(loc=1)
-

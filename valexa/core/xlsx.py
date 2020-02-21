@@ -1,7 +1,7 @@
 from enum import Enum
 
 import openpyxl
-from openpyxl.worksheet import Worksheet
+#from openpyxl import Worksheet
 from openpyxl import Workbook
 from os import path
 from openpyxl.drawing.image import Image

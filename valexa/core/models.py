@@ -11,7 +11,15 @@ Result = namedtuple('Result', ['series', 'level', 'concentration', 'result'])
 class Model:
     NAME_BY_DEGREE = {
         1: "Linear",
-        2: "Quadratic"
+        2: "Linear through 0",
+        2: "Quadratic",
+        3: "Weighed Linear"
+    }
+
+    EQUATION_BY_DEGREE = {
+        1: lambda x, a, b: a*x+b,
+        2: lambda x, a: a*x,
+        3: lambda x, a, b, c: a*x**2 + b*x
     }
 
     def __init__(self):
@@ -69,9 +77,12 @@ class ModelHandler:
     def __get_model_params(self, degree: int, entries: List[Entry]) -> Tuple:
         x_value = [e.concentration for e in entries]
         y_value = [e.response for e in entries]
+        #y_err = [np.std([e.response for e in entries ) ]
         parameters = np.polyfit(x_value, y_value, degree)
-
         return parameters
+
+    def __get_y_err(self, entries: List[Entry]):
+
 
     def __apply_params_to_series(self, index: int, parameters) -> List[Result]:
         results = []
