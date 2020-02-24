@@ -90,24 +90,24 @@ class ProfileLevel:
         self.relative_bias = (self.bias / self.introduced_concentration) * 100
         self.recovery = (self.calculated_concentration / self.introduced_concentration) * 100
         self.repeatability_var = self.get_repeatability_var()
-        self.repeatability_std = np.sqrt(self.repeatability_var)
+        self.repeatability_std = math.sqrt(self.repeatability_var)
         self.repeatability_std_pc = self.repeatability_std / self.calculated_concentration * 100
         self.inter_series_var = self.get_inter_series_var()
-        self.inter_series_std = np.sqrt(self.inter_series_var)
+        self.inter_series_std = math.sqrt(self.inter_series_var)
         self.inter_series_std_pc = self.inter_series_std / self.calculated_concentration * 100
         self.fidelity_var = np.sum([self.repeatability_var, self.inter_series_var])
-        self.fidelity_std = np.sqrt(self.fidelity_var)
+        self.fidelity_std = math.sqrt(self.fidelity_var)
         self.ratio_var = self.get_ratio_var()
         self.b_coefficient = (self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1)
         self.degree_of_freedom = (self.ratio_var + 1) ** 2 / ((self.ratio_var + (1 / self.nb_rep)) ** 2 /
                                                               (self.nb_series - 1) + (
                                                                           1 - (1 / self.nb_rep)) / self.nb_measures)
-        self.tolerance_std = self.fidelity_std * (np.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient))))
+        self.tolerance_std = self.fidelity_std * (math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient))))
         self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
         self.rel_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance]
         self.abs_uncertainty = self.tolerance_std * 2
         self.rel_uncertainty = self.abs_uncertainty/self.calculated_concentration
-        self.pc_uncertainty = self.abs_uncertainty/self.introduced_concentration
+        self.pc_uncertainty = self.abs_uncertainty/self.introduced_concentration*100
 
     def get_repeatability_var(self) -> float:
         repeatability_var = 0
@@ -145,8 +145,8 @@ class ProfileLevel:
 
     def get_absolute_tolerance(self, tolerance_limit: int) -> List[float]:
 
-        student_low = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.floor(self.degree_of_freedom))
-        student_high = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), math.ceil(self.degree_of_freedom))
+        student_low = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), int(math.floor(self.degree_of_freedom)))
+        student_high = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), int(math.ceil(self.degree_of_freedom)))
 
         cover_factor = student_low - (student_low - student_high) * (self.degree_of_freedom - math.floor(self.degree_of_freedom))
         tolerance_low = self.calculated_concentration - cover_factor * self.tolerance_std

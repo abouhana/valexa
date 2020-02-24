@@ -1,4 +1,4 @@
-import urllib, base64
+import urllib, base64, math
 from os import path
 
 class HtmlWriter:
@@ -27,8 +27,10 @@ class HtmlWriter:
 
         file.write(f'''<table style="border: 1px solid black">
               <tr style="border: 1px solid black">
+                <th colspan="2" rowspan="4"></th>
                 <th>Composé</th>
                 <th colspan="7">{self.__format_value(self.profile.name_of_file.replace('.xlsx',''))}</th>
+                <th colspan="2" rowspan="4"></th>
               </tr>
               <tr style="border: 1px solid black">
                 <td>Modèle</td>
@@ -53,7 +55,7 @@ class HtmlWriter:
                 <td>{self.__calculate_recovery(self.profile.model.correction_factor)}</td>
               </tr>
               <tr style="border: 1px solid black">
-                <td colspan="8"></td>
+                <td colspan="12"></td>
               </tr>
               <tr style="border: 1px solid black">
                 <td rowspan="2">Concentration</td>
@@ -61,6 +63,8 @@ class HtmlWriter:
                 <td colspan="2">Exactitude</td>
                 <td colspan="2">Précision</td>
                 <td colspan="2">Justesse</td>
+                <td colspan="3">Incertitude</td>
+                <td rowspan="2">Q</td>
               </tr>
               <tr style="border: 1px solid black">
                 <td>Biais absolue</td>
@@ -69,6 +73,9 @@ class HtmlWriter:
                 <td>Intermédiaire (%RSD)</td>
                 <td>Limite de tolérance</td>
                 <td>Limite relative</td>
+                <td>Incertitude absolue</td>
+                <td>Incertitude relative</td>
+                <td>% d'incertitude</td>
               </tr>''')
 
         for list_item in self.profile.levels:
@@ -81,6 +88,10 @@ class HtmlWriter:
                 <td>{list_item.inter_series_std_pc:.3f}</td>
                 <td>[{list_item.abs_tolerance[0]:.2f},{list_item.abs_tolerance[1]:.2f}]</td>
                 <td>[{-100 + list_item.rel_tolerance[0]:.2f},{-100 + list_item.rel_tolerance[1]:.2f}]</td>
+                <td>{list_item.abs_uncertainty:.3f}</td>
+                <td>{list_item.rel_uncertainty:.3f}</td>
+                <td>{list_item.pc_uncertainty:.3f}</td>
+                <td>{list_item.ratio_var:.3f}</td>
               </tr>''')
 
         self.profile.image_data.seek(0)
@@ -88,13 +99,27 @@ class HtmlWriter:
         image_string = base64.b64encode(self.profile.image_data.read())
         uri = 'data:image/png;base64,' + urllib.parse.quote(image_string)
         file.write(f'''<tr style="border: 1px solid black">
-                        <td colspan="8"></td>
+                        <td colspan="12"></td>
                       </tr>
                       <tr style="border: 1px solid black">
-                        <td colspan="8"><img src = "{uri}"/></td>
-                      </tr>
-                    </table>
-                    <br>''')
+                        <td colspan="12"><img src = "{uri}"/></td>
+                      </tr>''')
+        colspan = math.floor(12/len(self.profile.model.full_fit_info))
+        padding_colspan = 12-len(self.profile.model.full_fit_info)*colspan
+        file.write(f'''<tr colspan="12">
+                </tr>
+                <tr>''')
+        if padding_colspan > 0:
+            file.write(f'''<td colspan="{padding_colspan}"></td>''')
+        for i in range(0, len(self.profile.model.full_fit_info)):
+            file.write(f'''<td colspan="{colspan}"><center>Série {i+1}</center></td>''')
+        file.write("</tr><tr>")
+        for key in self.profile.model.full_fit_info:
+            file.write(f'''<td colspan="{colspan}"><center>{self.profile.model.full_fit_info[key].summary().as_html()}</center></td>''')
+        if padding_colspan > 0:
+            file.write(f'''<td colspan="{padding_colspan}"></td>''')
+        file.write("</tr></table>")
+
         file.close()
 
     def __valid_if_file_exist(self, file_name):

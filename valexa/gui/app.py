@@ -75,6 +75,11 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
                 profile_widget = ProfileWidget(profile=profile)
                 plot_layout.addWidget(profile_widget)
 
+                profile_writer = HtmlWriter(profile_to_use=profile)
+                profile_writer.write_profile(str(PurePath(self.file_name_input.text()).parent) + '/' + str(PurePath(self.file_name_input.text()).name.split(".")[0]) + ' - ' + self.file_name_sanitize(profile.model.name + '.html'))
+
+
+
         except Exception as e:
             QMessageBox.critical(self, "Error 1", str(e))
 
@@ -142,4 +147,9 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
 
                         ProfilePlotCanvas(profile=profile)
                         profile_writer = HtmlWriter(profile_to_use=profile)
-                        profile_writer.write_profile(root + '/' + name_of_compound + ' - ' + profile.model.name + '.html')
+                        profile_writer.write_profile(root + '/' + name_of_compound + ' - ' + self.file_name_sanitize(profile.model.name + '.html'))
+
+    def file_name_sanitize(self, filename):
+        keepcharacters = (' ', '.', '_')
+        sane_filename = "".join(c for c in filename if c.isalnum() or c in keepcharacters).rstrip()
+        return sane_filename
