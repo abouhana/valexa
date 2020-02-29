@@ -328,10 +328,11 @@ class Profile:
         return min_limit, max_limit
 
     def make_plot(self, ax):
-        levels_x = [l.calculated_concentration for l in self.levels]
+        levels_x = np.array([l.introduced_concentration for l in self.levels])
+        y_recovery = np.array([l.recovery for l in self.levels])
+        y_error = np.array([s.pc_uncertainty for s in self.levels])
         ax.axis["bottom", "top", "right"].set_visible(False)
         ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
-        ax.plot(levels_x, [l.recovery for l in self.levels], color="m", linewidth=2.0, marker=".", label="Recovery")
         ax.plot(levels_x, [l.rel_tolerance[0] for l in self.levels], linewidth=1.0, color="b",
                 label="Min tolerance limit")
         ax.plot(levels_x, [l.rel_tolerance[1] for l in self.levels], linewidth=1.0, color="g",
@@ -341,6 +342,7 @@ class Profile:
         results_x = [s.concentration for s in self.series]
         results_y = [(s.result / s.concentration) * 100 for s in self.series]
         ax.scatter(results_x, results_y, alpha=0.5, s=2)
+        ax.errorbar(levels_x, y_recovery, yerr=y_error, color="m", linewidth=2.0, marker=".", label="Recovery")
         ax.set_xlabel("Concentration")
         ax.set_ylabel("Recovery (%)")
         ax.legend(loc=1)

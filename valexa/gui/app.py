@@ -66,22 +66,22 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
     def open_model_page(self):
         self.scrollArea.setBackgroundRole(QPalette.Dark)
         self.stackedWidget.setCurrentIndex(2)
-        try:
-            profiles = make_profiles(self.state.calib_data, self.state.valid_data, self.state.tolerance_limit,
-                                     self.state.acceptance_limit, PurePath(self.file_name_input.text()).name)
-            plot_layout = self.plot_layout
-            for profile in profiles:
+        #try:
+        profiles = make_profiles(self.state.calib_data, self.state.valid_data, self.state.tolerance_limit,
+                                 self.state.acceptance_limit, PurePath(self.file_name_input.text()).name)
+        plot_layout = self.plot_layout
+        for profile in profiles:
 
-                profile_widget = ProfileWidget(profile=profile)
-                plot_layout.addWidget(profile_widget)
+            profile_widget = ProfileWidget(profile=profile)
+            plot_layout.addWidget(profile_widget)
 
-                profile_writer = HtmlWriter(profile_to_use=profile)
-                profile_writer.write_profile(str(PurePath(self.file_name_input.text()).parent) + '/' + str(PurePath(self.file_name_input.text()).name.split(".")[0]) + ' - ' + self.file_name_sanitize(profile.model.name + '.html'))
+            profile_writer = HtmlWriter(profile_to_use=profile)
+            profile_writer.write_profile(str(PurePath(self.file_name_input.text()).parent) + '/' + str(PurePath(self.file_name_input.text()).name.split(".")[0]) + ' - ' + self.file_name_sanitize(profile.model.name + '.html'))
 
 
 
-        except Exception as e:
-            QMessageBox.critical(self, "Error 1", str(e))
+        #except Exception as e:
+        #    QMessageBox.critical(self, "Error 1", str(e))
 
     def select_file(self):
         filename, _ = QFileDialog.getOpenFileName()
@@ -126,7 +126,7 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
             for file in files:
 
                 if os.path.splitext(file)[1] == ".xlsx":
-                    name_of_compound = os.path.basename(root)
+                    name_of_compound = os.path.splitext(file)[0]
 
                     xlsx_handler = XlsxHandler(root + '/' + file)
                     self.file_name_input.setText(root + '/' + file)
@@ -140,6 +140,7 @@ class ValexaApp(QMainWindow, Ui_main_window.Ui_MainWindow):
                     self.calibration_data_list_widget.addItems([str(r) for r in self.state.calib_data])
                     self.validation_data_list_widget.addItems([str(r) for r in self.state.valid_data])
 
+                    print("Starting compound: " + name_of_compound)
                     profiles = make_profiles(self.state.calib_data, self.state.valid_data, self.state.tolerance_limit,
                                              self.state.acceptance_limit, file)
 

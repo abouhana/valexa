@@ -8,6 +8,8 @@ class HtmlWriter:
 
     def write_profile(self, file_name):
 
+        print("Printing: " + str(file_name))
+
         if not self.__valid_if_file_exist(file_name):
             file = open(file_name, 'w')
             file.write('''<!DOCTYPE html>     
@@ -79,20 +81,20 @@ class HtmlWriter:
               </tr>''')
 
         for list_item in self.profile.levels:
-            file.write(f'''<tr style="border: 1px solid black"> 
-                <td>{list_item.introduced_concentration:.3f}</td>
-                <td>{list_item.calculated_concentration:.3f}</td>
-                <td>{list_item.bias:.3f}</td>
-                <td>{list_item.relative_bias:.2f}</td>
-                <td>{list_item.repeatability_std_pc:.3f}</td>
-                <td>{list_item.inter_series_std_pc:.3f}</td>
-                <td>[{list_item.abs_tolerance[0]:.2f},{list_item.abs_tolerance[1]:.2f}]</td>
-                <td>[{-100 + list_item.rel_tolerance[0]:.2f},{-100 + list_item.rel_tolerance[1]:.2f}]</td>
-                <td>{list_item.abs_uncertainty:.3f}</td>
-                <td>{list_item.rel_uncertainty:.3f}</td>
-                <td>{list_item.pc_uncertainty:.3f}</td>
-                <td>{list_item.ratio_var:.3f}</td>
-              </tr>''')
+            file.write(f'''<tr style="border: 1px solid black">''')
+            file.write(f'''<td>{list_item.introduced_concentration:.3f}</td>''')
+            file.write(f'''<td>{float(list_item.calculated_concentration):.3f}</td>''')
+            file.write(f'''<td>{list_item.bias:.3f}</td>''')
+            file.write(f'''<td>{list_item.relative_bias:.2f}</td>''')
+            file.write(f'''<td>{self.__correctNan(float(list_item.repeatability_std_pc)):.3f}</td>''')
+            file.write(f'''<td>{self.__correctNan(float(list_item.inter_series_std_pc)):.3f}</td>''')
+            file.write(f'''<td>[{float(list_item.abs_tolerance[0]):.2f},{float(list_item.abs_tolerance[1]):.2f}]</td>''')
+            file.write(f'''<td>[{float(-100 + list_item.rel_tolerance[0]):.2f},{float(-100 + list_item.rel_tolerance[1]):.2f}]</td>''')
+            file.write(f'''<td>{list_item.abs_uncertainty:.3f}</td>''')
+            file.write(f'''<td>{self.__correctNan(list_item.rel_uncertainty):.3f}</td>''')
+            file.write(f'''<td>{self.__correctNan(list_item.pc_uncertainty):.3f}</td>''')
+            file.write(f'''<td>{self.__correctNan(list_item.ratio_var):.3f}</td>''')
+            file.write(f'''</tr>''')
 
         self.profile.image_data.seek(0)
 
@@ -102,7 +104,7 @@ class HtmlWriter:
                         <td colspan="12"></td>
                       </tr>
                       <tr style="border: 1px solid black">
-                        <td colspan="12"><img src = "{uri}"/></td>
+                        <td colspan="12"><center><img src = "{uri}"/></center></td>
                       </tr>''')
         colspan = math.floor(12/len(self.profile.model.full_fit_info))
         padding_colspan = 12-len(self.profile.model.full_fit_info)*colspan
@@ -133,8 +135,18 @@ class HtmlWriter:
         else:
             return value_to_format
 
+    def __correctNan(self, item):
+        if math.isnan(item):
+            return 0
+        else:
+            return item
+
+
+
     def __calculate_recovery(self, correction_factor):
         if correction_factor is None:
             return 'N/A'
-        else:
+        elif correction_factor>0:
             return '{0:.2f}'.format(1/correction_factor*100)
+        else:
+            return 'N/A'

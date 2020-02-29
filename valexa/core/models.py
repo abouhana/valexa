@@ -14,12 +14,6 @@ Result = namedtuple('Result', ['series', 'level', 'concentration', 'result'])
 
 
 class Model:
-    NAME_BY_DEGREE = {
-        1: "Linear",
-        2: "Linear through 0",
-        3: "Quadratic",
-        4: "1/X Weighed Linear"
-    }
 
     EQUATION_BY_DEGREE = {
         1: {
@@ -63,6 +57,30 @@ class Model:
             "formula": "y ~ x",
             "weight": lambda x, y: 1 / np.array(y)**2,
             "function": lambda p, x: p["x"] * x + p["Intercept"] - p["y"]
+        },
+        8: {
+            "name": "1/X Weighted Quadratic",
+            "formula": "y ~ x + I(x**2)",
+            "weight": lambda x, y: 1/np.array(x),
+            "function": lambda p, x: p["I(x ** 2)"] * x**2 + p["x"] * x + p["Intercept"] - p["y"]
+        },
+        9: {
+            "name": "1/X^2 Weighted Quadratic",
+            "formula": "y ~ x + I(x**2)",
+            "weight": lambda x, y: 1/np.array(x)**2,
+            "function": lambda p, x: p["I(x ** 2)"] * x**2 + p["x"] * x + p["Intercept"] - p["y"]
+        },
+        10: {
+            "name": "1/Y Weighted Quadratic",
+            "formula": "y ~ x + I(x**2)",
+            "weight": lambda x, y: 1 / np.array(y),
+            "function": lambda p, x: p["I(x ** 2)"] * x**2 + p["x"] * x + p["Intercept"] - p["y"]
+        },
+        11: {
+            "name": "1/Y^2 Weighted Quadratic",
+            "formula": "y ~ x + I(x**2)",
+            "weight": lambda x, y: 1 / np.array(y)**2,
+            "function": lambda p, x: p["I(x ** 2)"] * x**2 + p["x"] * x + p["Intercept"] - p["y"]
         }
     }
 
@@ -121,7 +139,7 @@ class Model:
 
 
 class ModelHandler:
-    DEFAULT_MAX_DEGREE = 7
+    DEFAULT_MAX_DEGREE = 11
 
     def __init__(self, calib_std: Standard, valid_std: Standard):
         self.calib_std = calib_std
@@ -132,6 +150,7 @@ class ModelHandler:
         for degree in range(1, max_degree + 1):
             model = Model()
             model.degree = degree
+            print("Starting model: " + model.name)
             for (key, entries) in self.calib_std.series.items():
                 model.range = [min([e.concentration for e in entries]), max([e.concentration for e in entries])]
                 fitted_model = self.__get_model_fit(model, entries)
@@ -140,6 +159,7 @@ class ModelHandler:
                 model.full_fit_info[key] = fitted_model
             model.handle_correction()
             models.append(model)
+            print(model.name + " done")
         return models
 
     def __get_model_fit(self, model: Model, entries: List[Entry]):
@@ -160,9 +180,13 @@ class ModelHandler:
         for entry in self.valid_std.series[index]:
             function_params = model.series_params[index]
             function_params["y"] = entry.response
-            x = Symbol('x')
-            result_value = [r for r in solve(model.function(function_params, x), x) if model.range[0] < r < model.range[1]]
-            result = Result(entry.series, entry.level, entry.concentration, result_value[0])
+            x = Symbol('x', real=True)
+            root_value = solve(model.function(function_params, x), x)
+            if len(root_value)>0:
+                result_value = min(root_value)
+            else:
+                result_value = 0
+            result = Result(entry.series, entry.level, entry.concentration, result_value)
             results.append(result)
 
         return results
