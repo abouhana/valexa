@@ -1,13 +1,13 @@
 import numpy as np
 
 
-def model_list():
+def model_list(model_number:int = 1):
     model_list = {
         1: {
             "name": "Linear",
             "formula": "y ~ x",
             "weight": None,
-            "function": "p['x'] * x + p['Intercept'] - p['y']"
+            "solver": "statsmodels"
         },
         2: {
             "name": "Linear though 0",
@@ -71,7 +71,4 @@ def model_list():
         }
     }
 
-    return model_list
-
-def model_builder(model: dict):
-
+    return model_list[model_number]
