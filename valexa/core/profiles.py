@@ -7,6 +7,7 @@ from scipy.stats import t
 
 import math
 import numpy as np
+import pandas as pd
 
 from valexa.core.standard import Standard
 from valexa.core.models import Result, ModelHandler, Model
@@ -14,6 +15,36 @@ from valexa.core.models import Result, ModelHandler, Model
 DEFAULT_TOLERANCE = 80
 DEFAULT_ACCEPTANCE = 50
 
+class ProfileManager:
+
+    def __init__( self, compound_name: str, validation_data: pd.DataFrame, calibration_data: pd.DataFrame = None,
+                  tolerance_limit: float =80, acceptance_limit: float =20, quantity_units: str = None,
+                  rolling_data: bool = False, rolling_data_limit: int = 3, model_to_test: List[str] = None ) -> None:
+        """
+        Init ProfileManager with the necessary data
+        :param compound_name: This is the name of the compounds for the profile
+        :param validation_data: These are the validation data in the form of a Dataframe
+        :param calibration_data: (Optional) These are the calibration data in the form of a Datafram. If it is omitted,
+        it will be assumed that the validation data are in absolute form and will only build one profile.
+        :param tolerance_limit: (Optional) The tolerance limit (beta). Default = 80
+        :param acceptance_limit: (Optional) The acceptance limite (lambda). Default = 20
+        :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced data. This is only to
+        ease the reading of the output.
+        :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the data and
+        generate multiple profile with each subset of data.
+        :param rolling_data_limit: (Optional) In combination with rolling_data, this is the minimum lenght of the subset
+        that rolling_data will go to. Default = 3.
+        :param model_to_test: (Optional) A list of model to test, if not set the system will test them all.
+        """
+        self.compound_name: str = compound_name
+        self.quantity_units: str = quantity_units
+        self.tolerance_limit: float = tolerance_limit
+        self.acceptance_limit: float = acceptance_limit
+        self.calibration_data:  pd.DataFrame = calibration_data
+        self.validation_data: pd.DataFrame = validation_data
+        self.rolling_data: bool = rolling_data
+        self.model_to_test: List[str] = model_to_test
+        self.rolling_data_limit: int = rolling_data_limit
 
 def make_profiles(calib_data: List[tuple], valid_data: List[tuple], tolerance_limit: int,
                   acceptance_limit: int, file_name: str) -> List:
