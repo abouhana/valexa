@@ -1,7 +1,8 @@
+from __future__ import annotations
 from collections import defaultdict
 from enum import Enum
 from operator import attrgetter
-from typing import List, Dict
+from typing import List, Dict, Optional, Union
 
 from scipy.stats import t
 
@@ -10,24 +11,106 @@ import numpy as np
 import pandas as pd
 
 from valexa.core.standard import Standard
-from valexa.core.models import Result, ModelHandler, Model
+from valexa.core.models import Result, ModelHandler, Model, ModelsManager
 
 DEFAULT_TOLERANCE = 80
 DEFAULT_ACCEPTANCE = 50
 
+def test_data():
+    calib = pd.DataFrame([
+        [1,3,625,25],
+        [1,4,25,93],
+        [1,5,100,348],
+        [1,3,6.25,25],
+        [1,4,25,96],
+        [1,5,100,350],
+        [1,3,6.25,27],
+        [1,4,25,89],
+        [1,5,100,349],
+        [2,3,6.25,28],
+        [2,4,25,91],
+        [2,5,100,332],
+        [2,3,6.25,31],
+        [2,4,25,92],
+        [2,5,100,329],
+        [2,3,6.25,26],
+        [2,4,25,90],
+        [2,5,100,333],
+        [2,3,6.25,25],
+        [2,4,25,94],
+        [2,5,100,333],
+        [2,3,6.25,32],
+        [2,4,25,98],
+        [2,5,100,351],
+        [2,3,6.25,34],
+        [2,4,25,97],
+        [2,5,100,345],
+        [3,3,6.25,24],
+        [3,4,25,98],
+        [3,5,100,370],
+        [3,3,6.25,27],
+        [3,4,25,95],
+        [3,5,100,361],
+        [3,3,6.25,21],
+        [3,4,25,101],
+        [3,5,100,364]
+    ], columns=["Serie", "Level", "x", "y"])
+
+    valid = pd.DataFrame([
+        [1,3,6.25,25],
+        [1,4,25,93],
+        [1,5,100,348],
+        [1,3,6.25,25],
+        [1,4,25,96],
+        [1,5,100,350],
+        [1,3,6.25,27],
+        [1,4,25,89],
+        [1,5,100,349],
+        [2,3,6.25,28],
+        [2,4,25,91],
+        [2,5,100,332],
+        [2,3,6.25,31],
+        [2,4,25,92],
+        [2,5,100,329],
+        [2,3,6.25,26],
+        [2,4,25,90],
+        [2,5,100,333],
+        [2,3,6.25,25],
+        [2,4,25,94],
+        [2,5,100,333],
+        [2,3,6.25,32],
+        [2,4,25,98],
+        [2,5,100,351],
+        [2,3,6.25,34],
+        [2,4,25,97],
+        [2,5,100,345],
+        [3,3,6.25,24],
+        [3,4,25,98],
+        [3,5,100,370],
+        [3,3,6.25,27],
+        [3,4,25,95],
+        [3,5,100,361],
+        [3,3,6.25,21],
+        [3,4,25,101],
+        [3,5,100,364]
+    ], columns=["Serie", "Level", "x", "y"])
+
+
+    return {"Calibration": calib, "Validation": valid}
+
 class ProfileManager:
 
-    def __init__( self, compound_name: str, validation_data: pd.DataFrame, calibration_data: pd.DataFrame = None,
-                  tolerance_limit: float =80, acceptance_limit: float =20, quantity_units: str = None,
-                  rolling_data: bool = False, rolling_data_limit: int = 3, model_to_test: List[str] = None ) -> None:
+    def __init__(self, compound_name: str, data: Dict[str, pd.DataFrame], calibration_data: pd.DataFrame = None,
+                 tolerance_limit: float = 80, acceptance_limit: float = 20, quantity_units: str = None,
+                 rolling_data: bool = False, rolling_data_limit: int = 3, model_to_test: List[str] = None) -> None:
         """
         Init ProfileManager with the necessary data
         :param compound_name: This is the name of the compounds for the profile
         :param validation_data: These are the validation data in the form of a Dataframe
-        :param calibration_data: (Optional) These are the calibration data in the form of a Datafram. If it is omitted,
+        :param calibration_data: (Optional) These are the calibration data in the form of a Dataframe. If it is omitted,
         it will be assumed that the validation data are in absolute form and will only build one profile.
         :param tolerance_limit: (Optional) The tolerance limit (beta). Default = 80
-        :param acceptance_limit: (Optional) The acceptance limite (lambda). Default = 20
+        :param acceptance_limit: (Optional) The acceptance limit (lambda). Default = 20
         :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced data. This is only to
         ease the reading of the output.
         :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the data and
@@ -40,30 +123,43 @@ class ProfileManager:
         self.quantity_units: str = quantity_units
         self.tolerance_limit: float = tolerance_limit
         self.acceptance_limit: float = acceptance_limit
-        self.calibration_data:  pd.DataFrame = calibration_data
-        self.validation_data: pd.DataFrame = validation_data
+        self.data: Dict[str, pd.DataFrame] = data
         self.rolling_data: bool = rolling_data
         self.model_to_test: List[str] = model_to_test
         self.rolling_data_limit: int = rolling_data_limit
 
-def make_profiles(calib_data: List[tuple], valid_data: List[tuple], tolerance_limit: int,
-                  acceptance_limit: int, file_name: str) -> List:
-    std_calib = Standard(calib_data)
-    std_valid = Standard(valid_data)
-    model_handler = ModelHandler(std_calib, std_valid)
+        self.model_manager: ModelsManager = ModelsManager()
+        self.model_manager.initialize_models(self.model_to_test)
 
-    models = model_handler.get_models()
+    def make_profiles(self, model_name: Union[str, List[str]] = "") -> Optional[Dict[str, List[Profile]]]:
+        list_of_models: List[str] = self.model_manager.initialized_models_list
+        profiles: Dict[str, List[Profile]] = {}
 
-    profiles = []
-    for model in models:
-        profile = Profile(model)
-        profile.name_of_file = file_name
-        profile.tolerance_limit = tolerance_limit
-        profile.acceptance_limit = acceptance_limit
-        profile.calculate(tolerance_limit, acceptance_limit)
-        profiles.append(profile)
+        if model_name != "":
+            if model_name in list_of_models:
+                profiles["model_name"] = __model_data(model_name)
 
-    return profiles
+        elif type(model_name) == list:
+
+        else:
+
+        return profiles
+
+    def __model_data(self, model_name: str) -> List[Profile]:
+
+        if self.rolling_data:
+            data_dict: Dict[str, List[pd.DataFrame]] = self.__moving_data
+
+            profiles: List[Profile] = self.__data_manager(self.data, True)
+        else:
+            profiles: List[Profile] = self.__data_manager(self.data)
+
+        return profiles
+
+    @property
+    def __moving_data(self) -> List[pd.DataFrame]:
+        return [pd.DataFrame(data={})]
+
 
 
 class ProfileLevel:
@@ -132,13 +228,13 @@ class ProfileLevel:
         self.b_coefficient = (self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1)
         self.degree_of_freedom = (self.ratio_var + 1) ** 2 / ((self.ratio_var + (1 / self.nb_rep)) ** 2 /
                                                               (self.nb_series - 1) + (
-                                                                          1 - (1 / self.nb_rep)) / self.nb_measures)
+                                                                      1 - (1 / self.nb_rep)) / self.nb_measures)
         self.tolerance_std = self.fidelity_std * (math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient))))
         self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
         self.rel_tolerance = [(tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance]
         self.abs_uncertainty = self.tolerance_std * 2
-        self.rel_uncertainty = self.abs_uncertainty/self.calculated_concentration
-        self.pc_uncertainty = self.abs_uncertainty/self.introduced_concentration*100
+        self.rel_uncertainty = self.abs_uncertainty / self.calculated_concentration
+        self.pc_uncertainty = self.abs_uncertainty / self.introduced_concentration * 100
 
     def get_repeatability_var(self) -> float:
         repeatability_var = 0
@@ -179,7 +275,8 @@ class ProfileLevel:
         student_low = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), int(math.floor(self.degree_of_freedom)))
         student_high = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), int(math.ceil(self.degree_of_freedom)))
 
-        cover_factor = student_low - (student_low - student_high) * (self.degree_of_freedom - math.floor(self.degree_of_freedom))
+        cover_factor = student_low - (student_low - student_high) * (
+                    self.degree_of_freedom - math.floor(self.degree_of_freedom))
         tolerance_low = self.calculated_concentration - cover_factor * self.tolerance_std
         tolerance_high = self.calculated_concentration + cover_factor * self.tolerance_std
 

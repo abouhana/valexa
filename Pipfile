@@ -7,11 +7,26 @@ name = "pypi"
 
 [packages]
 
-"pyqt5" = "*"
-openpyxl = "*"
+cycler = "*"
+et-xmlfile = "*"
+jdcal = "*"
+kiwisolver = "*"
 matplotlib = "*"
+mpmath = "*"
 numpy = "*"
+openpyxl = "*"
+pandas = "*"
+patsy = "*"
+pyparsing = "*"
+PyQt5 = "*"
+PyQt5-sip = "*"
+python-dateutil = "*"
+pytz = "*"
 scipy = "*"
+six = "*"
+statsmodels = "*"
+sympy = "*"
+
 
 
 [dev-packages]
@@ -24,4 +39,4 @@ pytest-mock = "*"
 
 [requires]
 
-python_version = "3.6"
+python_version = "3.8"
