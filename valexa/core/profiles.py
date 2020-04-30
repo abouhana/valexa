@@ -11,98 +11,109 @@ import numpy as np
 import pandas as pd
 
 from valexa.core.standard import Standard
-from valexa.core.models import Result, ModelHandler, Model, ModelsManager
+from valexa.core.models import Model, ModelsManager
+from valexa.core.dataobject import DataObject
 
 DEFAULT_TOLERANCE = 80
 DEFAULT_ACCEPTANCE = 50
 
+
 def test_data():
     calib = pd.DataFrame([
-        [1,3,625,25],
-        [1,4,25,93],
-        [1,5,100,348],
-        [1,3,6.25,25],
-        [1,4,25,96],
-        [1,5,100,350],
-        [1,3,6.25,27],
-        [1,4,25,89],
-        [1,5,100,349],
-        [2,3,6.25,28],
-        [2,4,25,91],
-        [2,5,100,332],
-        [2,3,6.25,31],
-        [2,4,25,92],
-        [2,5,100,329],
-        [2,3,6.25,26],
-        [2,4,25,90],
-        [2,5,100,333],
-        [2,3,6.25,25],
-        [2,4,25,94],
-        [2,5,100,333],
-        [2,3,6.25,32],
-        [2,4,25,98],
-        [2,5,100,351],
-        [2,3,6.25,34],
-        [2,4,25,97],
-        [2,5,100,345],
-        [3,3,6.25,24],
-        [3,4,25,98],
-        [3,5,100,370],
-        [3,3,6.25,27],
-        [3,4,25,95],
-        [3,5,100,361],
-        [3,3,6.25,21],
-        [3,4,25,101],
-        [3,5,100,364]
+        [1, 1, 0.98, 5],
+        [1, 2, 3.9, 13],
+        [1, 3, 15.635, 58],
+        [1, 4, 62.5, 230],
+        [1, 5, 250, 890],
+        [1, 6, 500, 1616],
+        [1, 7, 1000, 3310],
+        [1, 1, 0.98, 5],
+        [1, 2, 3.9, 19],
+        [1, 3, 15.635, 57],
+        [1, 4, 62.5, 219],
+        [1, 5, 250, 898],
+        [1, 6, 500, 1623],
+        [1, 7, 1000, 3294],
+        [1, 1, 0.98, 6],
+        [1, 2, 3.9, 16],
+        [1, 3, 15.635, 63],
+        [1, 4, 62.5, 230],
+        [1, 5, 250, 887],
+        [1, 6, 500, 1660],
+        [1, 7, 1000, 3298]
     ], columns=["Serie", "Level", "x", "y"])
 
     valid = pd.DataFrame([
-        [1,3,6.25,25],
-        [1,4,25,93],
-        [1,5,100,348],
-        [1,3,6.25,25],
-        [1,4,25,96],
-        [1,5,100,350],
-        [1,3,6.25,27],
-        [1,4,25,89],
-        [1,5,100,349],
-        [2,3,6.25,28],
-        [2,4,25,91],
-        [2,5,100,332],
-        [2,3,6.25,31],
-        [2,4,25,92],
-        [2,5,100,329],
-        [2,3,6.25,26],
-        [2,4,25,90],
-        [2,5,100,333],
-        [2,3,6.25,25],
-        [2,4,25,94],
-        [2,5,100,333],
-        [2,3,6.25,32],
-        [2,4,25,98],
-        [2,5,100,351],
-        [2,3,6.25,34],
-        [2,4,25,97],
-        [2,5,100,345],
-        [3,3,6.25,24],
-        [3,4,25,98],
-        [3,5,100,370],
-        [3,3,6.25,27],
-        [3,4,25,95],
-        [3,5,100,361],
-        [3,3,6.25,21],
-        [3,4,25,101],
-        [3,5,100,364]
+        [1, 1, 0.7765, 6],
+        [1, 2, 1.563, 8],
+        [1, 3, 6.25, 25],
+        [1, 4, 25, 93],
+        [1, 5, 100, 348],
+        [1, 1, 0.7765, 7],
+        [1, 2, 1.563, 12],
+        [1, 3, 6.25, 25],
+        [1, 4, 25, 96],
+        [1, 5, 100, 350],
+        [1, 1, 0.7765, 9],
+        [1, 2, 1.563, 13],
+        [1, 3, 6.25, 27],
+        [1, 4, 25, 89],
+        [1, 5, 100, 349],
+        [2, 1, 0.7765, 5],
+        [2, 2, 1.563, 11],
+        [2, 3, 6.25, 28],
+        [2, 4, 25, 91],
+        [2, 5, 100, 332],
+        [2, 1, 0.7765, 5],
+        [2, 2, 1.563, 11],
+        [2, 3, 6.25, 31],
+        [2, 4, 25, 92],
+        [2, 5, 100, 329],
+        [2, 1, 0.7765, 6],
+        [2, 2, 1.563, 13],
+        [2, 3, 6.25, 26],
+        [2, 4, 25, 90],
+        [2, 5, 100, 333],
+        [2, 1, 0.7765, 3],
+        [2, 2, 1.563, 8],
+        [2, 3, 6.25, 25],
+        [2, 4, 25, 94],
+        [2, 5, 100, 333],
+        [2, 1, 0.7765, 4],
+        [2, 2, 1.563, 12],
+        [2, 3, 6.25, 32],
+        [2, 4, 25, 98],
+        [2, 5, 100, 351],
+        [2, 1, 0.7765, 9],
+        [2, 2, 1.563, 10],
+        [2, 3, 6.25, 34],
+        [2, 4, 25, 97],
+        [2, 5, 100, 345],
+        [3, 1, 0.7765, 7],
+        [3, 2, 1.563, 6],
+        [3, 3, 6.25, 24],
+        [3, 4, 25, 98],
+        [3, 5, 100, 370],
+        [3, 1, 0.7765, 6],
+        [3, 2, 1.563, 9],
+        [3, 3, 6.25, 27],
+        [3, 4, 25, 95],
+        [3, 5, 100, 361],
+        [3, 1, 0.7765, 6],
+        [3, 2, 1.563, 12],
+        [3, 3, 6.25, 21],
+        [3, 4, 25, 101],
+        [3, 5, 100, 364]
     ], columns=["Serie", "Level", "x", "y"])
-
 
     return {"Calibration": calib, "Validation": valid}
 
+
 class ProfileManager:
 
-    def __init__(self, compound_name: str, data: Dict[str, pd.DataFrame], calibration_data: pd.DataFrame = None,
-                 tolerance_limit: float = 80, acceptance_limit: float = 20, quantity_units: str = None,
-                 rolling_data: bool = False, rolling_data_limit: int = 3, model_to_test: List[str] = None) -> None:
+    def __init__( self, compound_name: str, data: Dict[str, pd.DataFrame], calibration_data: pd.DataFrame = None,
+                  tolerance_limit: float = 80, acceptance_limit: float = 20, quantity_units: str = None,
+                  rolling_data: bool = False, rolling_data_limit: int = 3, model_to_test: List[str] = None ) -> None:
         """
         Init ProfileManager with the necessary data
         :param compound_name: This is the name of the compounds for the profile
@@ -131,39 +142,78 @@ class ProfileManager:
         self.model_manager: ModelsManager = ModelsManager()
         self.model_manager.initialize_models(self.model_to_test)
 
-    def make_profiles(self, model_name: Union[str, List[str]] = "") -> Optional[Dict[str, List[Profile]]]:
+        self.data_objects: List[DataObject] = self.__get_dataobject
+
+        self.profiles = self.make_profiles("Linear")
+
+        print("aa")
+
+    def make_profiles( self, model_name: Union[str, List[str]] = "" ) -> Optional[Dict[str, List[Profile]]]:
         list_of_models: List[str] = self.model_manager.initialized_models_list
         profiles: Dict[str, List[Profile]] = {}
 
         if model_name != "":
             if model_name in list_of_models:
-                profiles["model_name"] = __model_data(model_name)
+                profiles[model_name] = self.__get_profiles(model_name)
 
         elif type(model_name) == list:
-
+            pass
         else:
-
+            pass
         return profiles
 
-    def __model_data(self, model_name: str) -> List[Profile]:
-
-        if self.rolling_data:
-            data_dict: Dict[str, List[pd.DataFrame]] = self.__moving_data
-
-            profiles: List[Profile] = self.__data_manager(self.data, True)
+    def __get_profiles(self, model_name: str = None) -> List[Profile]:
+        profiles: List[Profile] = []
+        if "Calibration" in self.data:
+            for data_object in self.data_objects:
+                profiles.append(Profile(self.model_manager.modelize(model_name, data_object)))
         else:
-            profiles: List[Profile] = self.__data_manager(self.data)
+            for data_object in self.data_objects:
+                profiles.append(Profile(data_object))
 
         return profiles
 
     @property
-    def __moving_data(self) -> List[pd.DataFrame]:
-        return [pd.DataFrame(data={})]
+    def __get_dataobject( self ) -> List[DataObject]:
+        validation_dict: Dict[str, pd.DataFrame] = {}
+        data_to_model: List[DataObject] = []
+        if "Calibration" in self.data:
+            calibration_dict: Dict[str, pd.DataFrame] = {}
+            if self.rolling_data:
+                validation_dict = self.__sliding_window_data(self.data["Validation"])
+                calibration_dict = self.__sliding_window_data(self.data["Calibration"])
+            else:
+                validation_dict["All"] = self.data["Validation"]
+                calibration_dict["All"] = self.data["Calibration"]
 
+            for validation_key in validation_dict.keys():
+                for calibration_key in calibration_dict.keys():
+                    data_to_model.append(DataObject(validation_dict[validation_key], validation_key, calibration_dict[calibration_key], calibration_key))
+        else:
+            if self.rolling_data:
+                validation_dict = self.__sliding_window_data(self.data["Validation"])
+            else:
+                validation_dict["All"] = self.data["Validation"]
+
+            for validation_key in validation_dict.keys():
+                data_to_model.append(DataObject(validation_dict[validation_key], validation_key))
+
+        return data_to_model
+
+    def __sliding_window_data( self, data: pd.DataFrame ) -> Dict[str, pd.DataFrame]:
+        data_level: np.ndarray = data["Level"].unique()
+        data_dict: Dict[str, pd.DataFrame] = dict()
+        for window_size in range(self.rolling_data_limit - 1, len(data_level) + 1):
+            for window_location in range(0, len(data_level) - window_size):
+                start_level: int = data_level[window_location]
+                end_level: int = data_level[window_location + window_size]
+                level_name: str = str(start_level) + "->" + str(end_level)
+                data_dict[level_name]: pd.DataFrame = data[(data["Level"] >= start_level) & (data["Level"] <= end_level)]
+        return data_dict
 
 
 class ProfileLevel:
-    def __init__(self, index):
+    def __init__( self, index ):
         self.index = index
         self.series: List[Result] = []
         self.introduced_concentration: float = None
@@ -196,17 +246,17 @@ class ProfileLevel:
         self.rel_uncertainty: float = None
         self.pc_uncertainty: float = None
 
-    def __series_by_group(self) -> Dict:
+    def __series_by_group( self ) -> Dict:
         series_group = defaultdict(list)
         for s in self.series:
             series_group[s.series].append(s)
 
         return series_group
 
-    def add_result(self, result):
+    def add_result( self, result ):
         self.series.append(result)
 
-    def calculate(self, tolerance_limit: int = DEFAULT_TOLERANCE):
+    def calculate( self, tolerance_limit: int = DEFAULT_TOLERANCE ):
         self.series_by_group = self.__series_by_group()
         self.nb_series = len(self.series_by_group.keys())
         self.nb_measures = len(self.series)
@@ -236,7 +286,7 @@ class ProfileLevel:
         self.rel_uncertainty = self.abs_uncertainty / self.calculated_concentration
         self.pc_uncertainty = self.abs_uncertainty / self.introduced_concentration * 100
 
-    def get_repeatability_var(self) -> float:
+    def get_repeatability_var( self ) -> float:
         repeatability_var = 0
         sum_square_errors = 0
         for (k, series) in self.series_by_group.items():
@@ -248,7 +298,7 @@ class ProfileLevel:
             repeatability_var = sum_square_errors / (self.nb_series * (self.nb_rep - 1))
         return repeatability_var
 
-    def get_inter_series_var(self) -> float:
+    def get_inter_series_var( self ) -> float:
         sum_square_errors_total = np.sum([(s.result - self.calculated_concentration) ** 2 for s in self.series])
         sum_square_errors_inter_series = sum_square_errors_total - self.sum_square_error_intra_series
 
@@ -262,7 +312,7 @@ class ProfileLevel:
 
         return inter_series_var
 
-    def get_ratio_var(self) -> float:
+    def get_ratio_var( self ) -> float:
         if self.inter_series_var == 0 or self.repeatability_var == 0:
             ratio_var = 0
         else:
@@ -270,13 +320,13 @@ class ProfileLevel:
 
         return ratio_var
 
-    def get_absolute_tolerance(self, tolerance_limit: int) -> List[float]:
+    def get_absolute_tolerance( self, tolerance_limit: int ) -> List[float]:
 
         student_low = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), int(math.floor(self.degree_of_freedom)))
         student_high = t.ppf(1 - ((1 - (tolerance_limit / 100)) / 2), int(math.ceil(self.degree_of_freedom)))
 
         cover_factor = student_low - (student_low - student_high) * (
-                    self.degree_of_freedom - math.floor(self.degree_of_freedom))
+                self.degree_of_freedom - math.floor(self.degree_of_freedom))
         tolerance_low = self.calculated_concentration - cover_factor * self.tolerance_std
         tolerance_high = self.calculated_concentration + cover_factor * self.tolerance_std
 
@@ -290,7 +340,7 @@ class Direction(Enum):
 
 class Intersect:
 
-    def __init__(self, value: float, direction: Direction):
+    def __init__( self, value: float, direction: Direction ):
         self.value = value
         self.direction = direction
 
@@ -299,24 +349,26 @@ class Profile:
     LIMIT_LOWER = 0
     LIMIT_UPPER = 1
 
-    def __init__(self, model: Model):
-        self.model = model
-        self.series = model.series_calculated
-        self.levels: List[ProfileLevel] = []
-        self.acceptance_interval: List[float] = []
-        self.min_lq: float = None
-        self.max_lq: float = None
-        self.ld: float = None
-        self.has_limits = False
-        self.name_of_file: str = None
-        self.acceptance_limit: int = None
-        self.tolerance_limit: int = None
-        self.image_data = None
+    def __init__( self, model: Union[Model, DataObject]):
+        if type(model) == Model:
 
-        self.__split_series_by_levels()
-        self.levels.sort(key=attrgetter('index'))
+            self.model = model
+            self.series = model.series_calculated
+            self.levels: List[ProfileLevel] = []
+            self.acceptance_interval: List[float] = []
+            self.min_lq: float = None
+            self.max_lq: float = None
+            self.ld: float = None
+            self.has_limits = False
+            self.name_of_file: str = None
+            self.acceptance_limit: int = None
+            self.tolerance_limit: int = None
+            self.image_data = None
 
-    def __split_series_by_levels(self):
+            self.__split_series_by_levels()
+            self.levels.sort(key=attrgetter('index'))
+
+    def __split_series_by_levels( self ):
         for s in self.series:
             try:
                 level = [level for level in self.levels if level.index == s.level][0]
@@ -326,7 +378,7 @@ class Profile:
                 level.add_result(s)
                 self.levels.append(level)
 
-    def calculate(self, tolerance_limit: int = DEFAULT_TOLERANCE, acceptance_limit: int = DEFAULT_ACCEPTANCE):
+    def calculate( self, tolerance_limit: int = DEFAULT_TOLERANCE, acceptance_limit: int = DEFAULT_ACCEPTANCE ):
         self.acceptance_interval = [(1 - (acceptance_limit / 100)) * 100, (1 + (acceptance_limit / 100)) * 100]
         for level in self.levels:
             level.calculate(tolerance_limit)
@@ -339,7 +391,7 @@ class Profile:
             self.max_lq = None
             self.ld = None
 
-    def get_limits_of_quantification(self, acceptance_limit: int) -> (float, float):
+    def get_limits_of_quantification( self, acceptance_limit: int ) -> (float, float):
 
         intersects_low = []
         intersects_high = []
@@ -361,7 +413,7 @@ class Profile:
 
         return limits
 
-    def get_intersect_between_levels(self, level_a, level_b, accept_limit: int, limit_type) -> Intersect:
+    def get_intersect_between_levels( self, level_a, level_b, accept_limit: int, limit_type ) -> Intersect:
         level_a_tol = level_a.abs_tolerance[limit_type]
         level_b_tol = level_b.abs_tolerance[limit_type]
         if limit_type == self.LIMIT_LOWER:
@@ -401,7 +453,7 @@ class Profile:
 
         return Intersect(value, direction)
 
-    def get_limits_from_intersects(self, intersects: List[Intersect], accept_limit: int, limit_type: int) -> (
+    def get_limits_from_intersects( self, intersects: List[Intersect], accept_limit: int, limit_type: int ) -> (
             float, float):
 
         if len(intersects) == 0:
@@ -438,7 +490,7 @@ class Profile:
 
         return limits
 
-    def group_intersects_by_in_out(self, intersects: List[Intersect]) -> List:
+    def group_intersects_by_in_out( self, intersects: List[Intersect] ) -> List:
         in_out_pairs = []
         current_in_intersect = None
         for i in intersects:
@@ -449,13 +501,13 @@ class Profile:
                 current_in_intersect = None
         return in_out_pairs
 
-    def get_most_restrictive_limits(self, lower_limits, upper_limits) -> (float, float):
+    def get_most_restrictive_limits( self, lower_limits, upper_limits ) -> (float, float):
         min_limit = max(lower_limits[0], upper_limits[0])
         max_limit = min(lower_limits[1], upper_limits[1])
 
         return min_limit, max_limit
 
-    def make_plot(self, ax):
+    def make_plot( self, ax ):
         levels_x = np.array([l.introduced_concentration for l in self.levels])
         y_recovery = np.array([l.recovery for l in self.levels])
         y_error = np.array([s.pc_uncertainty for s in self.levels])

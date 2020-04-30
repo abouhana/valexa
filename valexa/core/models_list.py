@@ -3,7 +3,7 @@
 
 def model_list(model_name: str = ""):
     model_list = {
-        "Linear" : {
+        "Linear": {
             "formula": "y ~ x",
             "weight": None,
         },
