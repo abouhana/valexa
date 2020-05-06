@@ -1,8 +1,7 @@
-from typing import List, Callable, Dict, Union, OrderedDict
+from typing import Callable, Dict, Union, OrderedDict
 from valexa.core.profiles import ProfileManager
 
 import pandas as pd
-import collections
 
 class Optimizer:
 
@@ -22,17 +21,6 @@ class Optimizer:
 
         self.profile_value = self.get_profile_value()
         self.sorted_profile = self.sort_profile()
-
-    #def parameter_function( self, parameter ) -> Callable:
-    #    parameter_function: Dict(str, Callable) = {
-    #        "min_loq": self.__get_min_loq,
-    #        "max_loq": self.__get_max_loq,
-    #        "lod": self.__get_lod,
-    #        "model.fit.rsquared": self.__get_model_fit_rsquared,
-    #        "model.data.calibration_levels": self.__get_model_data_calibration_levels,
-    #        "has_limits": self.__get_has_limits
-    #    }
-    #    return parameter_function[parameter]
 
     def sort_profile( self ) -> pd.DataFrame:
         boolean_parameter: OrderedDict[str, bool] = {}
@@ -56,7 +44,7 @@ class Optimizer:
         return final_dataframe
 
     def get_profile_value( self ) -> pd.DataFrame:
-        results : pd.DataFrame = pd.DataFrame()
+        results: pd.DataFrame = pd.DataFrame()
         for parameter in self.parameters.keys():
             if len(results)==0:
                 results =  self.parameter_function[parameter]()

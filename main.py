@@ -98,7 +98,9 @@ def test_data():
 
 if __name__ == '__main__':
     start_time = time.time()
-    profiles: ProfileManager = ProfileManager("Test", test_data(), model_to_test="Linear", rolling_data=True, acceptance_limit=25, generate_figure=True)
+    profiles: ProfileManager = ProfileManager("Test", test_data(), rolling_data=False, acceptance_limit=25, generate_figure=True)
+    print("--- %s seconds ---" % (time.time() - start_time))
+    profiles.make_profiles("Linear")
     print("--- %s seconds ---" % (time.time() - start_time))
     optimizer_parameter = collections.OrderedDict({
         "has_limits": True,

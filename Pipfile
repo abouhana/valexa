@@ -1,12 +1,9 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 cycler = "*"
 et-xmlfile = "*"
 jdcal = "*"
@@ -26,17 +23,14 @@ scipy = "*"
 six = "*"
 statsmodels = "*"
 sympy = "*"
-
-
+pytest = "==5.4.1"
+annotations = "*"
 
 [dev-packages]
-
 pytest = "*"
 pytest-cov = "*"
 pyinstaller = "*"
 pytest-mock = "*"
 
-
 [requires]
-
 python_version = "3.8"

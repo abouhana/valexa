@@ -1,7 +1,5 @@
 from __future__ import annotations
-from collections import defaultdict
 from enum import Enum
-from operator import attrgetter
 from typing import List, Dict, Optional, Union
 import matplotlib.pyplot as plt
 
@@ -12,9 +10,7 @@ import numpy as np
 import pandas as pd
 import mpl_toolkits.axisartist as AA
 import io
-import copy
 
-from valexa.core.standard import Standard
 from valexa.core.models import Model, ModelsManager
 from valexa.core.dataobject import DataObject
 
@@ -61,10 +57,11 @@ class ProfileManager:
         self.model_manager.initialize_models(self.model_to_test)
 
         self.data_objects: List[DataObject] = self.__get_dataobject
+        self.profiles = None
 
-        self.profiles = self.make_profiles()
-
-    def make_profiles( self, models: List[str] = None) -> Optional[Dict[str, List[Profile]]]:
+    def make_profiles( self, models: List[str] = None) -> None:
+        if type(models)==str:
+            models = [models]
         list_of_models: List[str] = self.model_manager.initialized_models_list
         profiles: Dict[str, List[Profile]] = {}
         if models is None:
@@ -79,7 +76,7 @@ class ProfileManager:
                 profiles[model_name] = self.__get_profiles(model_name)
                 print("Number of profile: " + str(len(profiles[model_name])))
 
-        return profiles
+        self.profiles = profiles
 
     def __get_profiles(self, model_name: str = None) -> List[Profile]:
         profiles: List[Profile] = []

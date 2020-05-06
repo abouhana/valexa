@@ -1,6 +1,4 @@
 from __future__ import annotations
-from warnings import warn
-from typing import List, Dict, Union, Callable, Optional
 
 import pandas as pd
 import numpy as np
@@ -9,10 +7,15 @@ import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
 from sympy import lambdify, solveset, S
 from sympy.abc import x
-from patsy import dmatrix
+from patsy.highlevel import dmatrix
+
+from warnings import warn
+from typing import List, Dict, Union, Callable, Optional
 
 from valexa.core.models_list import model_list
 from valexa.core.dataobject import DataObject
+
+ModelInfo = Dict[str, Optional[str]]
 
 
 class ModelsManager:
@@ -40,12 +43,10 @@ class ModelsManager:
 
     def get_available_models( self, models_source: str = "hardcoded" ) -> Dict[str, Dict[str, str]]:
         # This will eventually handle model through SQL or other database
-        list_of_models: Dict[str, Dict[str, str]] = {}
+        list_of_models:  Union[Model, Dict[str, ModelInfo]] = {}
 
         if models_source == "hardcoded":
             list_of_models = model_list()
-        else:
-            list_of_models = {"Linear": {"formula": "y ~ x", "weight": None}}
 
         return list_of_models
 
@@ -78,22 +79,6 @@ class ModelsManager:
     def initialized_models_list( self ) -> List[str]:
         return list(self.available_models.keys())
 
-
-class ModelGenerator:
-
-    def __init__( self, model_name: str, model_info: Dict[str, str] ):
-
-        self.name: str = model_name
-        self.formula: str = model_info["formula"]
-        if model_info["weight"] is None:
-            self.weight: str = "I(x/x) - 1"
-        else:
-            self.weight: str = "I(" + model_info["weight"] + ") - 1"
-
-    def calculate_model( self, data: DataObject ) -> Model:
-        return Model(data, self.formula, self.weight)
-
-
 class Model:
 
     def __init__( self, data: DataObject, model_formula: str, model_weight: str):
@@ -112,10 +97,6 @@ class Model:
 
     @property
     def __get_model_roots( self ) -> pd.DataFrame:
-        #print(self.formula)
-        #print(self.weight)
-        #print(self.data.validation_levels)
-        #print(self.data.calibration_levels)
         list_of_roots: List[Union[float, None]] = []
         for validation_value in self.data.validation_data.iterrows():
             root_value: pd.DataFrame = pd.DataFrame(
@@ -129,13 +110,13 @@ class Model:
     @property
     def __build_function_from_params( self ) -> Callable:
         function_string: str = ""
-        for param in self.fit.params.iteritems():
-            if param[0] == "Intercept":
-                function_string += "-" + str(param[1])
-            elif param[0].startswith("I("):
-                function_string += "+" + str(param[1]) + "*" + param[0][2:-1]
+        for param, value in self.fit.params.items():
+            if param == "Intercept":
+                function_string += "-" + str(value)
+            elif param.startswith("I("):
+                function_string += "+" + str(value) + "*" + param[2:-1]
             else:
-                function_string += "+" + str(param[1]) + "*" + param[0]
+                function_string += "+" + str(value) + "*" + param
 
         return lambdify(x, function_string)
 
@@ -143,11 +124,11 @@ class Model:
         return self.data.get_level(level)
 
     @property
-    def data_x( self ) -> pd.DataFrame:
+    def data_x( self ) -> pd.Series:
         return self.data.data_x
 
     @property
-    def data_y( self ) -> pd.DataFrame:
+    def data_y( self ) -> pd.Series:
         return self.data.data_y
 
     @property
@@ -165,3 +146,17 @@ class Model:
     @property
     def calibration_data( self ) -> pd.DataFrame:
         return self.data.calibration_data
+
+class ModelGenerator:
+
+    def __init__( self, model_name: str, model_info: Dict[str, str] ):
+
+        self.name: str = model_name
+        self.formula: str = model_info["formula"]
+        if model_info["weight"] is None:
+            self.weight: str = "I(x/x) - 1"
+        else:
+            self.weight: str = "I(" + model_info["weight"] + ") - 1"
+
+    def calculate_model( self, data: DataObject ) -> Model:
+        return Model(data, self.formula, self.weight)

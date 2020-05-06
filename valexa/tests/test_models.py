@@ -1,7 +1,6 @@
 import pytest
 
 from valexa.core.models import ModelHandler, Model, Result
-from valexa.core.standard import Standard
 
 
 class TestModelHandler:
