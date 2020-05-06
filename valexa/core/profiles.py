@@ -3,117 +3,27 @@ from collections import defaultdict
 from enum import Enum
 from operator import attrgetter
 from typing import List, Dict, Optional, Union
+import matplotlib.pyplot as plt
 
 from scipy.stats import t
 
 import math
 import numpy as np
 import pandas as pd
+import mpl_toolkits.axisartist as AA
+import io
+import copy
 
 from valexa.core.standard import Standard
 from valexa.core.models import Model, ModelsManager
 from valexa.core.dataobject import DataObject
 
-DEFAULT_TOLERANCE = 80
-DEFAULT_ACCEPTANCE = 50
-
-
-def test_data():
-    calib = pd.DataFrame([
-        [1, 1, 0.98, 5],
-        [1, 2, 3.9, 13],
-        [1, 3, 15.635, 58],
-        [1, 4, 62.5, 230],
-        [1, 5, 250, 890],
-        [1, 6, 500, 1616],
-        [1, 7, 1000, 3310],
-        [1, 1, 0.98, 5],
-        [1, 2, 3.9, 19],
-        [1, 3, 15.635, 57],
-        [1, 4, 62.5, 219],
-        [1, 5, 250, 898],
-        [1, 6, 500, 1623],
-        [1, 7, 1000, 3294],
-        [1, 1, 0.98, 6],
-        [1, 2, 3.9, 16],
-        [1, 3, 15.635, 63],
-        [1, 4, 62.5, 230],
-        [1, 5, 250, 887],
-        [1, 6, 500, 1660],
-        [1, 7, 1000, 3298]
-    ], columns=["Serie", "Level", "x", "y"])
-
-    valid = pd.DataFrame([
-        [1, 1, 0.7765, 6],
-        [1, 2, 1.563, 8],
-        [1, 3, 6.25, 25],
-        [1, 4, 25, 93],
-        [1, 5, 100, 348],
-        [1, 1, 0.7765, 7],
-        [1, 2, 1.563, 12],
-        [1, 3, 6.25, 25],
-        [1, 4, 25, 96],
-        [1, 5, 100, 350],
-        [1, 1, 0.7765, 9],
-        [1, 2, 1.563, 13],
-        [1, 3, 6.25, 27],
-        [1, 4, 25, 89],
-        [1, 5, 100, 349],
-        [2, 1, 0.7765, 5],
-        [2, 2, 1.563, 11],
-        [2, 3, 6.25, 28],
-        [2, 4, 25, 91],
-        [2, 5, 100, 332],
-        [2, 1, 0.7765, 5],
-        [2, 2, 1.563, 11],
-        [2, 3, 6.25, 31],
-        [2, 4, 25, 92],
-        [2, 5, 100, 329],
-        [2, 1, 0.7765, 6],
-        [2, 2, 1.563, 13],
-        [2, 3, 6.25, 26],
-        [2, 4, 25, 90],
-        [2, 5, 100, 333],
-        [2, 1, 0.7765, 3],
-        [2, 2, 1.563, 8],
-        [2, 3, 6.25, 25],
-        [2, 4, 25, 94],
-        [2, 5, 100, 333],
-        [2, 1, 0.7765, 4],
-        [2, 2, 1.563, 12],
-        [2, 3, 6.25, 32],
-        [2, 4, 25, 98],
-        [2, 5, 100, 351],
-        [2, 1, 0.7765, 9],
-        [2, 2, 1.563, 10],
-        [2, 3, 6.25, 34],
-        [2, 4, 25, 97],
-        [2, 5, 100, 345],
-        [3, 1, 0.7765, 7],
-        [3, 2, 1.563, 6],
-        [3, 3, 6.25, 24],
-        [3, 4, 25, 98],
-        [3, 5, 100, 370],
-        [3, 1, 0.7765, 6],
-        [3, 2, 1.563, 9],
-        [3, 3, 6.25, 27],
-        [3, 4, 25, 95],
-        [3, 5, 100, 361],
-        [3, 1, 0.7765, 6],
-        [3, 2, 1.563, 12],
-        [3, 3, 6.25, 21],
-        [3, 4, 25, 101],
-        [3, 5, 100, 364]
-    ], columns=["Serie", "Level", "x", "y"])
-
-    return {"Calibration": calib, "Validation": valid}
-
-
 class ProfileManager:
 
     def __init__( self, compound_name: str, data: Dict[str, pd.DataFrame], calibration_data: pd.DataFrame = None,
                   tolerance_limit: float = 80, acceptance_limit: float = 20, quantity_units: str = None,
-                  rolling_data: bool = False, rolling_data_limit: int = 3, model_to_test: List[str] = None ) -> None:
+                  rolling_data: bool = False, rolling_data_limit: int = 3, model_to_test: Union[List[str], str] = None,
+                  generate_figure: bool = False) -> None:
         """
         Init ProfileManager with the necessary data
         :param compound_name: This is the name of the compounds for the profile
@@ -129,47 +39,59 @@ class ProfileManager:
         :param rolling_data_limit: (Optional) In combination with rolling_data, this is the minimum lenght of the subset
         that rolling_data will go to. Default = 3.
         :param model_to_test: (Optional) A list of model to test, if not set the system will test them all.
+        :param generate_figure: (Optional) Generate a plot of the profile.
         """
         self.compound_name: str = compound_name
         self.quantity_units: str = quantity_units
+        self.stats_limits: Dict[str, float] = {
+            "Tolerance": tolerance_limit,
+            "Acceptance": acceptance_limit
+        }
         self.tolerance_limit: float = tolerance_limit
         self.acceptance_limit: float = acceptance_limit
         self.data: Dict[str, pd.DataFrame] = data
         self.rolling_data: bool = rolling_data
+        if type(model_to_test)==str:
+            model_to_test = [model_to_test]
         self.model_to_test: List[str] = model_to_test
         self.rolling_data_limit: int = rolling_data_limit
+        self.generate_figure: bool = generate_figure
 
         self.model_manager: ModelsManager = ModelsManager()
         self.model_manager.initialize_models(self.model_to_test)
 
         self.data_objects: List[DataObject] = self.__get_dataobject
 
-        self.profiles = self.make_profiles("Linear")
+        self.profiles = self.make_profiles()
 
-        print("aa")
-
-    def make_profiles( self, model_name: Union[str, List[str]] = "" ) -> Optional[Dict[str, List[Profile]]]:
+    def make_profiles( self, models: List[str] = None) -> Optional[Dict[str, List[Profile]]]:
         list_of_models: List[str] = self.model_manager.initialized_models_list
         profiles: Dict[str, List[Profile]] = {}
+        if models is None:
+            if self.model_to_test is None:
+                models = list_of_models
+            else:
+                models = self.model_to_test
 
-        if model_name != "":
+        for model_name in models:
             if model_name in list_of_models:
+                print(model_name)
                 profiles[model_name] = self.__get_profiles(model_name)
+                print("Number of profile: " + str(len(profiles[model_name])))
 
-        elif type(model_name) == list:
-            pass
-        else:
-            pass
         return profiles
 
     def __get_profiles(self, model_name: str = None) -> List[Profile]:
         profiles: List[Profile] = []
-        if "Calibration" in self.data:
-            for data_object in self.data_objects:
-                profiles.append(Profile(self.model_manager.modelize(model_name, data_object)))
-        else:
-            for data_object in self.data_objects:
-                profiles.append(Profile(data_object))
+        for data_object in self.data_objects:
+            if "Calibration" in self.data:
+                current_profile: Profile = Profile(self.model_manager.modelize(model_name, data_object))
+            else:
+                current_profile: Profile = Profile(data_object)
+            current_profile.calculate(self.stats_limits)
+            if self.generate_figure:
+                current_profile.make_plot()
+            profiles.append(current_profile)
 
         return profiles
 
@@ -188,7 +110,8 @@ class ProfileManager:
 
             for validation_key in validation_dict.keys():
                 for calibration_key in calibration_dict.keys():
-                    data_to_model.append(DataObject(validation_dict[validation_key], validation_key, calibration_dict[calibration_key], calibration_key))
+                    data_to_model.append(DataObject(validation_dict[validation_key], calibration_dict[calibration_key]))
+
         else:
             if self.rolling_data:
                 validation_dict = self.__sliding_window_data(self.data["Validation"])
@@ -196,7 +119,9 @@ class ProfileManager:
                 validation_dict["All"] = self.data["Validation"]
 
             for validation_key in validation_dict.keys():
-                data_to_model.append(DataObject(validation_dict[validation_key], validation_key))
+                data_to_model.append(DataObject(validation_dict[validation_key]))
+
+        data_to_model = self.__sanitize_data_to_model(data_to_model)
 
         return data_to_model
 
@@ -209,13 +134,23 @@ class ProfileManager:
                 end_level: int = data_level[window_location + window_size]
                 level_name: str = str(start_level) + "->" + str(end_level)
                 data_dict[level_name]: pd.DataFrame = data[(data["Level"] >= start_level) & (data["Level"] <= end_level)]
+                data_dict[level_name].reset_index(drop=True, inplace=True)
+
         return data_dict
+
+    def __sanitize_data_to_model( self, data_to_model: List[DataObject] ) -> List[DataObject]:
+        data_to_keep: List[DataObject] = []
+        for data_object in data_to_model:
+            if data_object.calibration_data is not None:
+                if (data_object.calibration_first_concentration/2) < data_object.validation_first_concentration and data_object.calibration_last_concentration > data_object.validation_last_concentration:
+                    data_to_keep.append(data_object)
+
+        return data_to_keep
 
 
 class ProfileLevel:
-    def __init__( self, index ):
-        self.index = index
-        self.series: List[Result] = []
+    def __init__( self, level_data: pd.DataFrame):
+        self.data: pd.DataFrame = level_data
         self.introduced_concentration: float = None
         self.calculated_concentration: float = None
         self.bias: float = None
@@ -246,23 +181,13 @@ class ProfileLevel:
         self.rel_uncertainty: float = None
         self.pc_uncertainty: float = None
 
-    def __series_by_group( self ) -> Dict:
-        series_group = defaultdict(list)
-        for s in self.series:
-            series_group[s.series].append(s)
-
-        return series_group
-
-    def add_result( self, result ):
-        self.series.append(result)
-
-    def calculate( self, tolerance_limit: int = DEFAULT_TOLERANCE ):
-        self.series_by_group = self.__series_by_group()
-        self.nb_series = len(self.series_by_group.keys())
-        self.nb_measures = len(self.series)
-        self.nb_rep = self.nb_measures / self.nb_series
-        self.introduced_concentration = np.mean([s.concentration for s in self.series])
-        self.calculated_concentration = np.mean([s.result for s in self.series])
+    def calculate( self, tolerance_limit: float ):
+        #self.series_by_group = self.__series_by_group()
+        self.nb_series: int = self.data["Serie"].nunique()
+        self.nb_measures: int = len(self.data.index)
+        self.nb_rep: float = self.nb_measures / self.nb_series
+        self.introduced_concentration: np.float = self.data["x"].mean()
+        self.calculated_concentration: np.float = self.data["x_calc"].mean()
         self.bias = self.calculated_concentration - self.introduced_concentration
         self.relative_bias = (self.bias / self.introduced_concentration) * 100
         self.recovery = (self.calculated_concentration / self.introduced_concentration) * 100
@@ -299,7 +224,7 @@ class ProfileLevel:
         return repeatability_var
 
     def get_inter_series_var( self ) -> float:
-        sum_square_errors_total = np.sum([(s.result - self.calculated_concentration) ** 2 for s in self.series])
+        sum_square_errors_total = np.sum(np.square(self.data['x'] - self.data['x_calc']))
         sum_square_errors_inter_series = sum_square_errors_total - self.sum_square_error_intra_series
 
         if sum_square_errors_inter_series <= 0:
@@ -350,55 +275,43 @@ class Profile:
     LIMIT_UPPER = 1
 
     def __init__( self, model: Union[Model, DataObject]):
-        if type(model) == Model:
+        self.model = model
+        self.acceptance_interval: List[float] = []
+        self.min_loq: float = None
+        self.max_loq: float = None
+        self.lod: float = None
+        self.has_limits = False
+        self.image_data = None
+        self.fig = None
+        self.profile_levels: List[ProfileLevel] = []
+        for level in self.model.list_of_levels:
+            self.profile_levels.append(ProfileLevel(self.model.get_level(level)))
 
-            self.model = model
-            self.series = model.series_calculated
-            self.levels: List[ProfileLevel] = []
-            self.acceptance_interval: List[float] = []
-            self.min_lq: float = None
-            self.max_lq: float = None
-            self.ld: float = None
-            self.has_limits = False
-            self.name_of_file: str = None
-            self.acceptance_limit: int = None
-            self.tolerance_limit: int = None
-            self.image_data = None
-
-            self.__split_series_by_levels()
-            self.levels.sort(key=attrgetter('index'))
-
-    def __split_series_by_levels( self ):
-        for s in self.series:
-            try:
-                level = [level for level in self.levels if level.index == s.level][0]
-                level.add_result(s)
-            except IndexError:
-                level = ProfileLevel(index=s.level)
-                level.add_result(s)
-                self.levels.append(level)
-
-    def calculate( self, tolerance_limit: int = DEFAULT_TOLERANCE, acceptance_limit: int = DEFAULT_ACCEPTANCE ):
+    def calculate( self , stats_limits: Union[Dict[str, float], None] = None):
+        if stats_limits is None:
+            stats_limits = {"Tolerance": 80, "Acceptance": 20}
+        acceptance_limit = stats_limits["Acceptance"]
+        tolerance_limit = stats_limits["Tolerance"]
         self.acceptance_interval = [(1 - (acceptance_limit / 100)) * 100, (1 + (acceptance_limit / 100)) * 100]
-        for level in self.levels:
+        for level in self.profile_levels:
             level.calculate(tolerance_limit)
         try:
-            self.min_lq, self.max_lq = self.get_limits_of_quantification(acceptance_limit)
-            self.ld = self.min_lq / 3.3
+            self.min_loq, self.max_loq = self.get_limits_of_quantification(acceptance_limit)
+            self.lod = self.min_loq / 3.3
             self.has_limits = True
         except ValueError as e:
-            self.min_lq = None
-            self.max_lq = None
-            self.ld = None
+            self.min_loq = None
+            self.max_loq = None
+            self.lod = None
 
     def get_limits_of_quantification( self, acceptance_limit: int ) -> (float, float):
 
         intersects_low = []
         intersects_high = []
 
-        for l in range(len(self.levels) - 1):
-            level_a = self.levels[l]
-            level_b = self.levels[l + 1]
+        for l in range(len(self.profile_levels) - 1):
+            level_a = self.profile_levels[l]
+            level_b = self.profile_levels[l + 1]
             lower_intersect = self.get_intersect_between_levels(level_a, level_b, acceptance_limit, self.LIMIT_LOWER)
             upper_intersect = self.get_intersect_between_levels(level_a, level_b, acceptance_limit, self.LIMIT_UPPER)
             if lower_intersect:
@@ -459,20 +372,20 @@ class Profile:
         if len(intersects) == 0:
             low_accept_limit_rel = (1 - (accept_limit / 100)) * 100
             high_accept_limit_rel = (1 + (accept_limit / 100)) * 100
-            mean_tolerance = np.mean([l.rel_tolerance[limit_type] for l in self.levels])
+            mean_tolerance = np.mean([l.rel_tolerance[limit_type] for l in self.profile_levels])
             if low_accept_limit_rel <= mean_tolerance <= high_accept_limit_rel:
-                limits = (self.levels[0].introduced_concentration, self.levels[-1].introduced_concentration)
+                limits = (self.profile_levels[0].introduced_concentration, self.profile_levels[-1].introduced_concentration)
             else:
                 raise ValueError("Not valid limit of quantification detected")
         elif len(intersects) == 1 and intersects[0].direction == Direction.IN:
-            limits = (intersects[0].value, self.levels[-1].introduced_concentration)
+            limits = (intersects[0].value, self.profile_levels[-1].introduced_concentration)
         elif len(intersects) == 1 and intersects[0].direction == Direction.OUT:
-            limits = (self.levels[0].introduced_concentration, intersects[0].value)
+            limits = (self.profile_levels[0].introduced_concentration, intersects[0].value)
         elif len(intersects) == 2:
             if intersects[0].direction == Direction.IN and intersects[1].direction == Direction.OUT:
                 limits = (intersects[0].value, intersects[1].value)
             elif intersects[0].direction == Direction.OUT and intersects[1].direction == Direction.IN:
-                limits = (intersects[1].value, self.levels[-1].introduced_concentration)
+                limits = (intersects[1].value, self.profile_levels[-1].introduced_concentration)
             else:
                 raise ValueError("Intersects pair not valid: possible values (IN, OUT) or (OUT, IN)")
         elif len(intersects) > 2:
@@ -507,22 +420,31 @@ class Profile:
 
         return min_limit, max_limit
 
-    def make_plot( self, ax ):
-        levels_x = np.array([l.introduced_concentration for l in self.levels])
-        y_recovery = np.array([l.recovery for l in self.levels])
-        y_error = np.array([s.pc_uncertainty for s in self.levels])
+    def make_plot( self ):
+
+        fig = plt.figure()
+        ax = AA.Subplot(fig, 111)
+        fig.add_subplot(ax)
+
+        levels_x = np.array([l.introduced_concentration for l in self.profile_levels])
+        y_recovery = np.array([l.recovery for l in self.profile_levels])
+        y_error = np.array([s.pc_uncertainty for s in self.profile_levels])
         ax.axis["bottom", "top", "right"].set_visible(False)
         ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
-        ax.plot(levels_x, [l.rel_tolerance[0] for l in self.levels], linewidth=1.0, color="b",
+        ax.plot(levels_x, [l.rel_tolerance[0] for l in self.profile_levels], linewidth=1.0, color="b",
                 label="Min tolerance limit")
-        ax.plot(levels_x, [l.rel_tolerance[1] for l in self.levels], linewidth=1.0, color="g",
+        ax.plot(levels_x, [l.rel_tolerance[1] for l in self.profile_levels], linewidth=1.0, color="g",
                 label="Max tolerance limit")
-        ax.plot(levels_x, [self.acceptance_interval[0] for _ in self.levels], "k--", label="Acceptance limit")
-        ax.plot(levels_x, [self.acceptance_interval[1] for _ in self.levels], "k--")
-        results_x = [s.concentration for s in self.series]
-        results_y = [(s.result / s.concentration) * 100 for s in self.series]
+        ax.plot(levels_x, [self.acceptance_interval[0] for _ in self.profile_levels], "k--", label="Acceptance limit")
+        ax.plot(levels_x, [self.acceptance_interval[1] for _ in self.profile_levels], "k--")
+        results_x = [s.introduced_concentration for s in self.profile_levels]
+        results_y = [(s.calculated_concentration / s.introduced_concentration) * 100 for s in self.profile_levels]
         ax.scatter(results_x, results_y, alpha=0.5, s=2)
         ax.errorbar(levels_x, y_recovery, yerr=y_error, color="m", linewidth=2.0, marker=".", label="Recovery")
         ax.set_xlabel("Concentration")
         ax.set_ylabel("Recovery (%)")
         ax.legend(loc=1)
+
+        self.fig = fig
+
+        self.image_data = io.BytesIO()

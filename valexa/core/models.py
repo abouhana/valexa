@@ -3,6 +3,8 @@ from warnings import warn
 from typing import List, Dict, Union, Callable, Optional
 
 import pandas as pd
+import numpy as np
+import copy
 import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
 from sympy import lambdify, solveset, S
@@ -96,14 +98,12 @@ class Model:
 
     def __init__( self, data: DataObject, model_formula: str, model_weight: str):
 
-        self.data: DataObject = data
+        self.data: DataObject = copy.deepcopy(data)
         self.formula: str = model_formula
         self.weight: str = model_weight
         self.fit: sm.RegressionResultsWrapper = self.__get_model_fit
         self.root_function: Callable = self.__build_function_from_params
-        self.roots: pd.DataFrame = self.__get_model_roots
-
-        self.data.add_calculated_value(self.roots)
+        self.data.add_calculated_value(self.__get_model_roots)
 
     @property
     def __get_model_fit( self ) -> sm.RegressionResultsWrapper:
@@ -112,12 +112,16 @@ class Model:
 
     @property
     def __get_model_roots( self ) -> pd.DataFrame:
+        #print(self.formula)
+        #print(self.weight)
+        #print(self.data.validation_levels)
+        #print(self.data.calibration_levels)
         list_of_roots: List[Union[float, None]] = []
-        for validation_value in self.data.validation_data.to_list():
+        for validation_value in self.data.validation_data.iterrows():
             root_value: pd.DataFrame = pd.DataFrame(
-                solveset(self.root_function(x, validation_value[1]), x, S.Reals).evalf())
+                solveset(self.root_function(x)-validation_value[1]["y"], x, S.Reals).evalf())
             if len(root_value) > 0:
-                list_of_roots.append((root_value - validation_value[0]).abs().sort_values([0]).values[0][0])
+                list_of_roots.append(root_value[0][0])
             else:
                 list_of_roots.append(None)
         return pd.DataFrame(list_of_roots, columns=["x_calc"])
@@ -135,29 +139,29 @@ class Model:
 
         return lambdify(x, function_string)
 
-    @property
-    def model_roots( self ) -> pd.DataFrame:
-        return self.roots
-
-    @property
-    def model_fit( self ) -> sm.RegressionResultsWrapper:
-        return self.model_fit
-
-    @property
-    def model_function( self ) -> Callable:
-        return self.model_function
-
-    @property
-    def model_data( self ) -> DataObject:
-        return self.data
+    def get_level( self, level ) -> Union[pd.DataFrame, None]:
+        return self.data.get_level(level)
 
     @property
     def data_x( self ) -> pd.DataFrame:
-        return self.data._validation_data
+        return self.data.data_x
 
     @property
     def data_y( self ) -> pd.DataFrame:
-        if self.data._calibration_data is None:
-            return self.data._validation_data
-        else:
-            return self.data._validation_data
+        return self.data.data_y
+
+    @property
+    def list_of_series( self ) -> np.ndarray:
+        return self.data.list_of_series
+
+    @property
+    def list_of_levels( self ) -> np.ndarray:
+        return self.data.list_of_levels
+
+    @property
+    def validation_data( self ) -> pd.DataFrame:
+        return self.data.validation_data
+
+    @property
+    def calibration_data( self ) -> pd.DataFrame:
+        return self.data.calibration_data

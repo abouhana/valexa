@@ -1,5 +1,9 @@
 from valexa.core.profiles import ProfileManager
+from valexa.core.optimizer import Optimizer
+
+import collections
 import pandas as pd
+import time
 
 def test_data():
     calib = pd.DataFrame([
@@ -93,8 +97,19 @@ def test_data():
 
 
 if __name__ == '__main__':
-    ProfileManager("Test", test_data())
-    # state = AppState()
+    start_time = time.time()
+    profiles: ProfileManager = ProfileManager("Test", test_data(), model_to_test="Linear", rolling_data=True, acceptance_limit=25, generate_figure=True)
+    print("--- %s seconds ---" % (time.time() - start_time))
+    optimizer_parameter = collections.OrderedDict({
+        "has_limits": True,
+        "min_loq": "min",
+        "model.fit.rsquared": "max",
+        "model.data.calibration_levels": "max",
+        "max_loq": "max"
+    })
+    aa = Optimizer(profiles, optimizer_parameter)
+
+    exit()
     # app = QApplication(sys.argv)
     # window = ValexaApp(state)
     # window.show()
