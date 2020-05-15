@@ -16,7 +16,6 @@ def calib_data():
         (2, 1, 0.1, 0.013),
         (2, 2, 5.0, 0.70),
         (2, 3, 10.0, 1.42),
-
     ]
 
 
@@ -29,7 +28,6 @@ def valid_data():
         (2, 1, 0.1, 0.016),
         (2, 2, 5.0, 0.72),
         (2, 3, 10.0, 1.37),
-
     ]
 
 
@@ -42,11 +40,12 @@ def test_make_profiles_returns_profiles(calib_data, valid_data):
     assert profiles
 
 
-def test_make_profiles_calls_profile_calculate_with_tolerance_limit_and_acceptance_limit(calib_data, valid_data,
-                                                                                         mocker):
+def test_make_profiles_calls_profile_calculate_with_tolerance_limit_and_acceptance_limit(
+    calib_data, valid_data, mocker
+):
     tolerance_limit = 80
     acceptance_limit = 20
-    calculate_mock: Mock = mocker.patch('valexa.core.profiles.Profile.calculate')
+    calculate_mock: Mock = mocker.patch("valexa.core.profiles.Profile.calculate")
 
     make_profiles(calib_data, valid_data, tolerance_limit, acceptance_limit)
 
@@ -90,14 +89,19 @@ class TestProfile:
         model.series_calculated = self.results_with_repetition
         return model
 
-    def test_create_from_a_model_results_calculate_levels_from_series(self, model_without_rep):
+    def test_create_from_a_model_results_calculate_levels_from_series(
+        self, model_without_rep
+    ):
         profile = Profile(model_without_rep)
 
         assert len(profile.levels) == 3
         assert len(profile.levels[0].series) == 2
 
-    @pytest.mark.parametrize("results", [results_with_repetition, results_without_repetition],
-                             ids=["without_rep", "with_rep"])
+    @pytest.mark.parametrize(
+        "results",
+        [results_with_repetition, results_without_repetition],
+        ids=["without_rep", "with_rep"],
+    )
     def test_calculate_generate_values_to_make_accuracy_profile(self, results):
         model = Model()
         model.series_calculated = results
@@ -136,16 +140,20 @@ class TestProfile:
         intersects_low = [
             Intersect(2, Direction.IN),
             Intersect(3, Direction.OUT),
-            Intersect(6, Direction.IN)
+            Intersect(6, Direction.IN),
         ]
         intersects_high = [
             Intersect(2, Direction.OUT),
             Intersect(3, Direction.IN),
-            Intersect(4, Direction.OUT)
+            Intersect(4, Direction.OUT),
         ]
 
-        lower_limits = profile.get_limits_from_intersects(intersects_low, accept_limit, Profile.LIMIT_LOWER)
-        upper_limits = profile.get_limits_from_intersects(intersects_high, accept_limit, Profile.LIMIT_UPPER)
+        lower_limits = profile.get_limits_from_intersects(
+            intersects_low, accept_limit, Profile.LIMIT_LOWER
+        )
+        upper_limits = profile.get_limits_from_intersects(
+            intersects_high, accept_limit, Profile.LIMIT_UPPER
+        )
 
         assert lower_limits == (2, 3)
         assert upper_limits == (3, 4)

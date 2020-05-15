@@ -1,13 +1,6 @@
 # Valexa
-[![Build Status](https://travis-ci.org/GroupeChemia/valexa.svg?branch=master)](https://travis-ci.org/GroupeChemia/valexa)
+[[Build Status](https://travis-ci.org/GroupeChemia/valexa.svg?branch=master)](https://travis-ci.org/GroupeChemia/valexa)
 
-## Generate an executable
-This project use [Pyinstaller](https://www.pyinstaller.org/).
+## What is it?
 
-Run the following command to generate an executable.
-
-```
-pipenv run pyinstaller -y valexa.spec
-```
-
-This will generate the bundle in a subdirectory called `dist`.
+Valexa is a meth

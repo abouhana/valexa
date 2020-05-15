@@ -14,50 +14,17 @@ def model_list(model_name: str = "") -> Union[ModelInfo, Dict[str, ModelInfo]]:
     :type model_name: Name of the model to return
     """
     model_list_var = {
-        "Linear": {
-            "formula": "y ~ x",
-            "weight": None,
-        },
-        "Linear though 0": {
-            "formula": "y ~ x - 1",
-            "weight": None,
-        },
-        "Quadratic": {
-            "formula": "y ~ x + I(x**2)",
-            "weight": None,
-        },
-        "1/X Weighted Linear": {
-            "formula": "y ~ x",
-            "weight": "1/x",
-        },
-        "1/X^2 Weighted Linear": {
-            "formula": "y ~ x",
-            "weight": "1/x**2",
-        },
-        "1/Y Weighted Linear": {
-            "formula": "y ~ x",
-            "weight": "1/y",
-        },
-        "1/Y^2 Weighted Linear": {
-            "formula": "y ~ x",
-            "weight": "1/y**2",
-        },
-        "1/X Weighted Quadratic": {
-            "formula": "y ~ x + I(x**2)",
-            "weight": "1/x",
-        },
-        "1/X^2 Weighted Quadratic": {
-            "formula": "y ~ x + I(x**2)",
-            "weight": "1/x**2",
-        },
-        "1/Y Weighted Quadratic": {
-            "formula": "y ~ x + I(x**2)",
-            "weight": "1/y",
-        },
-        "1/Y^2 Weighted Quadratic": {
-            "formula": "y ~ x + I(x**2)",
-            "weight": "1/y**2",
-        }
+        "Linear": {"formula": "y ~ x", "weight": None,},
+        "Linear through 0": {"formula": "y ~ x - 1", "weight": None,},
+        "Quadratic": {"formula": "y ~ x + I(x**2)", "weight": None,},
+        "1/X Weighted Linear": {"formula": "y ~ x", "weight": "1/x",},
+        "1/X^2 Weighted Linear": {"formula": "y ~ x", "weight": "1/x**2",},
+        "1/Y Weighted Linear": {"formula": "y ~ x", "weight": "1/y",},
+        "1/Y^2 Weighted Linear": {"formula": "y ~ x", "weight": "1/y**2",},
+        "1/X Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/x",},
+        "1/X^2 Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/x**2",},
+        "1/Y Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/y",},
+        "1/Y^2 Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/y**2",},
     }
 
     if model_name == "":

@@ -13,7 +13,6 @@ class TestModelHandler:
             (2, 1, 0.1, 0.013),
             (2, 2, 5.0, 0.70),
             (2, 3, 10.0, 1.42),
-
         ]
         return Standard(data)
 
@@ -26,11 +25,12 @@ class TestModelHandler:
             (2, 1, 0.1, 0.016),
             (2, 2, 5.0, 0.72),
             (2, 3, 10.0, 1.37),
-
         ]
         return Standard(data)
 
-    def test_models_handler_create_models_from_calibration_data(self, std_calib, std_valid):
+    def test_models_handler_create_models_from_calibration_data(
+        self, std_calib, std_valid
+    ):
         max_degree = 2
         model_handler = ModelHandler(std_calib, std_valid)
 
@@ -72,14 +72,13 @@ class TestModel:
         model_with_shift.handle_correction()
 
         assert model_with_shift.has_correction
-        assert model_with_shift.correction_factor == round(1/0.8, 1)
+        assert model_with_shift.correction_factor == round(1 / 0.8, 1)
 
-    def test_apply_correction_factor_to_result(self, model_with_shift: Model, results_with_shift):
+    def test_apply_correction_factor_to_result(
+        self, model_with_shift: Model, results_with_shift
+    ):
         model_with_shift.handle_correction()
 
         correction_factor = model_with_shift.correction_factor
         for (index, s) in enumerate(model_with_shift.series_calculated):
             assert s.result == results_with_shift[index].result * correction_factor
-
-
-
