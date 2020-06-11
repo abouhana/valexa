@@ -4,9 +4,7 @@ python:
 
 before_install:
   - pip install poetry
+  - pip install -U pytest
 
 install:
   - poetry install
-
-script:
-  - pipenv run pytest --cov
