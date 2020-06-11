@@ -9,11 +9,11 @@ import shapely.geometry
 import math
 import numpy as np
 import pandas as pd
-import mpl_toolkits.axisartist as AA
+import mpl_toolkits.axisartist as aa
 import io
 
-from valexa.core.models import Model, ModelsManager
-from valexa.core.dataobject import DataObject
+from . import models
+from .dataobject import DataObject
 
 OptimizerParams = Dict[str, Union[str, bool]]
 
@@ -56,11 +56,11 @@ class ProfileManager:
         correction threshold (0.9 - 1.1). Setting this to [1,1] will force a correction to be calculated. The
         correction_threshold is calculated by calculating the average recovery ratio.. If the ratio is outside the
         indicated range, a correction will be applied.
-        :param forced_correction_value: (Optional) If allow_correction is set to True, this will set the correction value
-        to the indicated value instead of calculating it. Note: the value of the average recovery ratio must still be
-        outside the threshold for this to take effect.
-        :param optimizer_parameter: (Optional) These are the value used to sort the profile from best to worst when using
-        the optimizer.
+        :param forced_correction_value: (Optional) If allow_correction is set to True, this will set the correction
+        value to the indicated value instead of calculating it. Note: the value of the average recovery ratio must still
+        be outside the threshold for this to take effect.
+        :param optimizer_parameter: (Optional) These are the value used to sort the profile from best to worst when
+        using the optimizer.
         """
         self.compound_name: str = compound_name
         self.quantity_units: str = quantity_units
@@ -89,7 +89,7 @@ class ProfileManager:
 
         self.optimzer_parameters: Optional[OptimizerParams] = optimizer_parameter
 
-        self.model_manager: ModelsManager = ModelsManager()
+        self.model_manager: models.ModelsManager = models.ModelsManager()
         self.model_manager.initialize_models(self.model_to_test)
 
         self.data_objects: List[DataObject] = self.__get_dataobject
@@ -104,18 +104,18 @@ class ProfileManager:
                 self.profiles, self.optimzer_parameters
             ).sort_profile()
 
-    def make_profiles(self, models: List[str] = None) -> None:
-        if type(models) == str:
-            models = [models]
+    def make_profiles(self, models_names: Optional[List[str]] = None) -> None:
+        if type(models_names) == str:
+            models_names = [models_names]
         list_of_models: List[str] = self.model_manager.initialized_models_list
         profiles: Dict[str, List[Profile]] = {}
-        if models is None:
+        if models_names is None:
             if self.model_to_test is None:
-                models = list_of_models
+                models_names = list_of_models
             else:
-                models = self.model_to_test
+                models_names = self.model_to_test
 
-        for model_name in models:
+        for model_name in models_names:
             if model_name in list_of_models:
                 print(model_name)
                 profiles[model_name] = self.__get_profiles(model_name)
@@ -176,8 +176,7 @@ class ProfileManager:
             for validation_key in validation_dict.keys():
                 data_to_model.append(DataObject(validation_dict[validation_key]))
 
-        #Still buggy need to be reworked
-        #data_to_model = self.__sanitize_data_to_model(data_to_model)
+        data_to_model = self.__sanitize_data_to_model(data_to_model)
 
         return data_to_model
 
@@ -236,6 +235,7 @@ class ProfileLevel:
         self.nb_rep: Optional[int] = None
         self.fidelity_var: Optional[float] = None
         self.fidelity_std: Optional[float] = None
+        self.fidelity_cv: Optional[float] = None
         self.ratio_var: Optional[float] = None
         self.b_coefficient: Optional[float] = None
         self.degree_of_freedom: Optional[float] = None
@@ -366,7 +366,7 @@ class ProfileLevel:
 class Profile:
     def __init__(
         self,
-        model: Union[Model, DataObject],
+        model: Union[models.Model, DataObject],
         correction_allowed: bool = False,
         correction_threshold: List[float] = None,
         forced_correction_value: float = None,
@@ -391,7 +391,7 @@ class Profile:
             self.profile_levels[level] = ProfileLevel(self.model.get_level(level))
 
     def summary(self) -> None:
-        if type(self.model) == Model:
+        if type(self.model) == models.Model:
             regression_stats: Dict[int, Dict[str, float]] = {}
             if self.model.multiple_calibration:
                 for key, fit_data in self.model.fit.items():
@@ -404,27 +404,28 @@ class Profile:
                 regression_stats[1].update({"P-Value": self.model.fit.f_pvalue})
             regression_dataframe: pd.DataFrame = pd.DataFrame(regression_stats)
 
-        model_stats: Dict[str, float] = {}
-        model_stats["LOD"] = self.lod
-        model_stats["Min LOQ"] = self.min_loq
-        model_stats["Max LOQ"] = self.max_loq
-        model_stats["Correction Factor"] = self.correction_factor
+        model_stats: dict = {
+            "LOD": self.lod,
+            "Min LOQ": self.min_loq,
+            "Max LOQ": self.max_loq,
+            "Correction Factor": self.correction_factor,
+        }
         model_dataframe: pd.DataFrame = pd.DataFrame([model_stats]).transpose()
 
-        level_stats: Dict[str, Dict[str, float]] = {}
-        fidelity_stats: Dict[str, Dict[str, float]] = {}
-        accuracy_stats: Dict[str, Dict[str, float]] = {}
-        tolerance_interval_stats: Dict[str, Dict[str, float]] = {}
-        accuracy_profile_stats: Dict[str, Dict[str, float]] = {}
-        uncertainty_stats: Dict[str, Dict[str, float]] = {}
+        level_stats: Dict[ProfileLevel, dict] = {}
+        fidelity_stats: Dict[ProfileLevel, dict] = {}
+        accuracy_stats: Dict[ProfileLevel, dict] = {}
+        tolerance_interval_stats: Dict[ProfileLevel, dict] = {}
+        accuracy_profile_stats: Dict[ProfileLevel, dict] = {}
+        uncertainty_stats: Dict[ProfileLevel, dict] = {}
 
         for level in list(self.profile_levels.keys()):
-            level_stats[level]: Dict[str, float] = {}
-            fidelity_stats[level]: Dict[str, float] = {}
-            accuracy_stats[level]: Dict[str, float] = {}
-            tolerance_interval_stats[level]: Dict[str, float] = {}
-            accuracy_profile_stats[level]: Dict[str, float] = {}
-            uncertainty_stats[level]: Dict[str, float] = {}
+            level_stats[level]: Dict[ProfileLevel, float] = {}
+            fidelity_stats[level]: Dict[ProfileLevel, float] = {}
+            accuracy_stats[level]: Dict[ProfileLevel, float] = {}
+            tolerance_interval_stats[level]: Dict[ProfileLevel, float] = {}
+            accuracy_profile_stats[level]: Dict[ProfileLevel, float] = {}
+            uncertainty_stats[level]: Dict[ProfileLevel, float] = {}
 
             level_stats[level]["Introduced Concentration"] = self.profile_levels[
                 level
@@ -508,7 +509,7 @@ class Profile:
         uncertainty_datafram: pd.DataFrame = pd.DataFrame(uncertainty_stats)
 
         print("\n\nModel information")
-        if type(self.model) == Model:
+        if type(self.model) == models.Model:
             print("Model type: Regression")
             print("Model name: " + str(self.model.name))
             print("Formula: " + str(self.model.formula))
@@ -516,7 +517,7 @@ class Profile:
         else:
             print("Model type: Direct")
         print(model_dataframe.astype(float).round(3))
-        if type(self.model) == Model:
+        if type(self.model) == models.Model:
             print("\n\nRegression information")
             print(regression_dataframe.astype(float).round(3))
         print("\n\nProfile Level Information")
@@ -560,8 +561,9 @@ class Profile:
         else:
             self.lod = None
 
+    @staticmethod
     def get_value_between(
-        self, x_value: float, left_coord: (float, float), right_coord: (float, float)
+        x_value: float, left_coord: (float, float), right_coord: (float, float)
     ) -> float:
         x1, y1 = left_coord
         x2, y2 = right_coord
@@ -786,7 +788,7 @@ class Profile:
     def make_plot(self):
 
         fig = plt.figure()
-        ax = AA.Subplot(fig, 111)
+        ax = aa.Subplot(fig, 111)
         fig.add_subplot(ax)
 
         levels_x = np.array(

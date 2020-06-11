@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from typing import Union, Optional
+from typing import Optional
 
 
 class DataObject:
@@ -50,10 +50,12 @@ class DataObject:
         else:
             return None
 
-    def get_serie(self, serie: int, type: str = "validation") -> Optional[pd.DataFrame]:
-        if type == "validation":
+    def get_serie(
+        self, serie: int, serie_type: str = "validation"
+    ) -> Optional[pd.DataFrame]:
+        if serie_type == "validation":
             return self.validation_data[self.validation_data["Serie"] == serie]
-        elif type == "calibration":
+        elif serie_type == "calibration":
             return self.calibration_data[self.calibration_data["Serie"] == serie]
         else:
             return None
@@ -65,34 +67,34 @@ class DataObject:
         else:
             return None
 
-    def data_x(self, type: str = "validation") -> Optional[pd.Series]:
-        if type == "validation":
+    def data_x(self, serie_type: str = "validation") -> Optional[pd.Series]:
+        if serie_type == "validation":
             return self.validation_data["x"]
-        elif type == "calibration":
+        elif serie_type == "calibration":
             return self.calibration_data["x"]
         else:
             return None
 
-    def data_y(self, type: str = "validation") -> Optional[pd.Series]:
-        if type == "validation":
+    def data_y(self, serie_type: str = "validation") -> Optional[pd.Series]:
+        if serie_type == "validation":
             return self.validation_data["y"]
-        elif type == "calibration":
+        elif serie_type == "calibration":
             return self.calibration_data["y"]
         else:
             return None
 
-    def list_of_series(self, type: str = "validation") -> Optional[np.ndarray]:
-        if type == "validation":
+    def list_of_series(self, serie_type: str = "validation") -> Optional[np.ndarray]:
+        if serie_type == "validation":
             return self.validation_data["Serie"].unique()
-        elif type == "calibration":
+        elif serie_type == "calibration":
             return self.calibration_data["Serie"].unique()
         else:
             return None
 
-    def list_of_levels(self, type: str = "validation") -> Optional[np.ndarray]:
-        if type == "validation":
+    def list_of_levels(self, serie_type: str = "validation") -> Optional[np.ndarray]:
+        if serie_type == "validation":
             return self.validation_data["Level"].unique()
-        elif type == "calibration":
+        elif serie_type == "calibration":
             return self.calibration_data["Level"].unique()
         else:
             return None

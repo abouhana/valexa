@@ -3,8 +3,8 @@ from matplotlib import pyplot as plt
 import mpl_toolkits.axisartist as AA
 from unittest.mock import Mock
 
-from valexa.core.profiles import make_profiles, Profile, Intersect, Direction
-from valexa.core.models import Result, Model
+from core.profiles import make_profiles, Profile, Intersect, Direction
+from core.models import Result, Model
 
 
 @pytest.fixture()

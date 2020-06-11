@@ -12,8 +12,8 @@ from patsy.highlevel import dmatrix
 from warnings import warn
 from typing import List, Dict, Union, Callable, Optional
 
-from valexa.core.models_list import model_list
-from valexa.core.dataobject import DataObject
+from core.models_list import model_list
+from core.dataobject import DataObject
 
 ModelInfo = Dict[str, Optional[str]]
 FitInfo = Union[sm.RegressionResultsWrapper, Dict[int, sm.RegressionResultsWrapper]]
@@ -45,8 +45,9 @@ class ModelsManager:
     def modelize(self, model_name: str, model_data: DataObject) -> Model:
         return self.models[model_name].calculate_model(model_data)
 
+    @staticmethod
     def get_available_models(
-        self, models_source: str = "hardcoded"
+        models_source: str = "hardcoded",
     ) -> Dict[str, Dict[str, str]]:
         # This will eventually handle model through SQL or other database
         list_of_models: Union[Model, Dict[str, ModelInfo]] = {}
@@ -158,8 +159,9 @@ class Model:
                 list_of_roots.append(None)
         return pd.DataFrame(list_of_roots, columns=["x_calc"])
 
+    @staticmethod
     def __build_function_from_params(
-        self, fitted_function: FitInfo, serie: Optional[int] = None
+        fitted_function: FitInfo, serie: Optional[int] = None
     ) -> Callable:
         function_string: str = ""
         if serie is None:
@@ -176,27 +178,31 @@ class Model:
 
         return lambdify(x, function_string)
 
-    def get_level(self, level: int, type: str = "validation") -> Optional[pd.DataFrame]:
-        return self.data.get_level(level, type)
+    def get_level(
+        self, level: int, serie_type: str = "validation"
+    ) -> Optional[pd.DataFrame]:
+        return self.data.get_level(level, serie_type)
 
-    def get_serie(self, serie: int, type: str = "validation") -> Optional[pd.DataFrame]:
-        return self.data.get_serie(serie, type)
+    def get_serie(
+        self, serie: int, serie_type: str = "validation"
+    ) -> Optional[pd.DataFrame]:
+        return self.data.get_serie(serie, serie_type)
 
     @property
     def data_x_calc(self) -> Optional[pd.Series]:
         return self.data.data_x_calc
 
-    def data_x(self, type: str = "validation") -> Optional[pd.Series]:
-        return self.data.data_x(type)
+    def data_x(self, serie_type: str = "validation") -> Optional[pd.Series]:
+        return self.data.data_x(serie_type)
 
-    def data_y(self, type: str = "validation") -> Optional[pd.Series]:
-        return self.data.data_y(type)
+    def data_y(self, serie_type: str = "validation") -> Optional[pd.Series]:
+        return self.data.data_y(serie_type)
 
-    def list_of_series(self, type: str = "validation") -> Optional[np.ndarray]:
-        return self.data.list_of_series(type)
+    def list_of_series(self, serie_type: str = "validation") -> Optional[np.ndarray]:
+        return self.data.list_of_series(serie_type)
 
-    def list_of_levels(self, type: str = "validation") -> Optional[np.ndarray]:
-        return self.data.list_of_levels(type)
+    def list_of_levels(self, serie_type: str = "validation") -> Optional[np.ndarray]:
+        return self.data.list_of_levels(serie_type)
 
     @property
     def validation_data(self) -> pd.DataFrame:

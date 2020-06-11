@@ -1,4 +1,4 @@
-from valexa.core.models_list import model_list
+from core.models_list import model_list
 
 
 def test_model_list_return_single_model():

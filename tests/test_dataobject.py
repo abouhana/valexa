@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pytest
 
-from valexa.core.dataobject import DataObject
+from core.dataobject import DataObject
 
 
 class TestDataObject:
