@@ -25,6 +25,7 @@ class ProfileManager:
         data: Dict[str, pd.DataFrame],
         tolerance_limit: float = 80,
         acceptance_limit: float = 20,
+        absolute_acceptance: bool = False,
         quantity_units: str = None,
         rolling_data: bool = False,
         rolling_data_limit: int = 3,
@@ -42,6 +43,8 @@ class ProfileManager:
         {"Validation": DataFrame, "Calibration": DataFrame}. Note that the calibration data are optional.
         :param tolerance_limit: (Optional) The tolerance limit (beta). Default = 80
         :param acceptance_limit: (Optional) The acceptance limit (lambda). Default = 20
+        :param absolute_acceptance: (Optional) If True, the acceptance will be considered to be in absolute unit instead
+        of percentage. Default = False
         :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced data. This is only to
         ease the reading of the output.
         :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the data and
@@ -70,6 +73,7 @@ class ProfileManager:
         }
         self.tolerance_limit: float = tolerance_limit
         self.acceptance_limit: float = acceptance_limit
+        self.absolute_acceptance: bool = absolute_acceptance
         self.data: Dict[str, pd.DataFrame] = data
         self.rolling_data: bool = rolling_data
         if type(model_to_test) == str:
@@ -87,39 +91,45 @@ class ProfileManager:
             self.correction_threshold: Optional[List[float]] = None
             self.forced_correction_value = None
 
-        self.optimzer_parameters: Optional[OptimizerParams] = optimizer_parameter
+        self.optimizer_parameters: Optional[OptimizerParams] = optimizer_parameter
 
-        self.model_manager: models.ModelsManager = models.ModelsManager()
-        self.model_manager.initialize_models(self.model_to_test)
+        if "Calibration" in self.data:
+            self.model_manager: models.ModelsManager = models.ModelsManager()
+            self.model_manager.initialize_models(self.model_to_test)
 
         self.data_objects: List[DataObject] = self.__get_dataobject
         self.profiles: Optional[Dict[str, Profile]] = None
         self.sorted_profiles: Optional[pd.DataFrame] = None
 
     def optimize(self) -> None:
-        if self.optimzer_parameters is None:
-            warn("No Optimizer parameter set. Optimizer cannot be run")
+        if self.optimizer_parameters is None:
+            warn("No Optimizer parameter set. Optimizer cannot be run.")
+        elif "Calibration" not in self.data:
+            warn("Optimizer cannot be run on validation using direct data.")
         else:
             self.sorted_profiles = Optimizer(
-                self.profiles, self.optimzer_parameters
+                self.profiles, self.optimizer_parameters
             ).sort_profile()
 
     def make_profiles(self, models_names: Optional[List[str]] = None) -> None:
-        if type(models_names) == str:
-            models_names = [models_names]
-        list_of_models: List[str] = self.model_manager.initialized_models_list
         profiles: Dict[str, List[Profile]] = {}
-        if models_names is None:
-            if self.model_to_test is None:
-                models_names = list_of_models
-            else:
-                models_names = self.model_to_test
+        if "Calibration" in self.data:
+            if type(models_names) == str:
+                models_names = [models_names]
+            list_of_models: List[str] = self.model_manager.initialized_models_list
+            if models_names is None:
+                if self.model_to_test is None:
+                    models_names = list_of_models
+                else:
+                    models_names = self.model_to_test
 
-        for model_name in models_names:
-            if model_name in list_of_models:
-                print(model_name)
-                profiles[model_name] = self.__get_profiles(model_name)
-                print("Number of profile: " + str(len(profiles[model_name])))
+            for model_name in models_names:
+                if model_name in list_of_models:
+                    print(model_name)
+                    profiles[model_name] = self.__get_profiles(model_name)
+                    print("Number of profile: " + str(len(profiles[model_name])))
+        else:
+            profiles["Direct"] = self.__get_profiles()
 
         self.profiles = profiles
 
@@ -136,6 +146,7 @@ class ProfileManager:
                 self.allow_correction,
                 self.correction_threshold,
                 self.forced_correction_value,
+                self.absolute_acceptance
             )
             current_profile.calculate(self.stats_limits)
 
@@ -175,6 +186,7 @@ class ProfileManager:
 
             for validation_key in validation_dict.keys():
                 data_to_model.append(DataObject(validation_dict[validation_key]))
+                data_to_model[-1].add_calculated_value(data_to_model[-1].data_y())
 
         data_to_model = self.__sanitize_data_to_model(data_to_model)
 
@@ -204,16 +216,18 @@ class ProfileManager:
                 if (
                     (data_object.calibration_first_concentration / 2)
                     < data_object.validation_first_concentration
-                    and data_object.calibration_last_concentration
-                    > data_object.validation_last_concentration
+                    and 1.5 * data_object.calibration_last_concentration
+                    >= data_object.validation_last_concentration
                 ):
                     data_to_keep.append(data_object)
+            else:
+                data_to_keep.append(data_object)
 
         return data_to_keep
 
 
 class ProfileLevel:
-    def __init__(self, level_data: pd.DataFrame):
+    def __init__(self, level_data: pd.DataFrame, absolute_acceptance: bool = False):
         self.data: pd.DataFrame = level_data
         self.introduced_concentration: Optional[np.float] = None
         self.calculated_concentration: Optional[np.float] = None
@@ -244,14 +258,15 @@ class ProfileLevel:
         self.rel_uncertainty: Optional[float] = None
         self.pc_uncertainty: Optional[float] = None
         self.cover_factor: Optional[float] = None
+        self.absolute_acceptance: bool = absolute_acceptance
 
-    def calculate(self, tolerance_limit: float, acceptance_limit: float) -> None:
+    def calculate(self, tolerance_limit: float, acceptance_interval: list) -> None:
         self.nb_series = self.data["Serie"].nunique()
         self.nb_measures = len(self.data.index)
         self.nb_rep = self.nb_measures / self.nb_series
         self.introduced_concentration = self.data["x"].mean()
         self.calculated_concentration = self.data["x_calc"].mean()
-        self.acceptance_interval = self.get_acceptance_interval(acceptance_limit)
+        self.acceptance_interval = acceptance_interval
         self.bias = self.calculated_concentration - self.introduced_concentration
         self.relative_bias = (self.bias / self.introduced_concentration) * 100
         self.recovery = (
@@ -288,10 +303,13 @@ class ProfileLevel:
         self.pc_uncertainty = self.abs_uncertainty / self.introduced_concentration * 100
 
     def get_acceptance_interval(self, acceptance_limit: float) -> List[float]:
-        introduced_percentage: float = acceptance_limit / 100 * self.introduced_concentration
+        if self.absolute_acceptance:
+            introduced_limit: float = acceptance_limit
+        else:
+            introduced_limit: float = acceptance_limit / 100 * self.introduced_concentration
         return [
-            self.introduced_concentration - introduced_percentage,
-            self.introduced_concentration + introduced_percentage,
+            self.introduced_concentration - introduced_limit,
+            self.introduced_concentration + introduced_limit,
         ]
 
     def get_repeatability_var(self) -> float:
@@ -360,6 +378,10 @@ class ProfileLevel:
             self.calculated_concentration + self.cover_factor * self.tolerance_std
         )
 
+        if self.absolute_acceptance:
+            tolerance_low = tolerance_low - self.introduced_concentration
+            tolerance_high = tolerance_high - self.introduced_concentration
+
         return [tolerance_low, tolerance_high]
 
 
@@ -370,9 +392,11 @@ class Profile:
         correction_allowed: bool = False,
         correction_threshold: List[float] = None,
         forced_correction_value: float = None,
+        absolute_acceptance: bool = False
     ):
         self.model = model
         self.acceptance_interval: List[float] = []
+        self.absolute_acceptance: bool = absolute_acceptance
         self.min_loq: Optional[float] = None
         self.max_loq: Optional[float] = None
         self.lod: Optional[float] = None
@@ -388,7 +412,7 @@ class Profile:
             self.generate_correction()
         self.profile_levels: Dict[ProfileLevel] = {}
         for level in self.model.list_of_levels("validation"):
-            self.profile_levels[level] = ProfileLevel(self.model.get_level(level))
+            self.profile_levels[level] = ProfileLevel(self.model.get_level(level), self.absolute_acceptance)
 
     def summary(self) -> None:
         if type(self.model) == models.Model:
@@ -446,6 +470,7 @@ class Profile:
                 "Fidelity variation coefficient"
             ] = self.profile_levels[level].fidelity_cv
 
+            accuracy_stats[level]["Absolute Bias"] = self.profile_levels[level].bias
             accuracy_stats[level]["Bias %"] = self.profile_levels[level].relative_bias
 
             tolerance_interval_stats[level]["Degree of freedom"] = self.profile_levels[
@@ -473,21 +498,39 @@ class Profile:
                 "Upper acceptability limit"
             ] = self.profile_levels[level].acceptance_interval[1]
 
-            accuracy_profile_stats[level]["Recovery"] = self.profile_levels[
-                level
-            ].recovery
-            accuracy_profile_stats[level][
-                "Lower tolerance interval limit in %"
-            ] = self.profile_levels[level].rel_tolerance[0]
-            accuracy_profile_stats[level][
-                "Upper tolerance interval limit in %"
-            ] = self.profile_levels[level].rel_tolerance[1]
-            accuracy_profile_stats[level][
-                "Lower acceptability limit in %"
-            ] = self.acceptance_interval[0]
-            accuracy_profile_stats[level][
-                "Upper acceptability limit in %"
-            ] = self.acceptance_interval[1]
+            if self.absolute_acceptance:
+                accuracy_profile_stats[level]["Bias"] = self.profile_levels[
+                    level
+                ].bias
+                accuracy_profile_stats[level][
+                    "Lower tolerance interval limit"
+                ] = self.profile_levels[level].abs_tolerance[0]
+                accuracy_profile_stats[level][
+                    "Upper tolerance interval limit"
+                ] = self.profile_levels[level].abs_tolerance[1]
+                accuracy_profile_stats[level][
+                    "Lower acceptability limit"
+                ] = self.acceptance_interval[0]
+                accuracy_profile_stats[level][
+                    "Upper acceptability limit"
+                ] = self.acceptance_interval[1]
+
+            else:
+                accuracy_profile_stats[level]["Recovery"] = self.profile_levels[
+                    level
+                ].recovery
+                accuracy_profile_stats[level][
+                    "Lower tolerance interval limit in %"
+                ] = self.profile_levels[level].rel_tolerance[0]
+                accuracy_profile_stats[level][
+                    "Upper tolerance interval limit in %"
+                ] = self.profile_levels[level].rel_tolerance[1]
+                accuracy_profile_stats[level][
+                    "Lower acceptability limit in %"
+                ] = self.acceptance_interval[0]
+                accuracy_profile_stats[level][
+                    "Upper acceptability limit in %"
+                ] = self.acceptance_interval[1]
 
             uncertainty_stats[level]["Absolute uncertainty"] = self.profile_levels[
                 level
@@ -533,14 +576,42 @@ class Profile:
         print("\n\nResults uncertainty")
         print(uncertainty_datafram.astype(float).round(3))
 
-    def average_profile_parameter(self, profile_parameter: str) -> Optional[np.ndarray]:
-        if hasattr(list(self.profile_levels.values())[1], profile_parameter):
-            value_list: List[float] = []
-            for level in self.profile_levels.values():
-                value_list.append(getattr(level, profile_parameter))
-            return np.mean(value_list)
+    def average_profile_parameter(self, profile_parameter: str) -> Optional[Union[pd.DataFrame, np.ndarray]]:
+        if type(profile_parameter) == str:
+            profile_parameter = [profile_parameter]
+        params_list: dict = {}
+        for parameter in profile_parameter:
+            if hasattr(list(self.profile_levels.values())[1], parameter):
+                value_list: List[float] = []
+                for level in self.profile_levels.values():
+                    value_list.append(getattr(level, parameter))
+                params_list[parameter] = value_list
+            else:
+                warn("The profile levels do not have attribute named " + parameter)
+        if len(value_list) > 0:
+            return pd.DataFrame(params_list)
+        if len(value_list) == 1:
+            return np.ndarray(list(params_list)[0])
         else:
-            warn("The profile levels do not have attribute name " + profile_parameter)
+            return None
+
+    def get_profile_parameter(self, profile_parameter: Union[str, list]) -> Optional[Union[pd.DataFrame, np.ndarray]]:
+        if type(profile_parameter) == str:
+            profile_parameter = [profile_parameter]
+        params_list: dict = {}
+        for parameter in profile_parameter:
+            if hasattr(list(self.profile_levels.values())[1], parameter):
+                value_list: dict = {}
+                for index, level in self.profile_levels.items():
+                    value_list[index] = getattr(level, parameter)
+                params_list[parameter] = value_list
+            else:
+                warn("The profile levels do not have attribute named " + parameter)
+        if len(value_list) > 0:
+            return pd.DataFrame(params_list)
+        if len(value_list) == 1:
+            return np.ndarray(list(params_list)[0])
+        else:
             return None
 
     def calculate(self, stats_limits: Optional[Union[Dict[str, float]]] = None) -> None:
@@ -548,12 +619,18 @@ class Profile:
             stats_limits = {"Tolerance": 80, "Acceptance": 20}
         acceptance_limit = stats_limits["Acceptance"]
         tolerance_limit = stats_limits["Tolerance"]
-        self.acceptance_interval = [
-            (1 - (acceptance_limit / 100)) * 100,
-            (1 + (acceptance_limit / 100)) * 100,
-        ]
+        if self.absolute_acceptance:
+            self.acceptance_interval = [
+                0 - acceptance_limit,
+                0 + acceptance_limit
+            ]
+        else:
+            self.acceptance_interval = [
+                (1 - (acceptance_limit / 100)) * 100,
+                (1 + (acceptance_limit / 100)) * 100
+            ]
         for level in self.profile_levels.values():
-            level.calculate(tolerance_limit, acceptance_limit)
+            level.calculate(tolerance_limit, self.acceptance_interval)
         self.min_loq, self.max_loq = self.get_limits_of_quantification()
         if self.min_loq:
             self.lod = self.min_loq / 3.3
@@ -792,22 +869,60 @@ class Profile:
         fig.add_subplot(ax)
 
         levels_x = np.array(
-            [l.introduced_concentration for l in self.profile_levels.values()]
+            [level.introduced_concentration for level in self.profile_levels.values()]
         )
-        y_recovery = np.array([l.recovery for l in self.profile_levels.values()])
-        y_error = np.array([s.pc_uncertainty for s in self.profile_levels.values()])
         ax.axis["bottom", "top", "right"].set_visible(False)
-        ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
+        if self.absolute_acceptance:
+            y_error = np.array([s.abs_uncertainty for s in self.profile_levels.values()])
+            ax.axis["y=0"] = ax.new_floating_axis(nth_coord=0, value=0)
+            results_y = [
+                s.calculated_concentration - s.introduced_concentration
+                for s in self.profile_levels.values()
+            ]
+            ax.set_ylabel("Accuracy (deviation from the target value)")
+            min_tol_limits = [level.abs_tolerance[0] for level in self.profile_levels.values()]
+            max_tol_limits = [level.abs_tolerance[1] for level in self.profile_levels.values()]
+            y_recovery = np.array([level.bias for level in self.profile_levels.values()])
+            ax.errorbar(
+                levels_x,
+                y_recovery,
+                yerr=y_error,
+                color="m",
+                linewidth=2.0,
+                marker=".",
+                label="Accuracy",
+            )
+        else:
+            y_error = np.array([s.pc_uncertainty for s in self.profile_levels.values()])
+            ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
+            results_y = [
+                (s.calculated_concentration / s.introduced_concentration) * 100
+                for s in self.profile_levels.values()
+            ]
+            ax.set_ylabel("Recovery (%)")
+            min_tol_limits = [level.rel_tolerance[0] for level in self.profile_levels.values()]
+            max_tol_limits = [level.rel_tolerance[1] for level in self.profile_levels.values()]
+            y_recovery = np.array([level.recovery for level in self.profile_levels.values()])
+            ax.errorbar(
+                levels_x,
+                y_recovery,
+                yerr=y_error,
+                color="m",
+                linewidth=2.0,
+                marker=".",
+                label="Recovery",
+            )
+
         ax.plot(
             levels_x,
-            [l.rel_tolerance[0] for l in self.profile_levels.values()],
+            min_tol_limits,
             linewidth=1.0,
             color="b",
             label="Min tolerance limit",
         )
         ax.plot(
             levels_x,
-            [l.rel_tolerance[1] for l in self.profile_levels.values()],
+            max_tol_limits,
             linewidth=1.0,
             color="g",
             label="Max tolerance limit",
@@ -824,22 +939,11 @@ class Profile:
             "k--",
         )
         results_x = [s.introduced_concentration for s in self.profile_levels.values()]
-        results_y = [
-            (s.calculated_concentration / s.introduced_concentration) * 100
-            for s in self.profile_levels.values()
-        ]
+
         ax.scatter(results_x, results_y, alpha=0.5, s=2)
-        ax.errorbar(
-            levels_x,
-            y_recovery,
-            yerr=y_error,
-            color="m",
-            linewidth=2.0,
-            marker=".",
-            label="Recovery",
-        )
+
         ax.set_xlabel("Concentration")
-        ax.set_ylabel("Recovery (%)")
+
         ax.legend(loc=1)
 
         self.fig = fig

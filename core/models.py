@@ -26,8 +26,12 @@ class ModelsManager:
         )
         self.models: Dict[str, ModelGenerator] = {}
 
-    def initialize_models(self, models_name: List = None) -> ModelsManager:
+    def initialize_models(self, models_name: Union[List, str] = None) -> ModelsManager:
         if models_name is not None:
+
+            if type(models_name) == str:
+                models_name = [models_name]
+
             for model in models_name:
                 if self.get_model_info(model) is not None:
                     self.models[model] = ModelGenerator(
@@ -38,7 +42,7 @@ class ModelsManager:
                 self.models[model] = ModelGenerator(model, self.get_model_info(model))
 
         if len(self.models) == 0:
-            warn("No model to initialize")
+            warn("No model initialized")
 
         return self
 
@@ -61,21 +65,21 @@ class ModelsManager:
         if model_name in self.available_models:
             return self.available_models[model_name]["weight"]
         else:
-            warn("Model name not found, returning None")
+            warn("Model name not found, try get_available_models() for a list of available models")
             return None
 
     def get_model_formula(self, model_name: str) -> Optional[str]:
         if model_name in self.available_models:
             return self.available_models[model_name]["formula"]
         else:
-            warn("Model name not found, returning None")
+            warn("Model name not found, try get_available_models() for a list of available models")
             return None
 
     def get_model_info(self, model_name: str) -> Optional[Dict[str, str]]:
         if model_name in self.available_models:
             return self.available_models[model_name]
         else:
-            warn("Model name not found, returning None")
+            warn("Model name not found, try get_available_models() for a list of available models")
             return None
 
     @property
@@ -84,7 +88,7 @@ class ModelsManager:
 
     @property
     def initialized_models_list(self) -> List[str]:
-        return list(self.available_models.keys())
+        return list(self.models.keys())
 
 
 class Model:
@@ -135,7 +139,7 @@ class Model:
         ).fit()
 
     @property
-    def __get_model_roots(self) -> pd.DataFrame:
+    def __get_model_roots(self) -> pd.Series:
         list_of_roots: List[Union[float, None]] = []
         for validation_value in self.data.validation_data.iterrows():
             if self.multiple_calibration:
@@ -157,7 +161,7 @@ class Model:
                 list_of_roots.append(root_value[0][0])
             else:
                 list_of_roots.append(None)
-        return pd.DataFrame(list_of_roots, columns=["x_calc"])
+        return pd.Series(list_of_roots)
 
     @staticmethod
     def __build_function_from_params(

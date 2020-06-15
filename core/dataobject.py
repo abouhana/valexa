@@ -29,12 +29,14 @@ class DataObject:
             )
             self.calibration_last_concentration: float = max(self.calibration_data["x"])
 
-    def add_calculated_value(self, calculated_value: pd.DataFrame) -> None:
+    def add_calculated_value(self, calculated_value: pd.Series) -> None:
+        calculated_value = calculated_value.to_frame("x_calc")
         self.validation_data = pd.concat(
             [self.validation_data, calculated_value], axis=1
         )
 
-    def add_corrected_value(self, corrected_value):
+    def add_corrected_value(self, corrected_value: pd.DataFrame) -> None:
+        corrected_value.columns = ["x_calc"]
         self.validation_data.rename(columns={"x_calc": "x_raw"}, inplace=True)
         self.validation_data = pd.concat(
             [self.validation_data, corrected_value], axis=1
@@ -65,7 +67,7 @@ class DataObject:
         if "x_calc" in self.validation_data:
             return self.validation_data["x_calc"]
         else:
-            return None
+            return self.validation_data["y"]
 
     def data_x(self, serie_type: str = "validation") -> Optional[pd.Series]:
         if serie_type == "validation":

@@ -1,84 +1,69 @@
 import pytest
 
-from core.models import ModelHandler, Model, Result
+from core.models import ModelsManager
+from examples.data.sample_dataset import dataset
+from core.dataobject import DataObject
 
-
-class TestModelHandler:
-    @pytest.fixture()
-    def std_calib(self):
-        data = [
-            (1, 1, 0.1, 0.012),
-            (1, 2, 5.0, 0.68),
-            (1, 3, 10.0, 1.34),
-            (2, 1, 0.1, 0.013),
-            (2, 2, 5.0, 0.70),
-            (2, 3, 10.0, 1.42),
-        ]
-        return Standard(data)
+class TestModelsManager:
 
     @pytest.fixture()
-    def std_valid(self):
-        data = [
-            (1, 1, 0.1, 0.013),
-            (1, 2, 5.0, 0.70),
-            (1, 3, 10.0, 1.24),
-            (2, 1, 0.1, 0.016),
-            (2, 2, 5.0, 0.72),
-            (2, 3, 10.0, 1.37),
-        ]
-        return Standard(data)
-
-    def test_models_handler_create_models_from_calibration_data(
-        self, std_calib, std_valid
-    ):
-        max_degree = 2
-        model_handler = ModelHandler(std_calib, std_valid)
-
-        models = model_handler.get_models(max_degree=max_degree)
-
-        assert len(models) == max_degree
-        assert isinstance(models[0], Model)
-        assert models[0].series_params
-        assert len(models[0].series_calculated) == 6
-
-
-class TestModel:
-    def test_name_property(self):
-        degree = 1
-        model = Model()
-        model.degree = degree
-
-        name = model.name
-
-        assert name == Model.NAME_BY_DEGREE[degree]
+    def test_modelsmanager_hardcoded( self ):
+        return ModelsManager()
 
     @pytest.fixture()
-    def results_with_shift(self):
-        return [
-            Result(1, 1, 10.0, 8.0),
-            Result(1, 2, 20.0, 16.0),
-            Result(2, 1, 10.0, 7.5),
-            Result(2, 2, 20.0, 17.0),
-        ]
+    def test_data( self ):
+        data = dataset("feinberg_nicotinamide")
+        return DataObject(data["Validation"], data["Calibration"])
 
     @pytest.fixture()
-    def model_with_shift(self, results_with_shift):
-        model = Model()
-        model.series_calculated = results_with_shift
+    def test_data_no_calib( self ):
 
-        return model
 
-    def test_correction_detection(self, model_with_shift: Model):
-        model_with_shift.handle_correction()
 
-        assert model_with_shift.has_correction
-        assert model_with_shift.correction_factor == round(1 / 0.8, 1)
+    def test_modelsmanager_initialize( self, test_modelsmanager_hardcoded ):
+        assert isinstance(test_modelsmanager_hardcoded, ModelsManager)
 
-    def test_apply_correction_factor_to_result(
-        self, model_with_shift: Model, results_with_shift
-    ):
-        model_with_shift.handle_correction()
+    def test_initialize_models_single( self , test_modelsmanager_hardcoded):
+        test_modelsmanager_hardcoded.initialize_models("Linear")
+        assert test_modelsmanager_hardcoded.initialized_models_list == ["Linear"]
 
-        correction_factor = model_with_shift.correction_factor
-        for (index, s) in enumerate(model_with_shift.series_calculated):
-            assert s.result == results_with_shift[index].result * correction_factor
+    def test_initialize_models_multiple( self, test_modelsmanager_hardcoded ):
+        test_modelsmanager_hardcoded.initialize_models(["Linear", "Quadratic"])
+        assert test_modelsmanager_hardcoded.initialized_models_list == ["Linear", "Quadratic"]
+
+    def test_initialize_models_all( self , test_modelsmanager_hardcoded):
+        test_modelsmanager_hardcoded.initialize_models()
+        assert test_modelsmanager_hardcoded.initialized_models_list == list(test_modelsmanager_hardcoded.get_available_models().keys())
+
+    def test_initialize_model_none( self, test_modelsmanager_hardcoded ):
+        with pytest.warns(UserWarning):
+            test_modelsmanager_hardcoded.initialize_models("")
+
+    def test_modelize( self, test_modelsmanager_hardcoded, test_data ):
+        test_modelsmanager_hardcoded.initialize_models("Linear")
+        test_modelsmanager_hardcoded.modelize("Linear", test_data)
+        assert test_modelsmanager_hardcoded.models["Linear"] is not None
+
+    def test_get_available_models( self, test_modelsmanager_hardcoded ):
+        assert type(test_modelsmanager_hardcoded.get_available_models()) == dict
+
+    def test_get_model_weight( self, test_modelsmanager_hardcoded ):
+        assert type(test_modelsmanager_hardcoded.get_model_weight("1/X Weighted Linear")) == str
+        with pytest.warns(UserWarning):
+            test_modelsmanager_hardcoded.get_model_weight("")
+
+    def test_get_model_formula( self, test_modelsmanager_hardcoded ):
+        assert type(test_modelsmanager_hardcoded.get_model_formula("Linear")) == str
+        with pytest.warns(UserWarning):
+            test_modelsmanager_hardcoded.get_model_formula("")
+
+    def test_get_model_info( self, test_modelsmanager_hardcoded ):
+        assert type(test_modelsmanager_hardcoded.get_model_info("Linear")) == dict
+        with pytest.warns(UserWarning):
+            test_modelsmanager_hardcoded.get_model_info("")
+
+    def test_number_of_models( self, test_modelsmanager_hardcoded ):
+        assert type(test_modelsmanager_hardcoded.number_of_models) == int
+
+    def test_initialized_models_list( self ):
+        assert True
