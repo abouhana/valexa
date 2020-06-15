@@ -1,7 +1,7 @@
 import pytest
 
 from core.models import ModelsManager
-from examples.data.sample_dataset import dataset
+from examples.dataset.sample_dataset import dataset
 from core.dataobject import DataObject
 
 class TestModelsManager:

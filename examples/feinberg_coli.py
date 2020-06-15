@@ -1,5 +1,5 @@
 from core.profiles import ProfileManager
-from examples.data import sample_dataset
+from examples.dataset import sample_dataset
 import numpy as np
 
 
@@ -8,7 +8,7 @@ def test_feinberg_coli():
     Dataset from Feinberg, M. et al., Validation of Alternative Methods for the Analysis of Drinking Water and Their
     Application to Escherichia coli (2011), https://dx.doi.org/10.1128/AEM.00020-11
     This is an example of validation with absolute unit, in this case a bacterial count.
-    Here the raw data are manipulated before being passed to the algorithm. They are transformed in their log10
+    Here the raw dataset are manipulated before being passed to the algorithm. They are transformed in their log10
     equivalent and the target level are using the median instead of the mean. Please refer to the article for more
     information.
     """

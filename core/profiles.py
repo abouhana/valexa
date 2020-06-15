@@ -37,18 +37,18 @@ class ProfileManager:
         optimizer_parameter: Optional[OptimizerParams] = None,
     ):
         """
-        Init ProfileManager with the necessary data
+        Init ProfileManager with the necessary dataset
         :param compound_name: This is the name of the compounds for the profile
-        :param data: These are the data in the form of a Dictionnary containing a DataFrame. The format should be
-        {"Validation": DataFrame, "Calibration": DataFrame}. Note that the calibration data are optional.
+        :param data: These are the dataset in the form of a Dictionnary containing a DataFrame. The format should be
+        {"Validation": DataFrame, "Calibration": DataFrame}. Note that the calibration dataset are optional.
         :param tolerance_limit: (Optional) The tolerance limit (beta). Default = 80
         :param acceptance_limit: (Optional) The acceptance limit (lambda). Default = 20
         :param absolute_acceptance: (Optional) If True, the acceptance will be considered to be in absolute unit instead
         of percentage. Default = False
-        :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced data. This is only to
+        :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced dataset. This is only to
         ease the reading of the output.
-        :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the data and
-        generate multiple profile with each subset of data.
+        :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the dataset and
+        generate multiple profile with each subset of dataset.
         :param rolling_data_limit: (Optional) In combination with rolling_data, this is the minimum lenght of the subset
         that rolling_data will go to. Default = 3.
         :param model_to_test: (Optional) A list of model to test, if not set the system will test them all.
@@ -105,7 +105,7 @@ class ProfileManager:
         if self.optimizer_parameters is None:
             warn("No Optimizer parameter set. Optimizer cannot be run.")
         elif "Calibration" not in self.data:
-            warn("Optimizer cannot be run on validation using direct data.")
+            warn("Optimizer cannot be run on validation using direct dataset.")
         else:
             self.sorted_profiles = Optimizer(
                 self.profiles, self.optimizer_parameters
@@ -571,7 +571,7 @@ class Profile:
         print(accuracy_dataframe.astype(float).round(3))
         print("\n\nTolerance interval statistics")
         print(tolerance_interval_dataframe.astype(float).round(3))
-        print("\n\nAccuracy profile data")
+        print("\n\nAccuracy profile dataset")
         print(accuracy_profile_dataframe.astype(float).round(3))
         print("\n\nResults uncertainty")
         print(uncertainty_datafram.astype(float).round(3))
@@ -976,7 +976,7 @@ class Optimizer:
             "model.rsquared": self.__get_model_rsquared,
             "max_loq": self.__get_max_loq,
             "lod": self.__get_lod,
-            "model.data.calibration_levels": self.__get_model_data_calibration_levels,
+            "model.dataset.calibration_levels": self.__get_model_data_calibration_levels,
             "validation_range": self.__get_validation_range,
             "average.bias": self.__get_average_bias,
         }
@@ -1082,7 +1082,7 @@ class Optimizer:
             for key, profile in enumerate(self.profiles[profile_type]):
                 temp_dataframe = pd.DataFrame(
                     [[profile_type, key, getattr(profile.model.data, parameter)]],
-                    columns=["Model", "Index", "model.data." + parameter],
+                    columns=["Model", "Index", "model.dataset." + parameter],
                 )
                 return_value = return_value.append(temp_dataframe, ignore_index=True)
         return return_value
