@@ -12,8 +12,8 @@ from patsy.highlevel import dmatrix
 from warnings import warn
 from typing import List, Dict, Union, Callable, Optional
 
-from core.models_list import model_list
-from core.dataobject import DataObject
+from valexa.models_list import model_list
+from valexa.dataobject import DataObject
 
 ModelInfo = Dict[str, Optional[str]]
 FitInfo = Union[sm.RegressionResultsWrapper, Dict[int, sm.RegressionResultsWrapper]]

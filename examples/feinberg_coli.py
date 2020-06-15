@@ -1,4 +1,4 @@
-from core.profiles import ProfileManager
+from valexa.profiles import ProfileManager
 from examples.dataset import sample_dataset
 import numpy as np
 

@@ -1,4 +1,4 @@
-from core.models_list import model_list
+from valexa.models_list import model_list
 import pytest
 
 
