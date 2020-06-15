@@ -1,7 +1,7 @@
 import pytest
 
 from valexa.models import ModelsManager
-from examples.dataset.sample_dataset import dataset
+from valexa.examples.sample_dataset import dataset
 from valexa.dataobject import DataObject
 
 class TestModelsManager:

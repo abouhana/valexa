@@ -1,5 +1,5 @@
 from valexa.profiles import ProfileManager
-from examples.dataset import sample_dataset
+from examples.data import sample_dataset
 import numpy as np
 
 import time
