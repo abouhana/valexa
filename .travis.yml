@@ -10,3 +10,4 @@ install:
   - poetry install
 
 script:
+  - pytest --cov

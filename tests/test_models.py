@@ -1,7 +1,7 @@
 import pytest
 
 from valexa.models import ModelsManager
-from valexa.examples.sample_dataset import dataset
+from valexa.examples.dataset.sample_dataset import dataset
 from valexa.dataobject import DataObject
 
 class TestModelsManager:
@@ -14,11 +14,6 @@ class TestModelsManager:
     def test_data( self ):
         data = dataset("feinberg_nicotinamide")
         return DataObject(data["Validation"], data["Calibration"])
-
-    @pytest.fixture()
-    def test_data_no_calib( self ):
-
-
 
     def test_modelsmanager_initialize( self, test_modelsmanager_hardcoded ):
         assert isinstance(test_modelsmanager_hardcoded, ModelsManager)

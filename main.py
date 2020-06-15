@@ -1,9 +1,4 @@
-from valexa.profiles import ProfileManager
-from valexa.dataset.sa import sample_dataset
-from examples.feinberg_coli import test_feinberg_coli
-import numpy as np
-
-import time
+from valexa.examples.test_feinberg_coli import test_feinberg_coli
 
 if __name__ == "__main__":
 

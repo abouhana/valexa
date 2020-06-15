@@ -247,9 +247,9 @@ class ProfileLevel:
         self.nb_series: Optional[int] = None
         self.nb_measures: Optional[int] = None
         self.nb_rep: Optional[int] = None
-        self.fidelity_var: Optional[float] = None
-        self.fidelity_std: Optional[float] = None
-        self.fidelity_cv: Optional[float] = None
+        self.inter_fidelity_var: Optional[float] = None
+        self.inter_fidelity_std: Optional[float] = None
+        self.inter_fidelity_cv: Optional[float] = None
         self.ratio_var: Optional[float] = None
         self.b_coefficient: Optional[float] = None
         self.degree_of_freedom: Optional[float] = None
@@ -282,16 +282,16 @@ class ProfileLevel:
         self.inter_series_std_pc = (
             self.inter_series_std / self.calculated_concentration * 100
         )
-        self.fidelity_var = np.sum([self.repeatability_var, self.inter_series_var])
-        self.fidelity_std = math.sqrt(self.fidelity_var)
-        self.fidelity_cv = self.fidelity_std / self.introduced_concentration * 100
+        self.inter_fidelity_var = np.sum([self.repeatability_var, self.inter_series_var])
+        self.inter_fidelity_std = math.sqrt(self.inter_fidelity_var)
+        self.inter_fidelity_cv = self.inter_fidelity_std / self.introduced_concentration * 100
         self.ratio_var = self.get_ratio_var()
         self.b_coefficient = (self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1)
         self.degree_of_freedom = (self.ratio_var + 1) ** 2 / (
             (self.ratio_var + (1 / self.nb_rep)) ** 2 / (self.nb_series - 1)
             + (1 - (1 / self.nb_rep)) / self.nb_measures
         )
-        self.tolerance_std = self.fidelity_std * (
+        self.tolerance_std = self.inter_fidelity_std * (
             math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient)))
         )
         self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
@@ -464,11 +464,11 @@ class Profile:
                 "Inter-series standard deviation (sB)"
             ] = self.profile_levels[level].inter_series_std
             fidelity_stats[level][
-                "Fidelity standard deviation (sFI)"
-            ] = self.profile_levels[level].fidelity_std
+                "Intermediate Fidelity standard deviation (sFI)"
+            ] = self.profile_levels[level].inter_fidelity_std
             fidelity_stats[level][
-                "Fidelity variation coefficient"
-            ] = self.profile_levels[level].fidelity_cv
+                "Intermediate Fidelity variation coefficient"
+            ] = self.profile_levels[level].inter_fidelity_cv
 
             accuracy_stats[level]["Absolute Bias"] = self.profile_levels[level].bias
             accuracy_stats[level]["Bias %"] = self.profile_levels[level].relative_bias

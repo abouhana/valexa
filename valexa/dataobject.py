@@ -35,8 +35,8 @@ class DataObject:
             [self.validation_data, calculated_value], axis=1
         )
 
-    def add_corrected_value(self, corrected_value: pd.DataFrame) -> None:
-        corrected_value.columns = ["x_calc"]
+    def add_corrected_value(self, corrected_value: pd.Series) -> None:
+        corrected_value = corrected_value.to_frame("x_calc")
         self.validation_data.rename(columns={"x_calc": "x_raw"}, inplace=True)
         self.validation_data = pd.concat(
             [self.validation_data, corrected_value], axis=1

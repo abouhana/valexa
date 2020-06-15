@@ -132,7 +132,7 @@ class TestDataObject:
 
     @pytest.fixture()
     def calculated_data( self ):
-        return pd.DataFrame(
+        return pd.Series(
             [
                 0.0971882842930686,
                 0.111145506906756,
@@ -194,8 +194,7 @@ class TestDataObject:
                 11.6316183263669,
                 11.8530855239004,
                 11.5910261958175,
-            ],
-            columns=["x_calc"],
+            ]
         )
 
     @pytest.fixture()
@@ -237,8 +236,8 @@ class TestDataObject:
             self, test_object_with_calib, test_object_without_calib, calculated_data
     ):
         test_object_with_calib.add_calculated_value(calculated_data)
-        assert test_object_without_calib.data_x_calc is None
-        assert test_object_with_calib.data_x_calc.equals(calculated_data["x_calc"])
+        assert test_object_without_calib.data_x_calc is test_object_without_calib.data_y()
+        assert test_object_with_calib.data_x_calc.equals(calculated_data)
 
     def test_data_y( self, test_object_with_calib, validation_data, calibration_data ):
         assert test_object_with_calib.data_y().equals(validation_data["y"])
@@ -258,4 +257,4 @@ class TestDataObject:
     def test_add_corrected_value(self, test_object_with_calib, calculated_data):
         test_object_with_calib.add_calculated_value(calculated_data)
         test_object_with_calib.add_corrected_value(calculated_data+1)
-        assert test_object_with_calib.data_x_calc.equals(calculated_data["x_calc"]+1)
+        assert test_object_with_calib.data_x_calc.tolist() == (calculated_data+1).to_list()
