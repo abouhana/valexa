@@ -104,7 +104,6 @@ ENV/
 .mypy_cache/
 
 # Data directory
-data
 !/tests/data/
 
 # Custom Pyinstaller spec
