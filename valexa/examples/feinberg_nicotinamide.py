@@ -13,16 +13,6 @@ def test_feinberg_nicotinamide():
 
     This is an example of validation with a linear calibration curve made before every series and correction factor.
 
-    The reference DataFrame is as follow:
-
-     Level | repeatability_std | inter_series_std | tolerance_std | bias  | abs_tolerance_low | abs_tolerance_high
-    -------+-------------------+------------------+---------------+-------+-------------------+--------------------
-      1    | 0.141             | 0.092            | 0.173         | 0.024 | -0.206            | 0.254
-    -------+-------------------+------------------+---------------+-------+-------------------+--------------------
-      2    | 0.093             | 0.081            | 0.127         | 0.055 | -0.115            | 0.225
-    -------+-------------------+------------------+---------------+-------+-------------------+--------------------
-      3    | 0.099             | 0.141            | 0.178         | 0.093 | -0.147            | 0.333
-
     The reference DataFrame for the model is as follow:
 
      Serie | Slope  | Origin
@@ -43,6 +33,7 @@ def test_feinberg_nicotinamide():
         "Test",
         data,
         acceptance_limit=10,
+        tolerance_limit=80,
         model_to_test="Linear"
     )
     profiles.make_profiles()

@@ -261,6 +261,9 @@ class ProfileLevel:
         self.pc_uncertainty: Optional[float] = None
         self.cover_factor: Optional[float] = None
         self.absolute_acceptance: bool = absolute_acceptance
+        self.intra_series_var: Optional[float] = None
+        self.intra_series_std: Optional[float] = None
+        self.intra_series_cv: Optional[float] = None
 
     def calculate(self, tolerance_limit: float, acceptance_limit: float) -> None:
         self.nb_series = self.data["Serie"].nunique()
@@ -341,7 +344,7 @@ class ProfileLevel:
         number_of_serie = self.data["Serie"].nunique()
         x_calc = [self.data[self.data["Serie"] == serie]["x_calc"] for serie in self.data["Serie"].unique()]
 
-        return (1/(np.sum(number_item_in_serie) - number_of_serie)) * np.sum([np.power(np.subtract(x_calc[mean_x_level_serie.index(mean_serie)],mean_serie),2) for mean_serie in mean_x_level_serie])
+        return (1/(np.sum(number_item_in_serie) - number_of_serie)) * np.sum([np.sum(np.power(np.subtract(x_calc[mean_x_level_serie.index(mean_serie)],mean_serie),2)) for mean_serie in mean_x_level_serie])
 
     @property
     def get_inter_series_var( self ) -> float:
@@ -599,13 +602,13 @@ class Profile:
                 value_list: List[float] = []
                 for level in self.profile_levels.values():
                     value_list.append(getattr(level, parameter))
-                params_list[parameter] = value_list
+                params_list[parameter] = np.mean(value_list)
             else:
                 warn("The profile levels do not have attribute named " + parameter)
-        if len(value_list) > 0:
+        if len(params_list) == 1:
+            return list(params_list.values())[0]
+        elif len(params_list) > 1:
             return pd.DataFrame(params_list)
-        if len(value_list) == 1:
-            return np.ndarray(list(params_list)[0])
         else:
             return None
 
@@ -621,10 +624,10 @@ class Profile:
                 params_list[parameter] = value_list
             else:
                 warn("The profile levels do not have attribute named " + parameter)
-        if len(value_list) > 0:
+        if len(params_list) == 1:
+            return list(params_list.values())[0]
+        elif len(params_list) > 1:
             return pd.DataFrame(params_list)
-        if len(value_list) == 1:
-            return np.ndarray(list(params_list)[0])
         else:
             return None
 
@@ -644,7 +647,7 @@ class Profile:
                 (1 + (acceptance_limit / 100)) * 100
             ]
         for level in self.profile_levels.values():
-            level.calculate(tolerance_limit, tolerance_limit)
+            level.calculate(tolerance_limit, acceptance_limit)
 
         self.min_loq, self.max_loq = self.get_limits_of_quantification()
         if self.min_loq:
@@ -698,7 +701,7 @@ class Profile:
                 {
                     "level_id": key,
                     "x_coord": level.introduced_concentration,
-                    "lower_tol_y_coord": level.rel_tolerance[0],
+                    "lower_tol_y_coord": level.abs_tolerance[0],
                     "lower_acc_y_coord": level.acceptance_interval[0],
                     "lower_inside": level.abs_tolerance[0]
                     > level.acceptance_interval[0],
@@ -970,9 +973,7 @@ class Profile:
         if ratio < self.correction_threshold[0] or ratio > self.correction_threshold[1]:
             if self.forced_correction_value is not None:
                 ratio = 1 / self.forced_correction_value
-            corrected_value: pd.DataFrame = pd.DataFrame(
-                self.model.data_x_calc / ratio, columns=["x_calc"]
-            )
+            corrected_value: pd.Series = pd.Series(self.model.data_x_calc / ratio)
             self.has_correction = True
             self.correction_factor = 1 / ratio
             self.model.data.add_corrected_value(corrected_value)
@@ -1052,7 +1053,7 @@ class Optimizer:
         return self.__get_profile_model("rsquared")
 
     def __get_average_bias(self) -> pd.DataFrame:
-        return self.__get_profiel_average("bias")
+        return self.__get_profile_average("bias")
 
     def __get_model_data_calibration_levels(self) -> pd.DataFrame:
         return self.__get_profile_model_data("calibration_levels")

@@ -1,11 +1,7 @@
 from valexa.profiles import ProfileManager
 from valexa.examples.dataset import sample_dataset
-import numpy as np
 
-import time
-
-if __name__ == "__main__":
-    start_time = time.time()
+def test_intern_dataset():
     optimizer_parameter = {
         "has_limits": True,
         "validation_range": "max",
@@ -13,24 +9,21 @@ if __name__ == "__main__":
         "min_loq": "min",
         "model.rsquared": "max",
     }
-    data = sample_dataset.dataset("feinberg_coli")
-
-    data["Validation"]["x"] = np.log10(data["Validation"]["x"])
-    data["Validation"]["y"] = np.log10(data["Validation"]["y"])
-    for level in data["Validation"]["Level"].unique():
-        data["Validation"].loc[data["Validation"]["Level"] == level,"x"] = np.median(data["Validation"][data["Validation"]["Level"] == level]["x"])
-
+    data = sample_dataset.dataset("intern_test")
 
     profiles: ProfileManager = ProfileManager(
         "Test",
         data,
+        model_to_test="Linear",
+        rolling_data=True,
         absolute_acceptance=True,
-        acceptance_limit=0.3
+        acceptance_limit=20,
+        optimizer_parameter=optimizer_parameter,
+        allow_correction=True
     )
-    print("--- %s seconds ---" % (time.time() - start_time))
-    profiles.make_profiles(["Linear", "Quadratic"])
-    print("--- %s seconds ---" % (time.time() - start_time))
+    profiles.make_profiles(["Linear"])
     profiles.optimize()
-    print("--- %s seconds ---" % (time.time() - start_time))
 
-    exit()
+    assert len(profiles.sorted_profiles) == 2
+    return True
+
