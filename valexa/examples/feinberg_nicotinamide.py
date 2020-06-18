@@ -24,8 +24,7 @@ def test_feinberg_nicotinamide():
      3     | 69.167 | -5.767
 
     Note: There seems to be a disrepancy between the value shown in the book and the value calculated by Valexa. This
-    may be explained by the rounding of the degree of liberty needed to calculate the results with Excel as shown in
-    the book.
+    may be explained by rounding error in Excel.
     """
     data = sample_dataset.dataset("feinberg_nicotinamide")
 
