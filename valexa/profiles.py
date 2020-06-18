@@ -403,6 +403,7 @@ class ProfileLevel:
 
 
 class Profile:
+
     def __init__(
         self,
         model: Union[models.Model, DataObject],
@@ -636,16 +637,7 @@ class Profile:
             stats_limits = {"Tolerance": 80, "Acceptance": 20}
         acceptance_limit = stats_limits["Acceptance"]
         tolerance_limit = stats_limits["Tolerance"]
-        if self.absolute_acceptance:
-            self.acceptance_interval = [
-                0 - acceptance_limit,
-                0 + acceptance_limit
-            ]
-        else:
-            self.acceptance_interval = [
-                (1 - (acceptance_limit / 100)) * 100,
-                (1 + (acceptance_limit / 100)) * 100
-            ]
+
         for level in self.profile_levels.values():
             level.calculate(tolerance_limit, acceptance_limit)
 
