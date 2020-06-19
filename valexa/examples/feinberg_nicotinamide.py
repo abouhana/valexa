@@ -68,11 +68,6 @@ def test_feinberg_nicotinamide():
                 2: 0.0598,
                 3: 0.0919
             },
-            "bias": {
-                1: 2.3,
-                2: 0.5,
-                3: -1.1
-            },
             "abs_tolerance_low": {
                 1: -0.206,
                 2: -0.115,
@@ -85,14 +80,11 @@ def test_feinberg_nicotinamide():
             },
         })
 
-    #assertion_dataframe: pd.DataFrame = profiles.profiles["Direct"][0].get_profile_parameter(["repeatability_std",
-    #                                                                                          "inter_series_std",
-    #                                                                                          "tolerance_std",
-    #                                                                                          "bias"]).round(3)
+    assertion_dataframe: pd.DataFrame = profiles.profiles["Linear"][0].get_profile_parameter(["repeatability_std",
+                                                                                              "inter_series_std",
+                                                                                              "tolerance_std"]).round(3)
 
-    #assertion_dataframe[["abs_tolerance_low", "abs_tolerance_high"]] = pd.DataFrame(
-    #    profiles.profiles["Direct"][0].get_profile_parameter(["abs_tolerance"]).abs_tolerance.tolist(),
-    #    index=assertion_dataframe.index
-    #).round(3)
+    assertion_dataframe[["abs_tolerance_low", "abs_tolerance_high"]] = pd.DataFrame(
+        profiles.profiles["Linear"][0].get_profile_parameter(["abs_tolerance"])).transpose().round(3)
 
     assert assertion_dataframe.equals(litterature_dataframe)

@@ -158,7 +158,7 @@ class Model:
                     ).evalf()
                 )
             if len(root_value) > 0:
-                list_of_roots.append(root_value[0][0])
+                list_of_roots.append(float(root_value[0][0]))
             else:
                 list_of_roots.append(None)
         return pd.Series(list_of_roots)

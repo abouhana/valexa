@@ -274,6 +274,7 @@ class ProfileLevel:
         self.acceptance_interval = self.get_acceptance_interval(acceptance_limit)
         self.bias = self.calculated_concentration - self.introduced_concentration
         self.relative_bias = (self.bias / self.introduced_concentration) * 100
+
         self.recovery = (
             self.calculated_concentration / self.introduced_concentration
         ) * 100
@@ -300,6 +301,7 @@ class ProfileLevel:
         self.total_error_abs = abs(self.bias) + abs(self.intermediate_precision_std)
         self.total_error_rel = self.total_error_abs/self.introduced_concentration * 100
         self.ratio_var = self.get_ratio_var
+
         self.b_coefficient = math.sqrt((self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1))
         self.degree_of_freedom = (self.ratio_var + 1) ** 2 / (
             (self.ratio_var + (1 / self.nb_rep)) ** 2 / (self.nb_series - 1)
@@ -461,104 +463,50 @@ class Profile:
         accuracy_profile_stats: Dict[ProfileLevel, dict] = {}
         uncertainty_stats: Dict[ProfileLevel, dict] = {}
 
-        for level in list(self.profile_levels.keys()):
-            level_stats[level]: Dict[ProfileLevel, float] = {}
-            fidelity_stats[level]: Dict[ProfileLevel, float] = {}
-            accuracy_stats[level]: Dict[ProfileLevel, float] = {}
-            tolerance_interval_stats[level]: Dict[ProfileLevel, float] = {}
-            accuracy_profile_stats[level]: Dict[ProfileLevel, float] = {}
-            uncertainty_stats[level]: Dict[ProfileLevel, float] = {}
+        for key, level in self.profile_levels.items():
+            level_stats[key]: Dict[ProfileLevel, float] = {}
+            fidelity_stats[key]: Dict[ProfileLevel, float] = {}
+            accuracy_stats[key]: Dict[ProfileLevel, float] = {}
+            tolerance_interval_stats[key]: Dict[ProfileLevel, float] = {}
+            accuracy_profile_stats[key]: Dict[ProfileLevel, float] = {}
+            uncertainty_stats[key]: Dict[ProfileLevel, float] = {}
 
-            level_stats[level]["Introduced Concentration"] = self.profile_levels[
-                level
-            ].introduced_concentration
-            level_stats[level]["Calculated Concentration"] = self.profile_levels[
-                level
-            ].calculated_concentration
-            fidelity_stats[level][
-                "Repeatability standard deviation (sr)"
-            ] = self.profile_levels[level].repeatability_std
-            fidelity_stats[level][
-                "Inter-series standard deviation (sB)"
-            ] = self.profile_levels[level].inter_series_std
-            fidelity_stats[level][
-                "Intermediate Fidelity standard deviation (sFI)"
-            ] = self.profile_levels[level].intermediate_precision_std
-            fidelity_stats[level][
-                "Intermediate Fidelity variation coefficient"
-            ] = self.profile_levels[level].intermediate_precision_cv
+            level_stats[key]["Introduced Concentration"] = level.introduced_concentration
+            level_stats[key]["Calculated Concentration"] = level.calculated_concentration
+            fidelity_stats[key]["Repeatability standard deviation (sr)"] = level.repeatability_std
+            fidelity_stats[key][ "Inter-series standard deviation (sB)"] = level.inter_series_std
+            fidelity_stats[key][ "Intermediate Fidelity standard deviation (sFI)"] = level.intermediate_precision_std
+            fidelity_stats[key]["Intermediate Fidelity variation coefficient"] = level.intermediate_precision_cv
 
-            accuracy_stats[level]["Absolute Bias"] = self.profile_levels[level].bias
-            accuracy_stats[level]["Bias %"] = self.profile_levels[level].relative_bias
+            accuracy_stats[key]["Absolute Bias"] = level.bias
+            accuracy_stats[key]["Bias %"] = level.relative_bias
 
-            tolerance_interval_stats[level]["Degree of freedom"] = self.profile_levels[
-                level
-            ].degree_of_freedom
-            tolerance_interval_stats[level][
-                "Coverage factor (kIT)"
-            ] = self.profile_levels[level].cover_factor
-            tolerance_interval_stats[level][
-                "Tolerance standard deviation (sIT)"
-            ] = self.profile_levels[level].tolerance_std
-            tolerance_interval_stats[level]["B^2 coefficient"] = self.profile_levels[
-                level
-            ].b_coefficient
-            tolerance_interval_stats[level][
-                "Lower tolerance interval limit"
-            ] = self.profile_levels[level].abs_tolerance[0]
-            tolerance_interval_stats[level][
-                "Upper tolerance interval limit"
-            ] = self.profile_levels[level].abs_tolerance[1]
-            tolerance_interval_stats[level][
-                "Lower acceptability limit"
-            ] = self.profile_levels[level].acceptance_interval[0]
-            tolerance_interval_stats[level][
-                "Upper acceptability limit"
-            ] = self.profile_levels[level].acceptance_interval[1]
+            tolerance_interval_stats[key]["Degree of freedom"] = level.degree_of_freedom
+            tolerance_interval_stats[key]["Coverage factor (kIT)"] = level.cover_factor
+            tolerance_interval_stats[key]["Tolerance standard deviation (sIT)"] = level.tolerance_std
+            tolerance_interval_stats[key]["B^2 coefficient"] = level.b_coefficient
+            tolerance_interval_stats[key]["Lower tolerance interval limit"] = level.abs_tolerance[0]
+            tolerance_interval_stats[key]["Upper tolerance interval limit"] = level.abs_tolerance[1]
+            tolerance_interval_stats[key]["Lower acceptability limit"] = level.acceptance_interval[0]
+            tolerance_interval_stats[key]["Upper acceptability limit"] = level.acceptance_interval[1]
 
             if self.absolute_acceptance:
-                accuracy_profile_stats[level]["Bias"] = self.profile_levels[
-                    level
-                ].bias
-                accuracy_profile_stats[level][
-                    "Lower tolerance interval limit"
-                ] = self.profile_levels[level].abs_tolerance[0]
-                accuracy_profile_stats[level][
-                    "Upper tolerance interval limit"
-                ] = self.profile_levels[level].abs_tolerance[1]
-                accuracy_profile_stats[level][
-                    "Lower acceptability limit"
-                ] = self.acceptance_interval[0]
-                accuracy_profile_stats[level][
-                    "Upper acceptability limit"
-                ] = self.acceptance_interval[1]
+                accuracy_profile_stats[key]["Bias"] = level.bias
+                accuracy_profile_stats[key]["Lower tolerance interval limit"] = level.abs_tolerance[0]
+                accuracy_profile_stats[key]["Upper tolerance interval limit"] = level.abs_tolerance[1]
+                accuracy_profile_stats[key]["Lower acceptability limit"] = level.acceptance_interval[0]
+                accuracy_profile_stats[key]["Upper acceptability limit"] = level.acceptance_interval[1]
 
             else:
-                accuracy_profile_stats[level]["Recovery"] = self.profile_levels[
-                    level
-                ].recovery
-                accuracy_profile_stats[level][
-                    "Lower tolerance interval limit in %"
-                ] = self.profile_levels[level].rel_tolerance[0]
-                accuracy_profile_stats[level][
-                    "Upper tolerance interval limit in %"
-                ] = self.profile_levels[level].rel_tolerance[1]
-                accuracy_profile_stats[level][
-                    "Lower acceptability limit in %"
-                ] = self.acceptance_interval[0]
-                accuracy_profile_stats[level][
-                    "Upper acceptability limit in %"
-                ] = self.acceptance_interval[1]
+                accuracy_profile_stats[key]["Recovery"] = level.recovery
+                accuracy_profile_stats[key]["Lower tolerance interval limit in %"] = level.rel_tolerance[0]
+                accuracy_profile_stats[key]["Upper tolerance interval limit in %"] = level.rel_tolerance[1]
+                accuracy_profile_stats[key]["Lower acceptability limit in %"] = level.acceptance_interval[0]
+                accuracy_profile_stats[key]["Upper acceptability limit in %"] = level.acceptance_interval[1]
 
-            uncertainty_stats[level]["Absolute uncertainty"] = self.profile_levels[
-                level
-            ].abs_uncertainty
-            uncertainty_stats[level]["Relative uncertainty"] = self.profile_levels[
-                level
-            ].rel_uncertainty
-            uncertainty_stats[level]["Relative uncertainty in %"] = self.profile_levels[
-                level
-            ].pc_uncertainty
+            uncertainty_stats[key]["Absolute uncertainty"] = level.abs_uncertainty
+            uncertainty_stats[key]["Relative uncertainty"] = level.rel_uncertainty
+            uncertainty_stats[key]["Relative uncertainty in %"] = level.pc_uncertainty
 
         level_dataframe: pd.DataFrame = pd.DataFrame(level_stats)
         fidelity_dataframe: pd.DataFrame = pd.DataFrame(fidelity_stats)
