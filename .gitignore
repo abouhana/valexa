@@ -104,8 +104,7 @@ ENV/
 .mypy_cache/
 
 # Data directory
-data
-!/valexa/tests/data/
+!/tests/data/
 
 # Custom Pyinstaller spec
 !/valexa.spec

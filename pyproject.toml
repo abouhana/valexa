@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "valexa"
+version = "0.1.0"
+description = "A method validation helper using accuracy profile."
+authors = ["Hubert Marceau <h.marceau@phytochemia.com>"]
+license = "MPL-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pandas = "^1.0.3"
+numpy = "^1.18.4"
+sympy = "^1.5.1"
+statsmodels = "^0.11.1"
+patsy = "^0.5.1"
+shapely = "^1.7.0"
+matplotlib = "^3.2.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.4.2"
+pytest-cov = "^2.10.0"
+coverage = {extras = ["toml"], version = "^5.1"}
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+    "/valexa/examples",
+    ]
+
+[tool.coverage.run]
+source = ["valexa"]
+omit = ["valexa/examples/*", "valexa/validate.py"]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
