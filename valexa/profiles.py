@@ -360,6 +360,24 @@ class ProfileLevel:
         return inter_serie_var
 
     @property
+    def sum_of_square_residual( self ) -> float:
+        mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
+                              self.data["Serie"].unique()]
+        x_calc = [self.data[self.data["Serie"] == serie]["x_calc"] for serie in self.data["Serie"].unique()]
+
+        return np.sum([np.sum(np.power(np.subtract(x_calc[mean_x_level_serie.index(mean_serie)], mean_serie), 2)) for mean_serie in mean_x_level_serie])
+
+    @property
+    def sum_of_square_total( self ) -> float:
+        mean_x_level = self.data["x_calc"].mean()
+        mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
+                              self.data["Serie"].unique()]
+        number_item_in_serie = [len(self.data[self.data["Serie"] == serie]) for serie in self.data["Serie"].unique()]
+
+        return np.sum(np.multiply(number_item_in_serie, np.power(np.subtract(mean_x_level_serie, mean_x_level), 2)))
+
+
+    @property
     def get_repeatability_var( self ) -> float:
         if self.mean_square_error < self.mean_square_model:
             repeatability_var = self.mean_square_error
@@ -541,6 +559,8 @@ class Profile:
         print(accuracy_profile_dataframe.astype(float).round(nb_of_figure))
         print("\n\nResults uncertainty")
         print(uncertainty_datafram.astype(float).round(nb_of_figure))
+
+        return True
 
     def average_profile_parameter(self, profile_parameter: str) -> Optional[Union[pd.DataFrame, np.ndarray]]:
         if type(profile_parameter) == str:
@@ -898,13 +918,13 @@ class Profile:
         )
         ax.plot(
             levels_x,
-            [self.acceptance_interval[0] for _ in self.profile_levels.values()],
+            [level.acceptance_interval[0] for level in self.profile_levels.values()],
             "k--",
             label="Acceptance limit",
         )
         ax.plot(
             levels_x,
-            [self.acceptance_interval[1] for _ in self.profile_levels.values()],
+            [level.acceptance_interval[1] for level in self.profile_levels.values()],
             "k--",
         )
         results_x = [s.introduced_concentration for s in self.profile_levels.values()]

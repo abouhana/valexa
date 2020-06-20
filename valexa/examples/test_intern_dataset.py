@@ -16,14 +16,16 @@ def test_intern_dataset():
         data,
         model_to_test="Linear",
         rolling_data=True,
-        absolute_acceptance=True,
-        acceptance_limit=20,
         optimizer_parameter=optimizer_parameter,
         allow_correction=True
     )
     profiles.make_profiles(["Linear"])
     profiles.optimize()
 
-    assert len(profiles.sorted_profiles) == 2
+    profiles.profiles["Linear"][1].summary()
+    profiles.profiles["Linear"][1].make_plot()
+
+    assert len(profiles.sorted_profiles) == 6
+    assert profiles.profiles["Linear"][1].fig is not None
     return True
 
