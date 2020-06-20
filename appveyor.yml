@@ -7,6 +7,7 @@ environment:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "pip install poetry"
+  - "pip install -U pytest"
   - "poetry install"
 
 test_script:
