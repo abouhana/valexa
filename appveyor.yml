@@ -6,11 +6,6 @@ environment:
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-
-  - "python --version"
-
-  - "python install pip"
-
   - "pip install poetry"
   - "poetry install"
 
