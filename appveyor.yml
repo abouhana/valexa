@@ -2,24 +2,18 @@ build: false
 
 environment:
   matrix:
-#  - PYTHON: "C:\\Python36-x64"
-  - PYTHON: "C:\\Miniconda38-x64"
+  - PYTHON: "C:\\Python38-x64"
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
   - "python --version"
 
-  - "conda install -yq pip numpy scipy matplotlib"
+  - "pyton install pip"
 
-  - "C:\\Miniconda36-x64\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
   - "pip install poetry"
   - "poetry install"
 
 test_script:
-  - "poetry run pytest"
+  - "pytest --cov"
 
-
-#artifacts:
-#  - path: dist
-#    name: Valexa
