@@ -6,6 +6,7 @@ from warnings import warn
 from scipy.stats import t
 import shapely.geometry
 
+
 import math
 import numpy as np
 import pandas as pd
@@ -34,36 +35,41 @@ class ProfileManager:
         allow_correction: bool = False,
         correction_threshold: Optional[List[float]] = None,
         forced_correction_value: Optional[float] = None,
+        correction_round_to: int = 1,
         optimizer_parameter: Optional[OptimizerParams] = None,
+        validate_first: bool = False
     ):
         """
         Init ProfileManager with the necessary dataset
         :param compound_name: This is the name of the compounds for the profile
         :param data: These are the dataset in the form of a Dictionnary containing a DataFrame. The format should be
         {"Validation": DataFrame, "Calibration": DataFrame}. Note that the calibration dataset are optional.
-        :param tolerance_limit: (Optional) The tolerance limit (beta). Default = 80
-        :param acceptance_limit: (Optional) The acceptance limit (lambda). Default = 20
+        :param tolerance_limit: (Optional) The tolerance limit (beta). Default is 80
+        :param acceptance_limit: (Optional) The acceptance limit (lambda). Default is 20
         :param absolute_acceptance: (Optional) If True, the acceptance will be considered to be in absolute unit instead
-        of percentage. Default = False
+        of percentage. Default is False
         :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced dataset. This is only to
-        ease the reading of the output.
+        ease the reading of the output. Default is None
         :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the dataset and
-        generate multiple profile with each subset of dataset.
+        generate multiple profile with each subset of dataset. Default is False.
         :param rolling_data_limit: (Optional) In combination with rolling_data, this is the minimum length of the subset
         that rolling_data will go to. Default = 3.
-        :param model_to_test: (Optional) A list of model to test, if not set the system will test them all.
-        :param generate_figure: (Optional) Generate a plot of the profile.
+        :param model_to_test: (Optional) A list of model to test, if not set the system will test them all. Default is
+        None.
+        :param generate_figure: (Optional) Generate a plot of the profile. Default is False.
         :param allow_correction: (Optional) If set to true, the model will be multiplied by a factor to bring the
-        recovery close to 1.
+        recovery close to 1. Default is False
         :param correction_threshold: (Optional) If allow_correction is set to True, these will overwrite the default
         correction threshold (0.9 - 1.1). Setting this to [1,1] will force a correction to be calculated. The
-        correction_threshold is calculated by calculating the average recovery ratio.. If the ratio is outside the
-        indicated range, a correction will be applied.
+        correction_threshold is calculated by calculating the average recovery ratio. If the ratio is outside the
+        indicated range, a correction will be applied. Default is [0.9, 1]
         :param forced_correction_value: (Optional) If allow_correction is set to True, this will set the correction
         value to the indicated value instead of calculating it. Note: the value of the average recovery ratio must still
-        be outside the threshold for this to take effect.
+        be outside the threshold for this to take effect. Default is None
+        :param correction_round_to: (Optional) If allow_correction is set to True, the generated correction will be
+        rounded to this decimal place. Default is 1.
         :param optimizer_parameter: (Optional) These are the value used to sort the profile from best to worst when
-        using the optimizer.
+        using the optimizer. Default is None
         """
         self.compound_name: str = compound_name
         self.quantity_units: str = quantity_units
@@ -82,6 +88,7 @@ class ProfileManager:
         self.rolling_data_limit: int = rolling_data_limit
         self.generate_figure: bool = generate_figure
         self.allow_correction: bool = allow_correction
+        self.correction_round_to: int = correction_round_to
         if allow_correction:
             if correction_threshold is None:
                 correction_threshold = [0.9, 1.1]
@@ -100,6 +107,7 @@ class ProfileManager:
         self.data_objects: List[DataObject] = self.__get_dataobject
         self.profiles: Optional[Dict[str, Profile]] = None
         self.sorted_profiles: Optional[pd.DataFrame] = None
+
 
     def optimize(self) -> None:
         if self.optimizer_parameters is None:
@@ -125,9 +133,7 @@ class ProfileManager:
 
             for model_name in models_names:
                 if model_name in list_of_models:
-                    print(model_name)
                     profiles[model_name] = self.__get_profiles(model_name)
-                    print("Number of profile: " + str(len(profiles[model_name])))
         else:
             profiles["Direct"] = self.__get_profiles()
 
@@ -146,7 +152,8 @@ class ProfileManager:
                 self.allow_correction,
                 self.correction_threshold,
                 self.forced_correction_value,
-                self.absolute_acceptance
+                self.absolute_acceptance,
+                self.correction_round_to
             )
             current_profile.calculate(self.stats_limits)
 
@@ -430,7 +437,8 @@ class Profile:
         correction_allowed: bool = False,
         correction_threshold: List[float] = None,
         forced_correction_value: float = None,
-        absolute_acceptance: bool = False
+        absolute_acceptance: bool = False,
+        correction_round_to: int = 1
     ):
         self.model = model
         self.acceptance_interval: List[float] = []
@@ -444,6 +452,7 @@ class Profile:
         self.correction_allowed: bool = correction_allowed
         self.correction_threshold: Optional[List[float]] = correction_threshold
         self.forced_correction_value: Optional[float] = forced_correction_value
+        self.correction_round_to: int = correction_round_to
         self.has_correction: bool = False
         self.correction_factor: Optional[float] = None
         if self.correction_allowed:
@@ -944,9 +953,10 @@ class Profile:
         if ratio < self.correction_threshold[0] or ratio > self.correction_threshold[1]:
             if self.forced_correction_value is not None:
                 ratio = 1 / self.forced_correction_value
-            corrected_value: pd.Series = pd.Series(self.model.data_x_calc / ratio)
             self.has_correction = True
-            self.correction_factor = 1 / ratio
+            self.correction_factor = round(1 / ratio, self.correction_round_to)
+
+            corrected_value: pd.Series = pd.Series(self.model.data_x_calc * self.correction_factor)
             self.model.data.add_corrected_value(corrected_value)
 
 

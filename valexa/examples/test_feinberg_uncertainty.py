@@ -8,7 +8,7 @@ import numpy as np
 def test_feinberg_uncertainty():
     """
     Dataset from:
-    Feinbger et al. (2004) New advances in method validation and measurement uncertainty aimed at improving the quality
+    Feinberg et al. (2004) New advances in method validation and measurement uncertainty aimed at improving the quality
         of chemical data. https://dx.doi.org/10.1007/s00216-004-2791-y
 
     This dataset is used to verify that the uncertainty calculation is in accordance with the literature.
