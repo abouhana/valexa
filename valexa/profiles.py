@@ -12,9 +12,10 @@ import numpy as np
 import pandas as pd
 import mpl_toolkits.axisartist as aa
 import io
+import json
 
-from . import models
-from .dataobject import DataObject
+from valexa import models
+from valexa.dataobject import DataObject
 
 OptimizerParams = Dict[str, Union[str, bool]]
 
@@ -279,12 +280,11 @@ class ProfileLevel:
         self.introduced_concentration = self.data["x"].mean()
         self.calculated_concentration = self.data["x_calc"].mean()
         self.acceptance_interval = self.get_acceptance_interval(acceptance_limit)
+        self.rel_acceptance_interval = self.get_rel_acceptance_interval(acceptance_limit)
         self.bias = self.calculated_concentration - self.introduced_concentration
         self.relative_bias = (self.bias / self.introduced_concentration) * 100
 
-        self.recovery = (
-            self.calculated_concentration / self.introduced_concentration
-        ) * 100
+        self.recovery = self.get_recovery()
 
         self.repeatability_var = self.get_repeatability_var
         self.repeatability_std = math.sqrt(self.repeatability_var)
@@ -318,12 +318,23 @@ class ProfileLevel:
             math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient)))
         )
         self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
-        self.rel_tolerance = [
-            (tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance
-        ]
+        self.rel_tolerance = self.get_rel_tolerance(tolerance_limit)
         self.abs_uncertainty = self.tolerance_std * 2
         self.rel_uncertainty = self.abs_uncertainty / self.calculated_concentration
         self.pc_uncertainty = self.abs_uncertainty / self.introduced_concentration * 100
+
+    def get_recovery( self ) -> float:
+        if self.absolute_acceptance:
+            return self.bias
+        else:
+            return (self.calculated_concentration / self.introduced_concentration) * 100
+
+    def get_rel_tolerance( self, tolerance_limit: float ) -> List[float]:
+        if self.absolute_acceptance:
+            return self.abs_tolerance
+        else:
+            return [(tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance]
+
 
     def get_acceptance_interval(self, acceptance_limit: float) -> List[float]:
         if self.absolute_acceptance:
@@ -334,6 +345,18 @@ class ProfileLevel:
             self.introduced_concentration - introduced_limit,
             self.introduced_concentration + introduced_limit,
         ]
+
+    def get_rel_acceptance_interval( self, acceptance_limit: float ) -> List[float]:
+        if self.absolute_acceptance:
+            return [
+                0 - acceptance_limit,
+                0 + acceptance_limit
+                ]
+        else:
+            return [
+                100 - acceptance_limit,
+                100 + acceptance_limit
+            ]
 
     @property
     def mean_square_model( self ) -> float:
@@ -860,85 +883,80 @@ class Profile:
 
         return [min_loq, max_loq]
 
+    def plot_data( self ):
+
+        graph = self.get_profile_parameter(["introduced_concentration", "recovery"])
+        graph[["tol_limit_low", "tol_limit_high"]] = pd.DataFrame(self.get_profile_parameter("rel_tolerance")).transpose()
+        graph[["acc_limit_low", "acc_limit_high"]] = pd.DataFrame(self.get_profile_parameter("rel_acceptance_interval")).transpose()
+
+        scatter = pd.DataFrame(self.model.validation_data["x"])
+        if self.absolute_acceptance:
+            scatter["y"] = self.model.validation_data["x_calc"]-self.model.validation_data["x"]
+            graph["error"] = pd.DataFrame(self.get_profile_parameter("abs_uncertainty"), index=["error"]).transpose()
+        else:
+            scatter["y"] = (self.model.validation_data["x_calc"] - self.model.validation_data["x"])/self.model.validation_data["x"]*100+100
+            graph["error"] = pd.DataFrame(self.get_profile_parameter("pc_uncertainty"), index=["error"]).transpose()
+
+        return {"graph": graph, "scatter": scatter}
+
     def make_plot(self):
 
         fig = plt.figure()
         ax = aa.Subplot(fig, 111)
         fig.add_subplot(ax)
 
-        levels_x = np.array(
-            [level.introduced_concentration for level in self.profile_levels.values()]
-        )
+        plot_data = self.plot_data()
+
         ax.axis["bottom", "top", "right"].set_visible(False)
         if self.absolute_acceptance:
-            y_error = np.array([s.abs_uncertainty for s in self.profile_levels.values()])
             ax.axis["y=0"] = ax.new_floating_axis(nth_coord=0, value=0)
-            results_y = [
-                s.calculated_concentration - s.introduced_concentration
-                for s in self.profile_levels.values()
-            ]
             ax.set_ylabel("Accuracy (deviation from the target value)")
-            min_tol_limits = [level.abs_tolerance[0] for level in self.profile_levels.values()]
-            max_tol_limits = [level.abs_tolerance[1] for level in self.profile_levels.values()]
-            y_recovery = np.array([level.bias for level in self.profile_levels.values()])
-            ax.errorbar(
-                levels_x,
-                y_recovery,
-                yerr=y_error,
-                color="m",
-                linewidth=2.0,
-                marker=".",
-                label="Accuracy",
-            )
         else:
-            y_error = np.array([s.pc_uncertainty for s in self.profile_levels.values()])
             ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
-            results_y = [
-                (s.calculated_concentration / s.introduced_concentration) * 100
-                for s in self.profile_levels.values()
-            ]
             ax.set_ylabel("Recovery (%)")
-            min_tol_limits = [level.rel_tolerance[0] for level in self.profile_levels.values()]
-            max_tol_limits = [level.rel_tolerance[1] for level in self.profile_levels.values()]
-            y_recovery = np.array([level.recovery for level in self.profile_levels.values()])
-            ax.errorbar(
-                levels_x,
-                y_recovery,
-                yerr=y_error,
-                color="m",
-                linewidth=2.0,
-                marker=".",
-                label="Recovery",
-            )
+
+        ax.errorbar(
+            plot_data["graph"]["introduced_concentration"],
+            plot_data["graph"]["recovery"],
+            yerr=plot_data["graph"]["error"],
+            color="m",
+            linewidth=2.0,
+            marker=".",
+            label="Accuracy",
+        )
 
         ax.plot(
-            levels_x,
-            min_tol_limits,
+            plot_data["graph"]["introduced_concentration"],
+            plot_data["graph"]["tol_limit_low"],
             linewidth=1.0,
             color="b",
             label="Min tolerance limit",
         )
         ax.plot(
-            levels_x,
-            max_tol_limits,
+            plot_data["graph"]["introduced_concentration"],
+            plot_data["graph"]["tol_limit_high"],
             linewidth=1.0,
             color="g",
             label="Max tolerance limit",
         )
         ax.plot(
-            levels_x,
-            [level.acceptance_interval[0] for level in self.profile_levels.values()],
+            plot_data["graph"]["introduced_concentration"],
+            plot_data["graph"]["acc_limit_low"],
             "k--",
             label="Acceptance limit",
         )
         ax.plot(
-            levels_x,
-            [level.acceptance_interval[1] for level in self.profile_levels.values()],
+            plot_data["graph"]["introduced_concentration"],
+            plot_data["graph"]["acc_limit_high"],
             "k--",
         )
-        results_x = [s.introduced_concentration for s in self.profile_levels.values()]
 
-        ax.scatter(results_x, results_y, alpha=0.5, s=2)
+        ax.scatter(
+            plot_data["scatter"]["x"],
+            plot_data["scatter"]["y"],
+            s=5,
+            color="k"
+        )
 
         ax.set_xlabel("Concentration")
 
@@ -958,6 +976,11 @@ class Profile:
 
             corrected_value: pd.Series = pd.Series(self.model.data_x_calc * self.correction_factor)
             self.model.data.add_corrected_value(corrected_value)
+
+    def output_json( self ):
+        graph = self.plot_data()["graph"].to_dict()
+        scatter = self.plot_data()["scatter"].to_dict()
+        print(json.dumps({"graph": graph, "scatter": scatter}))
 
 
 class Optimizer:

@@ -3,6 +3,7 @@
 import { app, protocol, BrowserWindow } from 'electron'
 const loadBalancer = require('electron-load-balancer')
 const { ipcMain } = require('electron')
+const path = require('path');
 
 import {
   createProtocol,
@@ -96,11 +97,11 @@ if (isDevelopment) {
 loadBalancer.register(
     ipcMain,
     {
-      'interface': '/src/interface/interface.html',
+      'interface': 'valexa/interface/interface.html',
     },
     { debug: true }
 )
 
 ipcMain.on("LOG", (events, args) => {
-  win.console.log(data)
+  console.log(args)
 });

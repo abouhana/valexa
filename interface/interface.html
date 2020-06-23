@@ -2,11 +2,12 @@
     const { ipcRenderer } = require('electron');
     const loadBalancer = require('electron-load-balancer');
     const { PythonShell } = require('python-shell')
-    const log = require('electron-log');
+    const path = require('path');
 
-    let pyshell = new PythonShell('interface.py'))
 
-    console.log("Win Open")
+    let pyshell = new PythonShell('interface.py', { pythonPath: 'venv/Scripts/python.exe' } )
+
+
 
     loadBalancer.job(
         ipcRenderer,
@@ -16,11 +17,12 @@
             pyshell.send('Hello')
 
             pyshell.on('message', function(message){
-                console.log(message)
-                ipcRenderer.send("LOG", {data: message})
+                ipcRenderer.send("LOG", { data: message })
             })
 
-            pyshell.end()
-    });
+        },
+        () => {
+            pyshell.terminate()
+        });
 
 </script>

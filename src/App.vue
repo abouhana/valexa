@@ -6,6 +6,8 @@
 </template>
 
 <script>
+
+console.log(__dirname)
 import HelloWorld from './components/HelloWorld.vue'
 
 export default {
