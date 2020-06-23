@@ -4,20 +4,15 @@
     const { PythonShell } = require('python-shell')
     const path = require('path');
 
-
-    let pyshell = new PythonShell('interface.py', { pythonPath: 'venv/Scripts/python.exe' } )
-
-
+    let pyshell = new PythonShell('interface.py', { pythonPath: path.join(process.env["npm_config_prefix"], '\\python') } )
 
     loadBalancer.job(
         ipcRenderer,
         'interface',
         () => {
 
-            pyshell.send('Hello')
-
             pyshell.on('message', function(message){
-                ipcRenderer.send("LOG", { data: message })
+                ipcRenderer.send("VALID_PROGRESS", { data: message })
             })
 
         },

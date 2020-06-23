@@ -19,8 +19,8 @@ def dataset( data_set_name: Optional[str] = None ) -> Union[List[str], Dict[str,
     feinberg_nicotinamide: Feinberg, M., Labo-Stat (2010), https://www.lavoisier.fr/livre/sciences-de-la-vie/labo-stat/feinberg/descriptif-9782743014261
     inter_test: Own dataset (HPLC-UV) (2020)
     feinberg_coli: Feinberg, M. et al., Validation of Alternative Methods for the Analysis of Drinking Water and Their Application to Escherichia coli (2011), https://dx.doi.org/10.1128/AEM.00020-11
-    sfstp: Hubert et al., Harmonization of strategies for the validation of quantitative analytical procedures. A SFSTP proposal - Part III
-    feinberg_uncertainty: Feinberg et al., DOI 10.1007/s00216-004-2791-y
+    sfstp: Hubert et al., Harmonization of strategies for the validation of quantitative analytical procedures. A SFSTP proposal - Part III (2004)
+    feinberg_uncertainty: Feinberg et al., New advances in method validation and measurement uncertainty aimed at improving the quality of chemical data (2004), DOI 10.1007/s00216-004-2791-y
     :param data_set_name: Name of the dataset to return
     :return: A dict of DataFram
     """

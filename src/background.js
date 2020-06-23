@@ -98,10 +98,19 @@ loadBalancer.register(
     ipcMain,
     {
       'interface': 'valexa/interface/interface.html',
+      'validate': 'valexa/interface/validate.html'
     },
-    { debug: true }
+    { debug: false }
 )
 
-ipcMain.on("LOG", (events, args) => {
-  console.log(args)
+ipcMain.on("VALID_NAME", (events, args) => {
+  win.webContents.send("VALID_NAME", args)
+});
+
+ipcMain.on("VALID_PASS", (events, args) => {
+  win.webContents.send("VALID_PASS", args)
+});
+
+ipcMain.on("VALID_FAIL", (events, args) => {
+  win.webContents.send("VALID_FAIL", args)
 });

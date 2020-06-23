@@ -17,7 +17,9 @@
     "electron-load-balancer": "^3.0.0",
     "electron-log": "^4.2.2",
     "python-shell": "^2.0.1",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "vue-progress-path": "0.0.2",
+    "vuetify": "^2.2.11"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.4.0",
@@ -27,8 +29,13 @@
     "electron": "9.0.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
+    "sass": "^1.19.0",
+    "sass-loader": "^8.0.0",
     "vue-cli-plugin-electron-builder": "^2.0.0-rc.2",
-    "vue-template-compiler": "^2.6.11"
+    "vue-cli-plugin-vuetify": "~2.0.5",
+    "vue-cli-plugin-vuetify-preset-rally": "~1.0.4",
+    "vue-template-compiler": "^2.6.11",
+    "vuetify-loader": "^1.3.0"
   },
   "eslintConfig": {
     "root": true,

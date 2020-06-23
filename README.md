@@ -21,7 +21,15 @@ Valexa use [Poetry](https://python-poetry.org/) as a package manager.
     
     poetry install
     
+    nodeenv -p
+    
+    npm install
+    
 ### How to use
 
 The current version does not have any gui yet. To generate the profile, modify the main.py to suits your needs. Look at
 'tests/data/test_dataset.py' for more detail on the data format needed.
+
+To run the Electron GUI type:
+
+    npm run electron:serve
