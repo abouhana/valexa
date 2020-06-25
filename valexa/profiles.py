@@ -978,8 +978,10 @@ class Profile:
             self.model.data.add_corrected_value(corrected_value)
 
     def output_json( self ):
-        graph = self.plot_data()["graph"].to_dict()
-        scatter = self.plot_data()["scatter"].to_dict()
+
+        graph = self.plot_data()["graph"].to_dict(orient="row")
+        scatter = self.plot_data()["scatter"].to_dict(orient="row")
+
         print(json.dumps({"graph": graph, "scatter": scatter}))
 
 

@@ -6,4 +6,5 @@ Vue.use(Vuetify);
 
 export default new Vuetify({
   preset,
+  theme: { dark: false },
 });

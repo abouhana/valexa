@@ -29,7 +29,7 @@
                 align="center"
         >
           <v-col class="grow">
-            <LoadingPage/>
+            <AccuracyProfile/>
           </v-col>
         </v-row>
       </v-container>
@@ -51,9 +51,10 @@
 
   import ValidationProgress from "./components/ValidationProgress";
   import LoadingPage from "./pages/LoadingPage";
+  import AccuracyProfile from "./components/profiles/AccuracyProfile";
 
   export default {
-    components: {LoadingPage, ValidationProgress},
+    components: {LoadingPage, ValidationProgress, AccuracyProfile},
     props: {
       source: String,
     },
