@@ -7,6 +7,7 @@ import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
 from sympy import lambdify, solveset, S
 from sympy.abc import x
+from sympy.sets.sets import EmptySet
 from patsy.highlevel import dmatrix
 
 from warnings import warn
@@ -138,25 +139,32 @@ class Model:
             data=calibration_data,
         ).fit()
 
+    def __sanitize_roots( self, root_set ):
+        if type(root_set) != EmptySet:
+            return pd.DataFrame(root_set.evalf())
+        else:
+            return pd.DataFrame()
+
     @property
     def __get_model_roots(self) -> pd.Series:
         list_of_roots: List[Union[float, None]] = []
         for validation_value in self.data.validation_data.iterrows():
             if self.multiple_calibration:
-                root_value: pd.DataFrame = pd.DataFrame(
-                    solveset(
-                        self.root_function[validation_value[1]["Serie"]](x)
-                        - validation_value[1]["y"],
-                        x,
-                        S.Reals,
-                    ).evalf()
-                )
+                root_value: pd.DataFrame = self.__sanitize_roots(
+                        solveset(
+                            self.root_function[validation_value[1]["Serie"]](x)
+                            - validation_value[1]["y"],
+                            x,
+                            S.Reals
+                        )
+                    )
             else:
-                root_value: pd.DataFrame = pd.DataFrame(
-                    solveset(
-                        self.root_function(x) - validation_value[1]["y"], x, S.Reals
-                    ).evalf()
-                )
+                root_value:  self.__sanitize_roots(
+                        solveset(
+                            self.root_function(x) - validation_value[1]["y"], x, S.Reals
+                        )
+                    )
+
             if len(root_value) > 0:
                 list_of_roots.append(float(root_value[0][0]))
             else:

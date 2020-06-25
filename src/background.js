@@ -97,7 +97,6 @@ if (isDevelopment) {
 loadBalancer.register(
     ipcMain,
     {
-      'interface': 'valexa/interface/interface.html',
       'validate': 'valexa/interface/validate.html'
     },
     { debug: false }
@@ -113,4 +112,8 @@ ipcMain.on("VALID_PASS", (events, args) => {
 
 ipcMain.on("VALID_FAIL", (events, args) => {
   win.webContents.send("VALID_FAIL", args)
+});
+
+ipcMain.on("VALID_INFO", (events, args) => {
+  win.webContents.send("VALID_INFO", args)
 });
