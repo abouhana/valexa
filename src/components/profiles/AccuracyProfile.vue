@@ -1,8 +1,8 @@
 <template>
     <v-container>
-        <v-row align="center" justify="center">
+        <div class="chart-container" style="position: relative;">
             <line-chart :chart-data="dataCollection" :options="options"></line-chart>
-        </v-row>
+        </div>
     </v-container>
 </template>
 
@@ -162,6 +162,7 @@
             dataCollection: function () {
                 var fullData = this.returnJson()
                 var dataObject = {}
+                var labels = []
 
                 for (const [key, value] of Object.entries(fullData)) {
                     if (key === "graph") {
@@ -191,67 +192,69 @@
                             }
                         }
                     } else if (key === "scatter") {
-                        var scatterPoint =  []
-                        for (const [scatter_key, scatter_value] of Object.entries(value)) {
-                            scatterPoint.push(scatter_value)
-                        }
-                        console.log(scatterPoint)
+                        var scatterPoint = value
                     }
                 }
 
-                dataObject["labels"] = () => {
-                    var listSerie = []
-                    for (i=0; i< graphList.length; 1++ ) {
-                        listSerie.push("Level " + i+1)
-                    }
-                    return listSerie
+
+                for (var i=0; i < graphList["recovery"].length; i++ ) {
+                    labels.push("Level " + (i+1))
                 }
+                dataObject["labels"] = labels
 
 
-                return {
-                    dataCollection: {
-                        labels: ["Serie 1", "Serie 2", "Serie 3"],
-
-                        datasets: [
-                            {
-                                label: "Série 1",
-                                fill: false,
-                                borderColor: 'black',
-                                data: [
-                                    {
-                                        x: 1,
-                                        y: 2
-                                    }, {
-                                        x: 3,
-                                        y: 5
-                                    }, {
-                                        x: 6,
-                                        y: 10
-                                    }
-                                ]
-                            },
-                            {
-                                label: "Série 2",
-                                fill: false,
-                                borderColor: 'black',
-                                data: [
-                                    {
-                                        x: 2,
-                                        y: 1
-                                    },
-                                    {
-                                        x: 5,
-                                        y: 3
-                                    },
-                                    {
-                                        x: 10,
-                                        y: 6
-                                    }
-                                ]
-                            }
-                        ]
+                dataObject["datasets"] = [
+                    {
+                        label: "Acceptance Limit",
+                        fill: false,
+                        borderColor: "orange",
+                        lineTension: 0,
+                        borderDash: [10,10],
+                        pointRadius: 0,
+                        data: graphList["acc_limit_high"]
+                    },
+                    {
+                        fill: false,
+                        borderColor: "orange",
+                        lineTension: 0,
+                        borderDash: [10,10],
+                        pointRadius: 0,
+                        data: graphList["acc_limit_low"]
+                    },
+                    {
+                        label: "Tolerance Limit",
+                        fill: false,
+                        borderColor: "green",
+                        lineTension: 0,
+                        pointRadius: 0,
+                        data: graphList["tol_limit_high"]
+                    },
+                    {
+                        fill: false,
+                        borderColor: "green",
+                        lineTension: 0,
+                        pointRadius: 0,
+                        data: graphList["tol_limit_low"]
+                    },
+                    {
+                        label: "Recovery",
+                        fill: false,
+                        borderColor: "blue",
+                        lineTension: 0,
+                        pointRadius: 0,
+                        data: graphList["recovery"]
+                    },
+                    {
+                        label: "Scatter",
+                        fill: false,
+                        borderColor: "black",
+                        showLine: false,
+                        data: scatterPoint,
+                        type: "scatter"
                     }
-                }
+                ]
+
+                return dataObject
             }
         },
 
@@ -260,6 +263,24 @@
                 options: {
                     layout: {
                         padding: 50
+                    },
+                    responsive: true,
+                    scales: {
+                         xAxes: [{
+                               type: 'linear',
+                               display: true,
+                               scaleLabel: {
+                                    display: true,
+                                    labelString: 'Your label'
+                               },
+                          }],
+                         yAxes: [{
+                             display: true,
+                             scaleLabel: {
+                                 display: true,
+                                 labelString: 'Count'
+                             }
+                         }]
                     }
                 }
             }

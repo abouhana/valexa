@@ -6,6 +6,7 @@ import VueProgress from 'vue-progress-path'
 
 Vue.use(VueProgress)
 Vue.config.productionTip = false
+Vue.config.devtools = process.env.NODE_ENV === 'development';
 
 new Vue({
   vuetify,
