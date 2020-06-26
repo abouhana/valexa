@@ -157,6 +157,13 @@
     }
         },
 
+        props: {
+          xAxeString: String,
+          yAxeString: String,
+
+        },
+
+
         computed: {
 
             dataCollection: function () {
@@ -211,9 +218,11 @@
                         lineTension: 0,
                         borderDash: [10,10],
                         pointRadius: 0,
+                        pointStyle: 'line',
                         data: graphList["acc_limit_high"]
                     },
                     {
+                        label: "none",
                         fill: false,
                         borderColor: "orange",
                         lineTension: 0,
@@ -227,9 +236,11 @@
                         borderColor: "green",
                         lineTension: 0,
                         pointRadius: 0,
+                        pointStyle: 'line',
                         data: graphList["tol_limit_high"]
                     },
                     {
+                        label: "none",
                         fill: false,
                         borderColor: "green",
                         lineTension: 0,
@@ -240,8 +251,10 @@
                         label: "Recovery",
                         fill: false,
                         borderColor: "blue",
+                        borderDash: [5, 5, 10, 10],
                         lineTension: 0,
                         pointRadius: 0,
+                        pointStyle: 'line',
                         data: graphList["recovery"]
                     },
                     {
@@ -255,6 +268,37 @@
                 ]
 
                 return dataObject
+            }
+            options2: function () {
+                const layout = {padding: 50}
+                const responsive = true
+                const legend = {
+                        filter: function (item) {
+                            return item.text == null || !item.text.includes('none');
+                        },
+                        usePointStyle: true
+                    }
+
+                var scales = {
+                    xAxes: [{
+                        type: 'linear',
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.xAxeString
+                        },
+                    }],
+                        yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.yAxeString
+                        }
+                    }]
+                }
+
+                return {layout: layout, responsive: responsive, legend: legend, scales: scales}
+
             }
         },
 
@@ -271,16 +315,24 @@
                                display: true,
                                scaleLabel: {
                                     display: true,
-                                    labelString: 'Your label'
+                                    labelString: 'Concentration'
                                },
                           }],
                          yAxes: [{
                              display: true,
                              scaleLabel: {
                                  display: true,
-                                 labelString: 'Count'
+                                 labelString: 'Deviation'
                              }
                          }]
+                    },
+                    legend: {
+                        labels: {
+                            filter: function (item) {
+                                return item.text == null || !item.text.includes('none');
+                            },
+                            usePointStyle: true
+                        }
                     }
                 }
             }

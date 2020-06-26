@@ -14,7 +14,7 @@ def test_intern_dataset():
     optimizer_parameter = {
         "has_limits": True,
         "validation_range": "max",
-        "average.bias": "min",
+        "average.bias_abs": "min",
         "min_loq": "min",
         "model.rsquared": "max",
     }

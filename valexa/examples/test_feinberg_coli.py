@@ -65,7 +65,7 @@ def test_feinberg_coli():
                 2: 0.127,
                 3: 0.178
             },
-            "bias": {
+            "bias_abs": {
                 1: 0.024,
                 2: 0.055,
                 3: 0.093
@@ -85,9 +85,9 @@ def test_feinberg_coli():
     results_dataframe: pd.DataFrame = profiles.profiles["Direct"][0].get_profile_parameter(["repeatability_std",
                                                                                               "inter_series_std",
                                                                                               "tolerance_std",
-                                                                                              "bias"]).round(3)
+                                                                                              "bias_abs"]).round(3)
 
-    results_dataframe[["abs_tolerance_low", "abs_tolerance_high"]] = pd.DataFrame(profiles.profiles["Direct"][0].get_profile_parameter(["abs_tolerance"])).transpose().round(3)
+    results_dataframe[["abs_tolerance_low", "abs_tolerance_high"]] = pd.DataFrame(profiles.profiles["Direct"][0].get_profile_parameter(["tolerance_abs"])).transpose().round(3)
 
     assertion_dataframe = np.abs(litterature_dataframe.sub(results_dataframe).divide(litterature_dataframe)*100)
 

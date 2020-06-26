@@ -55,12 +55,12 @@ def test_feinberg_labostat():
                 2: 100.5,
                 3: 98.9
             },
-            "rel_tolerance_low": {
+            "tolerance_rel_low": {
                 1: 93.9,
                 2: 95.7,
                 3: 95.6
             },
-            "rel_tolerance_high": {
+            "tolerance_rel_high": {
                 1: 110.7,
                 2: 105.4,
                 3: 102.1
@@ -74,10 +74,7 @@ def test_feinberg_labostat():
     calculated_model_dataframe = pd.DataFrame(calculated_model_dict).transpose().round(3)
 
     calculated_dataframe: pd.DataFrame = pd.DataFrame(
-        profiles.profiles["Linear"][0].get_profile_parameter(["recovery"]), index=["recovery"]).transpose().round(1)
-
-    calculated_dataframe[["rel_tolerance_low", "rel_tolerance_high"]] = pd.DataFrame(
-        profiles.profiles["Linear"][0].get_profile_parameter(["rel_tolerance"])).transpose().round(1)
+        profiles.profiles["Linear"][0].get_profile_parameter(["recovery","tolerance_rel"])).round(1)
 
     assertion_dataframe = np.abs(calculated_dataframe.sub(literature_dataframe))
     assertion_model_dataframe = np.abs(calculated_model_dataframe.sub(literature_model_dataframe).div(literature_model_dataframe)*100)

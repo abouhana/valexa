@@ -239,8 +239,8 @@ class ProfileLevel:
         self.data: pd.DataFrame = level_data
         self.introduced_concentration: Optional[np.float] = None
         self.calculated_concentration: Optional[np.float] = None
-        self.bias: Optional[float] = None
-        self.relative_bias: Optional[float] = None
+        self.bias_abs: Optional[float] = None
+        self.bias_rel: Optional[float] = None
         self.recovery: Optional[float] = None
         self.repeatability_var: Optional[float] = None
         self.repeatability_std: Optional[float] = None
@@ -250,9 +250,9 @@ class ProfileLevel:
         self.inter_series_cv: Optional[float] = None
         self.total_error_abs: Optional[float] = None
         self.total_error_rel: Optional[float] = None
-        self.abs_tolerance: List[float] = []
-        self.rel_tolerance: List[float] = []
-        self.acceptance_interval: List[float] = []
+        self.tolerance_abs: dict = {}
+        self.tolerance_rel: dict = {}
+        self.acceptance_limits_abs: dict = {}
         self.sum_square_error_intra_series: Optional[float] = None
         self.nb_series: Optional[int] = None
         self.nb_measures: Optional[int] = None
@@ -264,9 +264,9 @@ class ProfileLevel:
         self.b_coefficient: Optional[float] = None
         self.degree_of_freedom: Optional[float] = None
         self.tolerance_std: Optional[float] = None
-        self.abs_uncertainty: Optional[float] = None
-        self.rel_uncertainty: Optional[float] = None
-        self.pc_uncertainty: Optional[float] = None
+        self.uncertainty_abs: Optional[float] = None
+        self.uncertainty_rel: Optional[float] = None
+        self.uncertainty_pc: Optional[float] = None
         self.cover_factor: Optional[float] = None
         self.absolute_acceptance: bool = absolute_acceptance
         self.intra_series_var: Optional[float] = None
@@ -277,13 +277,14 @@ class ProfileLevel:
         self.nb_series = self.data["Serie"].nunique()
         self.nb_measures = len(self.data.index)
         self.nb_rep = self.nb_measures / self.nb_series
+
         self.introduced_concentration = self.data["x"].mean()
         self.calculated_concentration = self.data["x_calc"].mean()
-        self.acceptance_interval = self.get_acceptance_interval(acceptance_limit)
-        self.rel_acceptance_interval = self.get_rel_acceptance_interval(acceptance_limit)
-        self.bias = self.calculated_concentration - self.introduced_concentration
-        self.relative_bias = (self.bias / self.introduced_concentration) * 100
+        self.acceptance_limits_abs = self.get_acceptance_limits_abs(acceptance_limit)
+        self.acceptance_limits_rel = self.get_acceptance_limits_rel(acceptance_limit)
 
+        self.bias_abs = self.calculated_concentration - self.introduced_concentration
+        self.bias_rel = (self.bias_abs / self.introduced_concentration) * 100
         self.recovery = self.get_recovery()
 
         self.repeatability_var = self.get_repeatability_var
@@ -305,8 +306,9 @@ class ProfileLevel:
         self.intermediate_precision_std = math.sqrt(self.intermediate_precision_var)
         self.intermediate_precision_cv = self.intermediate_precision_std / self.introduced_concentration * 100
 
-        self.total_error_abs = abs(self.bias) + abs(self.intermediate_precision_std)
+        self.total_error_abs = abs(self.bias_abs) + abs(self.intermediate_precision_std)
         self.total_error_rel = self.total_error_abs/self.introduced_concentration * 100
+
         self.ratio_var = self.get_ratio_var
 
         self.b_coefficient = math.sqrt((self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1))
@@ -317,46 +319,49 @@ class ProfileLevel:
         self.tolerance_std = self.intermediate_precision_std * (
             math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient)))
         )
-        self.abs_tolerance = self.get_absolute_tolerance(tolerance_limit)
-        self.rel_tolerance = self.get_rel_tolerance(tolerance_limit)
-        self.abs_uncertainty = self.tolerance_std * 2
-        self.rel_uncertainty = self.abs_uncertainty / self.calculated_concentration
-        self.pc_uncertainty = self.abs_uncertainty / self.introduced_concentration * 100
+        self.tolerance_abs = self.get_absolute_tolerance(tolerance_limit)
+        self.tolerance_rel = self.get_tolerance_rel(tolerance_limit)
+
+        self.uncertainty_abs = self.tolerance_std * 2
+        self.uncertainty_rel = self.uncertainty_abs / self.calculated_concentration
+        self.uncertainty_pc = self.uncertainty_abs / self.introduced_concentration * 100
 
     def get_recovery( self ) -> float:
         if self.absolute_acceptance:
-            return self.bias
+            return self.bias_abs
         else:
             return (self.calculated_concentration / self.introduced_concentration) * 100
 
-    def get_rel_tolerance( self, tolerance_limit: float ) -> List[float]:
+    def get_tolerance_rel(self, tolerance_limit: float) -> pd.Series:
         if self.absolute_acceptance:
-            return self.abs_tolerance
+            return self.tolerance_abs
         else:
-            return [(tol / self.introduced_concentration) * 100 for tol in self.abs_tolerance]
+            return pd.Series({
+                "tolerance_rel_low": self.tolerance_abs["tolerance_abs_low"] / self.introduced_concentration * 100,
+                "tolerance_rel_high": self.tolerance_abs["tolerance_abs_high"] / self.introduced_concentration * 100
+            })
 
-
-    def get_acceptance_interval(self, acceptance_limit: float) -> List[float]:
+    def get_acceptance_limits_abs(self, acceptance_limit: float) -> pd.Series:
         if self.absolute_acceptance:
             introduced_limit: float = acceptance_limit
         else:
             introduced_limit: float = acceptance_limit / 100 * self.introduced_concentration
-        return [
-            self.introduced_concentration - introduced_limit,
-            self.introduced_concentration + introduced_limit,
-        ]
+        return pd.Series({
+            "acceptance_limits_abs_low": self.introduced_concentration - introduced_limit,
+            "acceptance_limits_abs_high": self.introduced_concentration + introduced_limit,
+        })
 
-    def get_rel_acceptance_interval( self, acceptance_limit: float ) -> List[float]:
+    def get_acceptance_limits_rel(self, acceptance_limit: float) -> pd.Series:
         if self.absolute_acceptance:
-            return [
-                0 - acceptance_limit,
-                0 + acceptance_limit
-                ]
+            return pd.Series({
+                "acceptance_limits_rel_low": 0 - acceptance_limit,
+                "acceptance_limits_rel_high": 0 + acceptance_limit
+            })
         else:
-            return [
-                100 - acceptance_limit,
-                100 + acceptance_limit
-            ]
+            return pd.Series({
+                "acceptance_limits_rel_low": 100 - acceptance_limit,
+                "acceptance_limits_rel_high": 100 + acceptance_limit
+            })
 
     @property
     def mean_square_model( self ) -> float:
@@ -390,7 +395,7 @@ class ProfileLevel:
         return inter_serie_var
 
     @property
-    def sum_of_square_residual( self ) -> float:
+    def sum_of_square_residual( self ) -> np.ndarray:
         mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
                               self.data["Serie"].unique()]
         x_calc = [self.data[self.data["Serie"] == serie]["x_calc"] for serie in self.data["Serie"].unique()]
@@ -398,14 +403,13 @@ class ProfileLevel:
         return np.sum([np.sum(np.power(np.subtract(x_calc[mean_x_level_serie.index(mean_serie)], mean_serie), 2)) for mean_serie in mean_x_level_serie])
 
     @property
-    def sum_of_square_total( self ) -> float:
+    def sum_of_square_total( self ) -> np.ndarray:
         mean_x_level = self.data["x_calc"].mean()
         mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
                               self.data["Serie"].unique()]
         number_item_in_serie = [len(self.data[self.data["Serie"] == serie]) for serie in self.data["Serie"].unique()]
 
         return np.sum(np.multiply(number_item_in_serie, np.power(np.subtract(mean_x_level_serie, mean_x_level), 2)))
-
 
     @property
     def get_repeatability_var( self ) -> float:
@@ -431,7 +435,7 @@ class ProfileLevel:
 
         return ratio_var
 
-    def get_absolute_tolerance(self, tolerance_limit: float) -> List[float]:
+    def get_absolute_tolerance(self, tolerance_limit: float) -> pd.Series:
 
         student = t.ppf((1+(tolerance_limit/100))/2, np.float32(self.degree_of_freedom))
 
@@ -449,7 +453,10 @@ class ProfileLevel:
             tolerance_low = tolerance_low - self.introduced_concentration
             tolerance_high = tolerance_high - self.introduced_concentration
 
-        return [tolerance_low, tolerance_high]
+        return pd.Series({
+            "tolerance_abs_low": tolerance_low,
+            "tolerance_abs_high": tolerance_high
+        })
 
 
 class Profile:
@@ -528,35 +535,35 @@ class Profile:
             fidelity_stats[key][ "Intermediate Fidelity standard deviation (sFI)"] = level.intermediate_precision_std
             fidelity_stats[key]["Intermediate Fidelity variation coefficient"] = level.intermediate_precision_cv
 
-            accuracy_stats[key]["Absolute Bias"] = level.bias
-            accuracy_stats[key]["Bias %"] = level.relative_bias
+            accuracy_stats[key]["Absolute Bias"] = level.bias_abs
+            accuracy_stats[key]["Bias %"] = level.bias_rel
 
             tolerance_interval_stats[key]["Degree of freedom"] = level.degree_of_freedom
             tolerance_interval_stats[key]["Coverage factor (kIT)"] = level.cover_factor
             tolerance_interval_stats[key]["Tolerance standard deviation (sIT)"] = level.tolerance_std
             tolerance_interval_stats[key]["B^2 coefficient"] = level.b_coefficient
-            tolerance_interval_stats[key]["Lower tolerance interval limit"] = level.abs_tolerance[0]
-            tolerance_interval_stats[key]["Upper tolerance interval limit"] = level.abs_tolerance[1]
-            tolerance_interval_stats[key]["Lower acceptability limit"] = level.acceptance_interval[0]
-            tolerance_interval_stats[key]["Upper acceptability limit"] = level.acceptance_interval[1]
+            tolerance_interval_stats[key]["Lower tolerance interval limit"] = level.tolerance_abs[0]
+            tolerance_interval_stats[key]["Upper tolerance interval limit"] = level.tolerance_abs[1]
+            tolerance_interval_stats[key]["Lower acceptability limit"] = level.acceptance_limits_abs[0]
+            tolerance_interval_stats[key]["Upper acceptability limit"] = level.acceptance_limits_abs[1]
 
             if self.absolute_acceptance:
-                accuracy_profile_stats[key]["Bias"] = level.bias
-                accuracy_profile_stats[key]["Lower tolerance interval limit"] = level.abs_tolerance[0]
-                accuracy_profile_stats[key]["Upper tolerance interval limit"] = level.abs_tolerance[1]
-                accuracy_profile_stats[key]["Lower acceptability limit"] = level.acceptance_interval[0]
-                accuracy_profile_stats[key]["Upper acceptability limit"] = level.acceptance_interval[1]
+                accuracy_profile_stats[key]["Bias"] = level.bias_abs
+                accuracy_profile_stats[key]["Lower tolerance interval limit"] = level.tolerance_abs[0]
+                accuracy_profile_stats[key]["Upper tolerance interval limit"] = level.tolerance_abs[1]
+                accuracy_profile_stats[key]["Lower acceptability limit"] = level.acceptance_limits_abs[0]
+                accuracy_profile_stats[key]["Upper acceptability limit"] = level.acceptance_limits_abs[1]
 
             else:
                 accuracy_profile_stats[key]["Recovery"] = level.recovery
-                accuracy_profile_stats[key]["Lower tolerance interval limit in %"] = level.rel_tolerance[0]
-                accuracy_profile_stats[key]["Upper tolerance interval limit in %"] = level.rel_tolerance[1]
-                accuracy_profile_stats[key]["Lower acceptability limit in %"] = level.acceptance_interval[0]
-                accuracy_profile_stats[key]["Upper acceptability limit in %"] = level.acceptance_interval[1]
+                accuracy_profile_stats[key]["Lower tolerance interval limit in %"] = level.tolerance_rel[0]
+                accuracy_profile_stats[key]["Upper tolerance interval limit in %"] = level.tolerance_rel[1]
+                accuracy_profile_stats[key]["Lower acceptability limit in %"] = level.acceptance_limits_abs[0]
+                accuracy_profile_stats[key]["Upper acceptability limit in %"] = level.acceptance_limits_abs[1]
 
-            uncertainty_stats[key]["Absolute uncertainty"] = level.abs_uncertainty
-            uncertainty_stats[key]["Relative uncertainty"] = level.rel_uncertainty
-            uncertainty_stats[key]["Relative uncertainty in %"] = level.pc_uncertainty
+            uncertainty_stats[key]["Absolute uncertainty"] = level.uncertainty_abs
+            uncertainty_stats[key]["Relative uncertainty"] = level.uncertainty_rel
+            uncertainty_stats[key]["Relative uncertainty in %"] = level.uncertainty_pc
 
         level_dataframe: pd.DataFrame = pd.DataFrame(level_stats)
         fidelity_dataframe: pd.DataFrame = pd.DataFrame(fidelity_stats)
@@ -616,20 +623,46 @@ class Profile:
     def get_profile_parameter(self, profile_parameter: Union[str, list]) -> Optional[Union[pd.DataFrame, np.ndarray]]:
         if type(profile_parameter) == str:
             profile_parameter = [profile_parameter]
-        params_list: dict = {}
+        params_list: pd.DataFrame = pd.DataFrame()
         for parameter in profile_parameter:
             if hasattr(list(self.profile_levels.values())[1], parameter):
-                value_list: dict = {}
+                value_dict: dict = {}
                 for index, level in self.profile_levels.items():
-                    value_list[index] = getattr(level, parameter)
-                params_list[parameter] = value_list
+                    value_dict[index] = getattr(level, parameter)
+                if np.array(list(value_dict.values())[0]).size > 1:
+                    params_list = pd.concat([params_list, pd.DataFrame(value_dict)])
+                else:
+                    params_list = pd.concat([params_list, pd.DataFrame(value_dict, index=[parameter])])
             else:
                 warn("The profile levels do not have attribute named " + parameter)
-        if len(params_list) == 1:
-            return list(params_list.values())[0]
-        elif len(params_list) > 1:
-            return pd.DataFrame(params_list)
+        if len(params_list) > 0:
+            return params_list.transpose()
         else:
+            return None
+
+    def get_model_parameter(self, model_parameter: Union[str, list]) -> Optional[Union[pd.DataFrame, np.ndarray]]:
+        if type(model_parameter) == str:
+            model_parameter = [model_parameter]
+        params_list = pd.DataFrame()
+        if hasattr(self, 'model'):
+            for parameter in model_parameter:
+                if hasattr(list(self.model.fit.values())[1], parameter):
+                    value_dict: dict = {}
+                    for index, fit in self.model.fit.items():
+                        value_dict[index] = getattr(fit, parameter)
+
+                    if np.array(list(value_dict.values())[0]).size > 1:
+                        params_list = pd.concat([params_list, pd.DataFrame(value_dict)])
+                    else:
+                        params_list = pd.concat([params_list, pd.DataFrame(value_dict, index=[parameter])])
+                else:
+                    warn("The model fits do not have an attribute named " + parameter)
+            if len(params_list) > 0:
+                return params_list.transpose()
+            else:
+                return None
+        else:
+            warn("This profile has no model")
             return None
 
     def calculate(self, stats_limits: Optional[Union[Dict[str, float]]] = None) -> None:
@@ -679,39 +712,39 @@ class Profile:
             acceptance_limit_point[0].append(
                 shapely.geometry.Point(
                     round(level.introduced_concentration, 3),
-                    round(level.acceptance_interval[0], 3),
+                    round(level.acceptance_limits_abs["acceptance_limits_abs_low"], 3),
                 )
             )
             acceptance_limit_point[1].append(
                 shapely.geometry.Point(
                     round(level.introduced_concentration, 3),
-                    round(level.acceptance_interval[1], 3),
+                    round(level.acceptance_limits_abs["acceptance_limits_abs_high"], 3),
                 )
             )
             tolerance_limit_point[0].append(
                 shapely.geometry.Point(
                     round(level.introduced_concentration, 3),
-                    round(level.abs_tolerance[0], 3),
+                    round(level.tolerance_abs["tolerance_abs_low"], 3),
                 )
             )
             tolerance_limit_point[1].append(
                 shapely.geometry.Point(
                     round(level.introduced_concentration, 3),
-                    round(level.abs_tolerance[1], 3),
+                    round(level.tolerance_abs["tolerance_abs_high"], 3),
                 )
             )
             level_tolerance_list.append(
                 {
                     "level_id": key,
                     "x_coord": level.introduced_concentration,
-                    "lower_tol_y_coord": level.abs_tolerance[0],
-                    "lower_acc_y_coord": level.acceptance_interval[0],
-                    "lower_inside": level.abs_tolerance[0]
-                    > level.acceptance_interval[0],
-                    "upper_tol_y_coord": level.abs_tolerance[1],
-                    "upper_acc_y_coord": level.acceptance_interval[1],
-                    "upper_inside": level.abs_tolerance[1]
-                    < level.acceptance_interval[1],
+                    "lower_tol_y_coord": level.tolerance_abs["tolerance_abs_low"],
+                    "lower_acc_y_coord": level.acceptance_limits_abs["acceptance_limits_abs_low"],
+                    "lower_inside": level.tolerance_abs["tolerance_abs_low"]
+                    > level.acceptance_limits_abs["acceptance_limits_abs_low"],
+                    "upper_tol_y_coord": level.tolerance_abs["tolerance_abs_high"],
+                    "upper_acc_y_coord": level.acceptance_limits_abs["acceptance_limits_abs_high"],
+                    "upper_inside": level.tolerance_abs["tolerance_abs_high"]
+                    < level.acceptance_limits_abs["acceptance_limits_abs_high"],
                 }
             )
 
@@ -883,21 +916,97 @@ class Profile:
 
         return [min_loq, max_loq]
 
-    def plot_data( self ):
+    def plot_data(self):
 
-        graph = self.get_profile_parameter(["introduced_concentration", "recovery"])
-        graph[["tol_limit_low", "tol_limit_high"]] = pd.DataFrame(self.get_profile_parameter("rel_tolerance")).transpose()
-        graph[["acc_limit_low", "acc_limit_high"]] = pd.DataFrame(self.get_profile_parameter("rel_acceptance_interval")).transpose()
+        graph = self.get_profile_parameter(["introduced_concentration", "recovery", "tolerance_rel", "acceptance_limits_rel"])
+        #graph[["tol_limit_low", "tol_limit_high"]] = pd.DataFrame(self.get_profile_parameter("tolerance_rel")).transpose()
+        #graph[["acc_limit_low", "acc_limit_high"]] = pd.DataFrame(self.get_profile_parameter("acceptance_interval_rel")).transpose()
 
         scatter = pd.DataFrame(self.model.validation_data["x"])
         if self.absolute_acceptance:
             scatter["y"] = self.model.validation_data["x_calc"]-self.model.validation_data["x"]
-            graph["error"] = pd.DataFrame(self.get_profile_parameter("abs_uncertainty"), index=["error"]).transpose()
+            graph["error"] = self.get_profile_parameter("uncertainty_abs")["uncertainty_abs"]
         else:
             scatter["y"] = (self.model.validation_data["x_calc"] - self.model.validation_data["x"])/self.model.validation_data["x"]*100+100
-            graph["error"] = pd.DataFrame(self.get_profile_parameter("pc_uncertainty"), index=["error"]).transpose()
+            graph["error"] = self.get_profile_parameter("uncertainty_rel")["uncertainty_rel"]
 
         return {"graph": graph, "scatter": scatter}
+
+    def profile_data(self):
+
+        if type(self.model) == models.Model:
+            regression_stats: Dict[int, Dict[str, float]] = {}
+            if self.model.multiple_calibration:
+                for key, fit_data in self.model.fit.items():
+                    regression_stats[key] = fit_data.params.to_dict()
+                    regression_stats[key].update({"R-Squared": fit_data.rsquared})
+                    regression_stats[key].update({"P-Value": fit_data.f_pvalue})
+            else:
+                regression_stats[1] = self.model.fit.params.to_dict()
+                regression_stats[1].update({"R-Squared": self.model.fit.rsquared})
+                regression_stats[1].update({"P-Value": self.model.fit.f_pvalue})
+            regression_dataframe: pd.DataFrame = pd.DataFrame(regression_stats)
+
+        model_stats: dict = {
+            "LOD": self.lod,
+            "Min LOQ": self.min_loq,
+            "Max LOQ": self.max_loq,
+            "Correction Factor": self.correction_factor,
+        }
+
+        # self.nb_series = self.data["Serie"].nunique()
+        # self.nb_measures = len(self.data.index)
+        # self.nb_rep = self.nb_measures / self.nb_series
+        #
+        # self.introduced_concentration = self.data["x"].mean()
+        # self.calculated_concentration = self.data["x_calc"].mean()
+        # self.acceptance_interval_abs = self.get_acceptance_interval(acceptance_limit)
+        # self.acceptance_interval_pc = self.get_rel_acceptance_interval(acceptance_limit)
+
+        # self.bias_abs = self.calculated_concentration - self.introduced_concentration
+        # self.bias_rel = (self.bias_abs / self.introduced_concentration) * 100
+        # self.recovery = self.get_recovery()
+        #
+        # self.repeatability_var = self.get_repeatability_var
+        # self.repeatability_std = math.sqrt(self.repeatability_var)
+        # self.repeatability_cv = (
+        #         self.repeatability_std / self.introduced_concentration * 100
+        # )
+        #
+        # self.intra_series_var = self.repeatability_var
+        # self.intra_series_std = self.repeatability_std
+        # self.intra_series_cv = self.repeatability_cv
+        #
+        # self.inter_series_var = self.get_inter_series_var
+        # self.inter_series_std = math.sqrt(self.inter_series_var)
+        # self.inter_series_cv = (
+        #         self.inter_series_std / self.calculated_concentration * 100
+        # )
+        # self.intermediate_precision_var = self.repeatability_var + self.inter_series_var
+        # self.intermediate_precision_std = math.sqrt(self.intermediate_precision_var)
+        # self.intermediate_precision_cv = self.intermediate_precision_std / self.introduced_concentration * 100
+        #
+        # self.total_error_abs = abs(self.bias_abs) + abs(self.intermediate_precision_std)
+        # self.total_error_rel = self.total_error_abs/self.introduced_concentration * 100
+        #
+        # self.ratio_var = self.get_ratio_var
+        #
+        # self.b_coefficient = math.sqrt((self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1))
+        # self.degree_of_freedom = (self.ratio_var + 1) ** 2 / (
+        #         (self.ratio_var + (1 / self.nb_rep)) ** 2 / (self.nb_series - 1)
+        #         + (1 - (1 / self.nb_rep)) / self.nb_measures
+        # )
+        # self.tolerance_std = self.intermediate_precision_std * (
+        #     math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient)))
+        # )
+        # self.tolerance_abs = self.get_absolute_tolerance(tolerance_limit)
+        # self.tolerance_rel = self.get_rel_tolerance(tolerance_limit)
+        #
+        # self.uncertainty_abs = self.tolerance_std * 2
+        # self.uncertainty_rel = self.uncertainty_abs / self.calculated_concentration
+        # self.uncertainty_pc = self.uncertainty_abs / self.introduced_concentration * 100
+
+        model_dataframe: pd.DataFrame = pd.DataFrame([model_stats]).transpose()
 
     def make_plot(self):
 
@@ -927,27 +1036,27 @@ class Profile:
 
         ax.plot(
             plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["tol_limit_low"],
+            plot_data["graph"]["tolerance_rel_low"],
             linewidth=1.0,
             color="b",
             label="Min tolerance limit",
         )
         ax.plot(
             plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["tol_limit_high"],
+            plot_data["graph"]["tolerance_rel_high"],
             linewidth=1.0,
             color="g",
             label="Max tolerance limit",
         )
         ax.plot(
             plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["acc_limit_low"],
+            plot_data["graph"]["acceptance_limits_rel_low"],
             "k--",
             label="Acceptance limit",
         )
         ax.plot(
             plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["acc_limit_high"],
+            plot_data["graph"]["acceptance_limits_rel_high"],
             "k--",
         )
 
@@ -1000,7 +1109,7 @@ class Optimizer:
             "lod": self.__get_lod,
             "model.dataset.calibration_levels": self.__get_model_data_calibration_levels,
             "validation_range": self.__get_validation_range,
-            "average.bias": self.__get_average_bias,
+            "average.bias_abs": self.__get_average_bias_abs,
         }
 
         self.profiles = profiles
@@ -1058,8 +1167,8 @@ class Optimizer:
     def __get_model_rsquared(self) -> pd.DataFrame:
         return self.__get_profile_model("rsquared")
 
-    def __get_average_bias(self) -> pd.DataFrame:
-        return self.__get_profile_average("bias")
+    def __get_average_bias_abs(self) -> pd.DataFrame:
+        return self.__get_profile_average("bias_abs")
 
     def __get_model_data_calibration_levels(self) -> pd.DataFrame:
         return self.__get_profile_model_data("calibration_levels")

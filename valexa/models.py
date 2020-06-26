@@ -149,8 +149,9 @@ class Model:
     def __get_model_roots(self) -> pd.Series:
         list_of_roots: List[Union[float, None]] = []
         for validation_value in self.data.validation_data.iterrows():
+            root_value: pd.DataFrame = pd.DataFrame()
             if self.multiple_calibration:
-                root_value: pd.DataFrame = self.__sanitize_roots(
+                root_value = self.__sanitize_roots(
                         solveset(
                             self.root_function[validation_value[1]["Serie"]](x)
                             - validation_value[1]["y"],
@@ -159,7 +160,7 @@ class Model:
                         )
                     )
             else:
-                root_value:  self.__sanitize_roots(
+                root_value = self.__sanitize_roots(
                         solveset(
                             self.root_function(x) - validation_value[1]["y"], x, S.Reals
                         )

@@ -20,6 +20,7 @@ def main():
         allow_correction=True
     )
     profiles.make_profiles(["Linear"])
+    profiles.profiles["Linear"][0].get_model_parameter(["params","rsquared"])
 
     return True
 
