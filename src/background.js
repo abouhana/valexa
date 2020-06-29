@@ -71,7 +71,10 @@ app.on('ready', async () => {
     // In addition, if the linked issue is closed, you can upgrade electron and uncomment these lines
      try {
        await installVueDevtools()
+       console.log("aa")
      } catch (e) {
+       console.log("bb")
+       console.log(e)
        console.error('Vue Devtools failed to install:', e.toString())
      }
 

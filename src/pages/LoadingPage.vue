@@ -11,29 +11,58 @@
                 align="stretch"
         >
             <div class="view">
-                <ValidationProgress v-bind:progress="progress"></ValidationProgress>
+                <ValidationProgress v-bind:progress="getValidationProgress"></ValidationProgress>
             </div>
         </v-row>
         <v-row
                 justify="center"
                 align="start"
         >
-            Validating against: {{ validationName }} <br>
-            Pass: {{numberOfPass}} out of {{ numberOfValidation }} <br>
-            Fail: {{numberOfFail}} out of {{ numberOfValidation }}
+            Validating against: {{ validationCurrentName }} <br>
+            Pass: {{validationPass}} out of {{ validationTotalNumber }} <br>
+            Fail: {{validationFail}} out of {{ validationTotalNumber }}
         </v-row>
     </div>
 </template>
 
 <script>
-    import ValidationProgress from "../components/ValidationProgress";
+    import ValidationProgress from "../components/ValidationProgress"
+    import { mapMutations, mapGetters, mapState } from 'vuex'
     const electron = require('electron')
     const ipcRenderer = electron.ipcRenderer
     const loadBalancer = require('electron-load-balancer')
 
     export default {
         name: "LoadingPage",
-        components: {ValidationProgress},
+        components: { ValidationProgress },
+        methods: {
+            ...mapMutations([
+                'incrementValidationFail',
+                'incrementValidationPass',
+                'incrementValidationCurrentNumber',
+                'setValidationTotalNumber',
+                'setValidationCurrentName',
+                'setValexaIsValidTrue',
+                'setValidationStatus',
+                'addValidationDescription'
+            ])
+        },
+        computed: {
+            ...mapState([
+                'valexaIsValid',
+                'validationTotalNumber',
+                'validationCurrentNumber',
+                'validationPass',
+                'validationFail',
+                'validationCurrentName',
+                'validationDescription',
+                'validationStatus'
+            ]),
+
+            ...mapGetters([
+                'getValidationProgress'
+            ])
+        },
         data () {
             return {
                 messageShown: "Please wait",
@@ -41,38 +70,30 @@
                 numberOfValidation: 0,
                 numberOfFail: 0,
                 numberOfPass: 0,
-                validationName: "",
-                progress: 0
+                validationName: ""
             }
         },
 
         mounted() {
             ipcRenderer.on("VALID_INFO",  (event, args) => {
-                this.numberOfValidation = args.numberOfValidation
-                this.numberOfFail = args.numberOfFail
-                this.numberOfPass = args.numberOfPass
-                if (args.status == "start") {
-                    this.messageShown = "I am currently validating myself."
-                } else if (args.status == "done") {
-                    if (this.numberOfPass == this.numberOfValidation) {
-                        this.messageShown = "All is good, I am valid :)"
-                    } else {
-                        this.messageShown = "There seem to be a problem with me :("
-                    }
+                this.setValidationTotalNumber(args.numberOfValidation)
+                if (args.status === "start") {
+                    this.setValidationStatus("start")
+                } else if (args.status === "done") {
+                    this.setValidationStatus("done")
                 }
             })
 
             ipcRenderer.on("VALID_NAME",  (event, args) => {
-                this.validationName = args.validationName
+                this.setValidationCurrentName(args.validationName)
             })
 
             ipcRenderer.on("VALID_PASS",  (event, args) => {
-                this.progress = parseInt(args.numberOfPass)/this.numberOfValidation
-                this.numberOfPass = args.numberOfPass
+                this.incrementValidationPass()
             })
 
             ipcRenderer.on("VALID_PASS",  (event, args) => {
-                this.numberOfFail = args.numberOfFail
+                this.incrementValidationFail()
             })
 
             loadBalancer.start( ipcRenderer ,'validate')

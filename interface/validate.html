@@ -17,7 +17,7 @@
 
             console.log("pyshell start")
             pyshell.on('message', function(message) {
-                if (message == "EXIT") {
+                if (message === "EXIT") {
                     loadBalancer.stop(ipcRenderer, 'validate')
                 } else {
                     try {
@@ -44,7 +44,7 @@
                                 })
                                 break
 
-                            case "VALIDE_FAIL":
+                            case "VALID_FAIL":
                                 ipcRenderer.send("VALID_FAIL", {
                                     numberOfFail: parsedJSON['validation_fail']
                                 })

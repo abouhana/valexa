@@ -3,27 +3,49 @@ import Vuex from 'vuex'
 
 Vue.use(Vuex)
 
-export const index = new Vuex.Store({
+export default {
   state: {
-    valexa_is_valid: false,
-    validation_pass: 0,
-    validation_fail: 0,
-    validation_current_name: "",
-
+    valexaIsValid: false,
+    validationTotalNumber: 0,
+    validationCurrentNumber: 0,
+    validationPass: 0,
+    validationFail: 0,
+    validationCurrentName: "",
+    validationDescription: [],
+    validationStatus: "",
   },
   mutations: {
-    increment_validation_fail (state) {
-      state.validation_fail++
+    incrementValidationFail (state) {
+      state.validationFail++
     },
-    increment_validation_pass (state) {
-      state.validation_pass++
+    incrementValidationPass (state) {
+      state.validationPass++
     },
-    set_validation_current_name (state, name) {
-      state.validation_current_name = name
+    incrementValidationCurrentNumber (state) {
+      state.validationCurrentNumber++
     },
-    set_valexa_is_valid_true (state) {
-      state.valexa_is_valid = true
+    setValidationTotalNumber (state, number) {
+      state.validationTotalNumber = number
+    },
+    setValidationCurrentName (state, name) {
+      state.validationCurrentName = name
+    },
+    setValexaIsValidTrue (state) {
+      state.valexaIsValid = true
+    },
+    setValidationStatus (state, status) {
+      state.validationStatus = status
+    },
+    addValidationDescription (state, validationStatus) {
+      state.validationDescription.push({
+        name: state.validationCurrentName,
+        status: validationStatustatus
+      })
     }
-
+  },
+  getters: {
+    getValidationProgress: state => {
+      return state.validationCurrentNumber / state.validationTotalNumber
+    }
   }
-})
+}
