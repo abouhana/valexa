@@ -83,6 +83,13 @@ class ModelsManager:
             warn("Model name not found, try get_available_models() for a list of available models")
             return None
 
+    def get_model_min_point( self, model_name:str ) -> Optional[str]:
+        if model_name in self.available_models:
+            return self.available_models[model_name]["min_points"]
+        else:
+            warn("Model name not found, try get_available_models() for a list of available models")
+            return None
+
     @property
     def number_of_models(self) -> int:
         return len(list(self.available_models.keys()))
@@ -92,7 +99,7 @@ class ModelsManager:
         return list(self.models.keys())
 
 
-class Model:
+class Model():
     def __init__(
         self, data: DataObject, model_formula: str, model_weight: str, model_name: str
     ):
@@ -217,6 +224,9 @@ class Model:
     def list_of_levels(self, serie_type: str = "validation") -> Optional[np.ndarray]:
         return self.data.list_of_levels(serie_type)
 
+    def add_corrected_value( self, corrected_value: pd.Series) -> None:
+        return self.data.add_corrected_value(corrected_value)
+
     @property
     def validation_data(self) -> pd.DataFrame:
         return self.data.validation_data
@@ -227,7 +237,7 @@ class Model:
 
 
 class ModelGenerator:
-    def __init__(self, model_name: str, model_info: Dict[str, str]):
+    def __init__(self, model_name: str, model_info: Dict[str, Union[str, int]]):
 
         self.name: str = model_name
         self.formula: str = model_info["formula"]
@@ -235,6 +245,7 @@ class ModelGenerator:
             self.weight: str = "I(x/x) - 1"
         else:
             self.weight: str = "I(" + model_info["weight"] + ") - 1"
+        self.min_points: int = model_info["min_points"]
 
     def calculate_model(self, data: DataObject) -> Model:
         return Model(data, self.formula, self.weight, self.name)

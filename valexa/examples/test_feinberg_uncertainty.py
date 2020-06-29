@@ -41,13 +41,9 @@ def test_feinberg_uncertainty():
         }
     )
 
-    calculated_composite_uncertainty: pd.Series = pd.Series(
-        profiles.profiles["1/X^2 Weighted Linear"][0].get_profile_parameter("tolerance_std")
-    )
+    calculated_composite_uncertainty: pd.Series = profiles.profiles["1/X^2 Weighted Linear"][0].get_profile_parameter("tolerance_std")
 
-    calculated_relative_expanded_uncertainty: pd.Series = pd.Series(
-        profiles.profiles["1/X^2 Weighted Linear"][0].get_profile_parameter("pc_uncertainty")
-    )
+    calculated_relative_expanded_uncertainty: pd.Series = profiles.profiles["1/X^2 Weighted Linear"][0].get_profile_parameter("uncertainty_pc")
 
 
     # We calculate an assertion matrice based on the percentage of error from the litterature value, for those in

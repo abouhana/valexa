@@ -12,17 +12,30 @@ def main():
     The
     :return:
     """
-    data = sample_dataset.dataset("inra_pyrene")
+
+    optimizer_parameter = {
+        "has_limits": True,
+        "validation_range": "max",
+        "average.bias_abs": "min",
+        "min_loq": "min",
+        "model.rsquared": "max",
+    }
+    data = sample_dataset.dataset("sfstp")
 
     profiles: ProfileManager = ProfileManager(
         "Test",
         data,
-        allow_correction=True
+        rolling_data=True,
+        optimizer_parameter=optimizer_parameter,
+        allow_correction=True,
     )
     profiles.make_profiles(["Linear"])
-    profiles.profiles["Linear"][0].get_model_parameter(["params","rsquared"])
+    profiles.optimize()
 
-    return True
+    profiles.profiles["Linear"][1].summary()
+
+    pass
+
 
 if __name__ == '__main__':
     main()

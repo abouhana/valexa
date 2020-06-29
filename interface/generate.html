@@ -1,0 +1,67 @@
+<script>
+    const { ipcRenderer } = require('electron');
+    const loadBalancer = require('electron-load-balancer');
+    const { PythonShell } = require('python-shell')
+    const path = require('path');
+
+    let pyshell = new PythonShell('interface.py', {
+        pythonPath: path.join(process.env["npm_config_prefix"], '\\python'),
+        pythonOptions: ['-u'],
+        args: ['validate']
+    } )
+
+    loadBalancer.job(
+        ipcRenderer,
+        'validate',
+        () => {
+
+            console.log("pyshell start")
+            pyshell.on('message', function(message) {
+                if (message == "EXIT") {
+                    loadBalancer.stop(ipcRenderer, 'validate')
+                } else {
+                    try {
+                        const parsedJSON = JSON.parse(message)
+                        switch (parsedJSON['type']) {
+                            case "VALID_INFO":
+                                ipcRenderer.send("VALID_INFO", {
+                                    numberOfValidation: parsedJSON['number_of_validation'],
+                                    status: parsedJSON['status'],
+                                    numberOfPass: parsedJSON['number_of_pass'],
+                                    numberOfFail: parsedJSON['number_of_fail']
+                                })
+                                break
+
+                            case "VALID_NAME":
+                                ipcRenderer.send("VALID_NAME", {
+                                    validationName: parsedJSON["validation_name"]
+                                })
+                                break
+
+                            case "VALID_PASS":
+                                ipcRenderer.send("VALID_PASS", {
+                                    numberOfPass: parsedJSON['validation_pass']
+                                })
+                                break
+
+                            case "VALIDE_FAIL":
+                                ipcRenderer.send("VALID_FAIL", {
+                                    numberOfFail: parsedJSON['validation_fail']
+                                })
+                                break
+
+                            default:
+                                break
+
+                        }
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            })
+        },
+        () => {
+            pyshell.terminate()
+        });
+
+</script>

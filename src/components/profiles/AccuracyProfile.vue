@@ -268,7 +268,8 @@
                 ]
 
                 return dataObject
-            }
+            },
+
             options2: function () {
                 const layout = {padding: 50}
                 const responsive = true

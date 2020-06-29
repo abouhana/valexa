@@ -29,7 +29,7 @@
                 align="center"
         >
           <v-col class="grow">
-            <AccuracyProfile/>
+            <LoadingPage/>
           </v-col>
         </v-row>
       </v-container>
