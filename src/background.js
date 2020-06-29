@@ -1,14 +1,9 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain } from 'electron'
+import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const loadBalancer = require('electron-load-balancer')
-const { ipcMain } = require('electron')
-const path = require('path');
-
-import {
-  createProtocol,
-  installVueDevtools
-} from 'vue-cli-plugin-electron-builder/lib'
+import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -18,7 +13,7 @@ let win
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: { secure: true, standard: true } }])
 
-function createWindow () {
+async function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({ width: 800, height: 600, webPreferences: {
     // Use pluginOptions.nodeIntegration, leave this alone
@@ -28,7 +23,7 @@ function createWindow () {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
+    await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
     if (!process.env.IS_TEST) win.webContents.openDevTools()
   } else {
     createProtocol('app')
@@ -69,14 +64,11 @@ app.on('ready', async () => {
     // Electron will not launch with Devtools extensions installed on Windows 10 with dark mode
     // If you are not using Windows 10 dark mode, you may uncomment these lines
     // In addition, if the linked issue is closed, you can upgrade electron and uncomment these lines
-     try {
-       await installVueDevtools()
-       console.log("aa")
-     } catch (e) {
-       console.log("bb")
-       console.log(e)
-       console.error('Vue Devtools failed to install:', e.toString())
-     }
+    try {
+      await installExtension(VUEJS_DEVTOOLS)
+    } catch (e) {
+      console.error('Vue Devtools failed to install:', e.toString())
+    }
 
   }
   createWindow()
@@ -100,9 +92,10 @@ if (isDevelopment) {
 loadBalancer.register(
     ipcMain,
     {
-      'validate': 'valexa/interface/validate.html'
+      'validate': 'valexa/interface/validate.html',
+      'test': 'valexa/interface/test_profile.html'
     },
-    { debug: false }
+    { debug: true }
 )
 
 ipcMain.on("VALID_NAME", (events, args) => {
@@ -120,3 +113,7 @@ ipcMain.on("VALID_FAIL", (events, args) => {
 ipcMain.on("VALID_INFO", (events, args) => {
   win.webContents.send("VALID_INFO", args)
 });
+
+ipcMain.on("GEN_MESSAGE", (events, args) => {
+  win.webContents.send("GEN_MESSAGE", args)
+})

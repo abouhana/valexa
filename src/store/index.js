@@ -3,7 +3,7 @@ import Vuex from 'vuex'
 
 Vue.use(Vuex)
 
-export default {
+export default new Vuex.Store({
   state: {
     valexaIsValid: false,
     validationTotalNumber: 0,
@@ -13,6 +13,9 @@ export default {
     validationCurrentName: "",
     validationDescription: [],
     validationStatus: "",
+    validationAccepted: "",
+
+    loadBalancerProc: 0
   },
   mutations: {
     incrementValidationFail (state) {
@@ -39,13 +42,25 @@ export default {
     addValidationDescription (state, validationStatus) {
       state.validationDescription.push({
         name: state.validationCurrentName,
-        status: validationStatustatus
+        status: validationStatus
       })
+    },
+    setValidationAccepted (state) {
+      state.validationAccepted = true
+    },
+
+    incrementLoadBalancerProc (state) {
+      state.loadBalancerProc++
+    },
+
+    decrementLoadBalancerProc (state) {
+      state.loadBalancerProc--
     }
+
   },
   getters: {
     getValidationProgress: state => {
       return state.validationCurrentNumber / state.validationTotalNumber
     }
   }
-}
+})

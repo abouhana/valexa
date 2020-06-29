@@ -18,6 +18,7 @@
             console.log("pyshell start")
             pyshell.on('message', function(message) {
                 if (message === "EXIT") {
+                    console.log("stop")
                     loadBalancer.stop(ipcRenderer, 'validate')
                 } else {
                     try {
