@@ -1,7 +1,8 @@
 import pandas as pd
 from valexa.profiles import ProfileManager
+import json
 
-def test_ouptut(data):
+def dev_ouptut(data):
     data = format_json_dict(data)
 
     aa = ProfileManager(
@@ -12,7 +13,9 @@ def test_ouptut(data):
 
     aa.make_profiles()
 
-    print(aa.output_profiles("json"))
+    bb = aa.output_profiles()
+    oo = {"type": "PROFILE", "data": bb}
+    print(json.dumps(oo))
 
 def format_json_dict(data):
     data_formatted = {}

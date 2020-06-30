@@ -45,7 +45,7 @@
                     </div>
                 </v-row>
             </div>
-            <div v-if="validationStatus === 'start'">
+            <div v-show="validationStatus === 'start'">
                 <v-row
                         justify="center"
                         align-content="start"
@@ -106,7 +106,8 @@
                 'setValexaIsValidTrue',
                 'setValidationStatus',
                 'addValidationDescription',
-                'setValidationAccepted'
+                'setValidationAccepted',
+                'setStateLoading'
             ])
         },
         computed: {
@@ -118,7 +119,8 @@
                 'validationFail',
                 'validationCurrentName',
                 'validationDescription',
-                'validationStatus'
+                'validationStatus',
+                'stateLoading'
             ]),
 
             ...mapGetters([
@@ -137,11 +139,14 @@
         },
 
         mounted() {
+            this.setStateLoading(true)
+
             ipcRenderer.on("VALID_INFO",  (event, args) => {
                 this.setValidationTotalNumber(args.numberOfValidation)
                 if (args.status === "start") {
                     this.setValidationStatus("start")
                 } else if (args.status === "done") {
+                    this.setStateLoading(false)
                     this.setValidationStatus("done")
                     if (this.validationPass === this.validationTotalNumber) {
                         this.setValexaIsValidTrue()

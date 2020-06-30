@@ -20,6 +20,19 @@
                 if (message === "EXIT") {
                     console.log("stop")
                     loadBalancer.stop(ipcRenderer, 'test')
+                } else {
+                    try {
+                        const parsedJSON = JSON.parse(message)
+                        switch (parsedJSON['type']) {
+                            case 'PROFILE':
+                                ipcRenderer.send("PROFILE", {
+                                    data: parsedJSON['data']
+                                })
+                                break
+                        }
+                    } catch (e) {
+                        console.log(e)
+                    }
                 }
             })
         },

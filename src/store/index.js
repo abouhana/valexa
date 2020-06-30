@@ -15,7 +15,11 @@ export default new Vuex.Store({
     validationStatus: "",
     validationAccepted: "",
 
-    loadBalancerProc: 0
+    loadBalancerProc: 0,
+
+    listOfProfile: {},
+
+    stateLoading: false
   },
   mutations: {
     incrementValidationFail (state) {
@@ -55,12 +59,33 @@ export default new Vuex.Store({
 
     decrementLoadBalancerProc (state) {
       state.loadBalancerProc--
-    }
+    },
 
+    makeProfileList (state, profilesData) {
+      state.listOfProfile = profilesData
+    },
+
+    setStateLoading (state, status) {
+      state.stateLoading = status
+    }
   },
   getters: {
     getValidationProgress: state => {
       return state.validationCurrentNumber / state.validationTotalNumber
+    },
+
+    getProfilesTable: state => {
+      const tableObject = []
+
+      for (const modelType in state.listOfProfile) {
+        console.log(state.listOfProfile[modelType])
+        for (const modelData in state.listOfProfile[modelType]) {
+          console.log(state.listOfProfile[modelType][modelData])
+          tableObject.push(state.listOfProfile[modelType][modelData]['model_info'])
+        }
+      }
+
+      return tableObject
     }
   }
 })

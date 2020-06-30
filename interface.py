@@ -1,7 +1,7 @@
 import sys
 import json
 from valexa.electron_interface.boot_validation import valexa_validate
-from valexa.electron_interface.test_ouput import test_ouptut
+from valexa.electron_interface.dev_ouput import dev_ouptut
 from warnings import filterwarnings
 
 def main(arguments):
@@ -11,7 +11,7 @@ def main(arguments):
             valexa_validate()
 
         if arguments[1] == "test":
-            test_ouptut(json.loads(arguments[2]))
+            dev_ouptut(json.loads(arguments[2]))
 
     print("EXIT")
     exit(0)

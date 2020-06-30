@@ -93,27 +93,31 @@ loadBalancer.register(
     ipcMain,
     {
       'validate': 'valexa/interface/validate.html',
-      'test': 'valexa/interface/test_profile.html'
+      'test': 'valexa/interface/dev_profile.html'
     },
     { debug: true }
 )
 
 ipcMain.on("VALID_NAME", (events, args) => {
   win.webContents.send("VALID_NAME", args)
-});
+})
 
 ipcMain.on("VALID_PASS", (events, args) => {
   win.webContents.send("VALID_PASS", args)
-});
+})
 
 ipcMain.on("VALID_FAIL", (events, args) => {
   win.webContents.send("VALID_FAIL", args)
-});
+})
 
 ipcMain.on("VALID_INFO", (events, args) => {
   win.webContents.send("VALID_INFO", args)
-});
+})
 
 ipcMain.on("GEN_MESSAGE", (events, args) => {
   win.webContents.send("GEN_MESSAGE", args)
+})
+
+ipcMain.on("PROFILE", (events, args) => {
+  win.webContents.send("PROFILE", args)
 })
