@@ -1,13 +1,23 @@
 <template>
     <v-container>
-        <div class="chart-container" style="position: relative;">
-            <line-chart :chart-data="dataCollection" :options="options"></line-chart>
-        </div>
+        <v-row>
+            <v-col>
+                <div class="chart-container" style="position: relative;">
+                    <line-chart :chart-data="accuracyProfileData" :options="options"></line-chart>
+                </div>
+            </v-col>
+            <v-col>
+                <div class="chart-container" style="position: relative;">
+                    <line-chart :chart-data="linearityProfileData" :options="options"></line-chart>
+                </div>
+            </v-col>
+        </v-row>
     </v-container>
 </template>
 
 <script>
     import LineChart from './ProfileChartJs'
+    import { mapGetters } from "vuex"
 
     export default {
         components: {
@@ -15,181 +25,54 @@
         },
 
         methods: {
-            returnJson: function () {
-                return JSON.parse('{\n' +
-                    '  "graph": [\n' +
-                    '    {\n' +
-                    '      "introduced_concentration": 1.9000000000000001,\n' +
-                    '      "recovery": 93.64406672852874,\n' +
-                    '      "tol_limit_low": 26.505410756319858,\n' +
-                    '      "tol_limit_high": 160.78272270073762,\n' +
-                    '      "acc_limit_low": 80,\n' +
-                    '      "acc_limit_high": 120,\n' +
-                    '      "error": 84.33259846316163\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "introduced_concentration": 4.7,\n' +
-                    '      "recovery": 100.33099312858967,\n' +
-                    '      "tol_limit_low": 83.16354160287855,\n' +
-                    '      "tol_limit_high": 117.49844465430076,\n' +
-                    '      "acc_limit_low": 80,\n' +
-                    '      "acc_limit_high": 120,\n' +
-                    '      "error": 19.091713992959775\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "introduced_concentration": 9.5,\n' +
-                    '      "recovery": 101.92752577281237,\n' +
-                    '      "tol_limit_low": 83.97126625133296,\n' +
-                    '      "tol_limit_high": 119.88378529429178,\n' +
-                    '      "acc_limit_low": 80,\n' +
-                    '      "acc_limit_high": 120,\n' +
-                    '      "error": 21.73721563100102\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "introduced_concentration": 28.5,\n' +
-                    '      "recovery": 99.74489293496109,\n' +
-                    '      "tol_limit_low": 94.45816126918002,\n' +
-                    '      "tol_limit_high": 105.03162460074216,\n' +
-                    '      "acc_limit_low": 80,\n' +
-                    '      "acc_limit_high": 120,\n' +
-                    '      "error": 6.489057951739105\n' +
-                    '    }\n' +
-                    '  ],\n' +
-                    '  "scatter": [\n' +
-                    '    {\n' +
-                    '      "x": 1.9,\n' +
-                    '      "y": 57.757506220170335\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 1.9,\n' +
-                    '      "y": 58.404039867218565\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 1.9,\n' +
-                    '      "y": 157.4552531339154\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 1.9,\n' +
-                    '      "y": 85.48904351446153\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 1.9,\n' +
-                    '      "y": 98.5129675644238\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 1.9,\n' +
-                    '      "y": 104.2455900709829\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 4.7,\n' +
-                    '      "y": 92.96846389772921\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 4.7,\n' +
-                    '      "y": 89.17442641125835\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 4.7,\n' +
-                    '      "y": 110.37111020939865\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 4.7,\n' +
-                    '      "y": 102.91926109927451\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 4.7,\n' +
-                    '      "y": 105.39004794469055\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 4.7,\n' +
-                    '      "y": 101.16264920918651\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 9.5,\n' +
-                    '      "y": 91.51457245611569\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 9.5,\n' +
-                    '      "y": 92.89647242204236\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 9.5,\n' +
-                    '      "y": 106.137233007347\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 9.5,\n' +
-                    '      "y": 111.95816171247905\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 9.5,\n' +
-                    '      "y": 112.04568157703814\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 9.5,\n' +
-                    '      "y": 97.01303346185196\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 28.5,\n' +
-                    '      "y": 101.87481319993755\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 28.5,\n' +
-                    '      "y": 103.4000368849118\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 28.5,\n' +
-                    '      "y": 99.66900771249853\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 28.5,\n' +
-                    '      "y": 95.83096468835534\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 28.5,\n' +
-                    '      "y": 100.339832979874\n' +
-                    '    },\n' +
-                    '    {\n' +
-                    '      "x": 28.5,\n' +
-                    '      "y": 97.35470214418935\n' +
-                    '    }\n' +
-                    '  ]\n' +
-                    '}')
-    }
+            absoluteModeSwitch: function () {
+                if (this.absoluteAcceptance===true) {
+                    return "abs"
+                } else {
+                    return "rel"
+                }
+            },
         },
 
         props: {
-          xAxeString: String,
-          yAxeString: String,
-
+            xAxeString: String,
+            yAxeString: String,
+            profileId: Number,
+            absoluteAcceptance: Boolean
         },
-
 
         computed: {
 
-            dataCollection: function () {
-                var fullData = this.returnJson()
+            ...mapGetters([
+               'getProfile'
+            ]),
+
+            profileData: function () {
+                return this.getProfile(this.profileId)
+            },
+
+            accuracyProfileData: function () {
                 var dataObject = {}
                 var labels = []
+                var acc = this.absoluteModeSwitch()
+                const graphList = {}
+                const errorBars = {}
 
-                for (const [key, value] of Object.entries(fullData)) {
+                for (const [key, value] of Object.entries(this.profileData)) {
                     if (key === "graph") {
-                        var graphList = {
-                            "recovery": [],
-                            "acc_limit_high": [],
-                            "acc_limit_low": [],
-                            "error": [],
-                            "tol_limit_high": [],
-                            "tol_limit_low": []
-                        }
-                        for (const [graph_key, graph_value] of Object.entries(value)) {
-                            for (const item of [
-                                "recovery",
-                                "acc_limit_high",
-                                "acc_limit_low",
-                                "error",
-                                "tol_limit_high",
-                                "tol_limit_low"
-                            ]) {
+                        const graphVar = [
+                            "recovery",
+                            "acceptance_limits_" + acc + "_high",
+                            "acceptance_limits_" + acc + "_low",
+                            "error",
+                            "tolerance_" + acc + "_high",
+                            "tolerance_" + acc + "_low"
+                        ]
+                        graphVar.forEach((value) => {
+                            graphList[value] = []
+                        })
+                        for (const graph_value of Object.values(value)) {
+                            for (const item of Object.keys(graphList)) {
                             graphList[item].push(
                                     {
                                         "x": graph_value["introduced_concentration"],
@@ -203,12 +86,17 @@
                     }
                 }
 
-
                 for (var i=0; i < graphList["recovery"].length; i++ ) {
                     labels.push("Level " + (i+1))
                 }
                 dataObject["labels"] = labels
 
+                dataObject["labels"].forEach(function (label, index) {
+                    errorBars[label] = {
+                     plus: graphList["error"][index]["y"],
+                     minus: -graphList["error"][index]["y"]
+                 }
+                })
 
                 dataObject["datasets"] = [
                     {
@@ -219,7 +107,7 @@
                         borderDash: [10,10],
                         pointRadius: 0,
                         pointStyle: 'line',
-                        data: graphList["acc_limit_high"]
+                        data: graphList["acceptance_limits_" + acc + "_high"]
                     },
                     {
                         label: "none",
@@ -228,7 +116,7 @@
                         lineTension: 0,
                         borderDash: [10,10],
                         pointRadius: 0,
-                        data: graphList["acc_limit_low"]
+                        data: graphList["acceptance_limits_" + acc + "_low"]
                     },
                     {
                         label: "Tolerance Limit",
@@ -237,7 +125,7 @@
                         lineTension: 0,
                         pointRadius: 0,
                         pointStyle: 'line',
-                        data: graphList["tol_limit_high"]
+                        data: graphList["tolerance_" + acc + "_high"]
                     },
                     {
                         label: "none",
@@ -245,7 +133,7 @@
                         borderColor: "green",
                         lineTension: 0,
                         pointRadius: 0,
-                        data: graphList["tol_limit_low"]
+                        data: graphList["tolerance_" + acc + "_low"]
                     },
                     {
                         label: "Recovery",
@@ -255,7 +143,8 @@
                         lineTension: 0,
                         pointRadius: 0,
                         pointStyle: 'line',
-                        data: graphList["recovery"]
+                        data: graphList["recovery"],
+                        errorBars: errorBars
                     },
                     {
                         label: "Scatter",
@@ -270,15 +159,79 @@
                 return dataObject
             },
 
-            options2: function () {
+            linearityProfileData: function () {
+                const dataObject = {}
+                const scatterPoints = []
+                const scatterPointRaw = []
+                var hasCorrection = false
+                var labels = []
+                let colorArray = ['#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+                    '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
+                    '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
+                    '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
+                    '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
+                    '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
+                    '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
+                    '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
+                    '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
+                    '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF'];
+
+                if (this.profileData["model_info"]["correction_factor"] > 0) {
+                    hasCorrection = true
+                }
+
+                this.profileData["model_info"]["list_of_series_validation"].forEach(value => {
+                    scatterPoints[value] = []
+                    labels.push("Serie " + value)
+                })
+
+                this.profileData["validation_data"].forEach( (dataPoint) => {
+                    scatterPoints[dataPoint["Serie"]].push({
+                        x: dataPoint["x"],
+                        y: dataPoint["x_calc"]
+                    })
+                })
+
+                if (hasCorrection) {
+                    for (const dataPoint in Object.values(this.profileData["validation_data"])){
+                        scatterPoints[dataPoint["Serie"]].push({
+                            x: dataPoint["x"],
+                            y: dataPoint["x_raw"]
+                        })
+                    }
+                }
+
+                dataObject["labels"] = labels
+                dataObject["datasets"] = []
+
+                scatterPoints.forEach(function (dataPoint, label){
+                    dataObject["datasets"].push(
+                        {
+                            label: "Serie " + label,
+                            fill: false,
+                            borderColor: colorArray[label],
+                            showLine: false,
+                            data: dataPoint,
+                            type: "scatter"
+                        }
+                    )
+                })
+
+                return dataObject
+
+            },
+
+            options: function () {
                 const layout = {padding: 50}
                 const responsive = true
                 const legend = {
+                    labels: {
                         filter: function (item) {
                             return item.text == null || !item.text.includes('none');
                         },
                         usePointStyle: true
                     }
+                }
 
                 var scales = {
                     xAxes: [{
@@ -305,37 +258,7 @@
 
         data () {
             return {
-                options: {
-                    layout: {
-                        padding: 50
-                    },
-                    responsive: true,
-                    scales: {
-                         xAxes: [{
-                               type: 'linear',
-                               display: true,
-                               scaleLabel: {
-                                    display: true,
-                                    labelString: 'Concentration'
-                               },
-                          }],
-                         yAxes: [{
-                             display: true,
-                             scaleLabel: {
-                                 display: true,
-                                 labelString: 'Deviation'
-                             }
-                         }]
-                    },
-                    legend: {
-                        labels: {
-                            filter: function (item) {
-                                return item.text == null || !item.text.includes('none');
-                            },
-                            usePointStyle: true
-                        }
-                    }
-                }
+
             }
         }
     }

@@ -13,7 +13,7 @@ export default new Vuex.Store({
     validationCurrentName: "",
     validationDescription: [],
     validationStatus: "",
-    validationAccepted: "",
+    validationAccepted: true,
 
     loadBalancerProc: 0,
 
@@ -75,17 +75,11 @@ export default new Vuex.Store({
     },
 
     getProfilesTable: state => {
-      const tableObject = []
+      return Object.values(state.listOfProfile)
+    },
 
-      for (const modelType in state.listOfProfile) {
-        console.log(state.listOfProfile[modelType])
-        for (const modelData in state.listOfProfile[modelType]) {
-          console.log(state.listOfProfile[modelType][modelData])
-          tableObject.push(state.listOfProfile[modelType][modelData]['model_info'])
-        }
-      }
-
-      return tableObject
+    getProfile: (state) => (id) => {
+      return state.listOfProfile[id]
     }
   }
 })

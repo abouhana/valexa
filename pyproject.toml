@@ -15,6 +15,7 @@ patsy = "^0.5.1"
 shapely = "^1.7.0"
 matplotlib = "^3.2.1"
 nodeenv = "^1.4.0"
+sigfig = "^1.1.8"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.2"

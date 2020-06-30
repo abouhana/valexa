@@ -1,14 +1,16 @@
 import pandas as pd
 from valexa.profiles import ProfileManager
 import json
+import valexa.helper as vx
 
 def dev_ouptut(data):
-    data = format_json_dict(data)
+    data = vx.format_json_to_dict(data)
 
     aa = ProfileManager(
         "Test",
         data,
-        model_to_test=["Linear"]
+        model_to_test=["Linear"],
+        rolling_data=False
     )
 
     aa.make_profiles()
@@ -16,11 +18,3 @@ def dev_ouptut(data):
     bb = aa.output_profiles()
     oo = {"type": "PROFILE", "data": bb}
     print(json.dumps(oo))
-
-def format_json_dict(data):
-    data_formatted = {}
-
-    data_formatted["Validation"] = pd.DataFrame(data["Validation"])
-    data_formatted["Calibration"] = pd.DataFrame(data["Calibration"])
-
-    return data_formatted

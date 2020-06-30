@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List, Dict, Optional, Union, Callable
 import matplotlib.pyplot as plt
 from warnings import warn
+from valexa.helper import round
 
 from scipy.stats import t
 import shapely.geometry
@@ -15,6 +16,7 @@ import json
 
 from valexa import models
 from valexa.dataobject import DataObject
+import valexa.helper as vx
 
 OptimizerParams = Dict[str, Union[str, bool]]
 
@@ -162,18 +164,23 @@ class ProfileManager:
 
     def output_profiles( self , format: str = "dict"):
         output_dict = {}
+        profile_number = 0
+        temp_profile_data = {}
 
         if self.sorted_profiles is not None:
-            for profile_type in self.sorted_profiles["Model"].unique():
-                output_dict[profile_type] = []
             for index, profile in self.sorted_profiles.iterrows():
-                output_dict[profile["Model"]].append(self.profiles[profile["Model"]][profile["Index"]].output_profile())
+                temp_profile_data = self.profiles[profile["Model"]][profile["Index"]].output_profile()
+                temp_profile_data["id"] = profile_number
+                output_dict[profile_number] = temp_profile_data
+                profile_number += 1
 
         else:
-            for profile_type in self.profiles:
-                output_dict[profile_type] = []
-                for profile in self.profiles[profile_type]:
-                    output_dict[profile_type].append(profile.output_profile())
+            for profile_list in self.profiles.values():
+                for profile in profile_list:
+                    temp_profile_data = profile.output_profile()
+                    temp_profile_data["id"] = profile_number
+                    output_dict[profile_number] = temp_profile_data
+                    profile_number += 1
 
         if format == "dict":
             return output_dict
@@ -789,16 +796,6 @@ class Profile:
 
         return [x, y]
 
-    @staticmethod
-    def get_value_between(
-            x_value: float, left_coord: (float, float), right_coord: (float, float)
-    ) -> float:
-        x1, y1 = left_coord
-        x2, y2 = right_coord
-        slope: float = (y2 - y1) / (x2 - x1)
-
-        return slope * (x_value - x1) + y1
-
     def get_limits_of_quantification( self ) -> (float, float):
 
         acceptance_limit_point: List[List[shapely.geometry.Point]] = [[], []]
@@ -936,17 +933,17 @@ class Profile:
                 level_switch[switch - 1] + "_acc_y_coord"
                 ]
 
-            opposite_tol: float = self.get_value_between(
+            opposite_tol: float = vx.get_value_between(
                 cur_x_coord,
                 [left_x_coord, left_opp_tol],
                 [right_x_coord, right_opp_tol],
             )
-            opposite_acc: float = self.get_value_between(
+            opposite_acc: float = vx.get_value_between(
                 cur_x_coord,
                 [left_x_coord, left_opp_acc],
                 [right_x_coord, right_opp_acc],
             )
-            cur_acc: float = self.get_value_between(
+            cur_acc: float = vx.get_value_between(
                 cur_x_coord, [left_x_coord, left_acc], [right_x_coord, right_acc]
             )
 
@@ -1042,7 +1039,7 @@ class Profile:
         else:
             scatter["y"] = (self.model.validation_data["x_calc"] - self.model.validation_data["x"]) / \
                            self.model.validation_data["x"] * 100 + 100
-            graph["error"] = self.get_profile_parameter("uncertainty_rel")["uncertainty_rel"]
+            graph["error"] = self.get_profile_parameter("uncertainty_pc")["uncertainty_pc"]
 
         return_dict = {"graph": graph, "scatter": scatter}
 
@@ -1054,7 +1051,7 @@ class Profile:
             warn("No data of type: " + data_type + ". The available data types are: " + ", ".join(return_dict.keys()))
             return None
 
-    def profile_data( self , data_type: str = "") -> Optional[Union[dict, pd.DataFrame]]:
+    def profile_data( self , data_type: str = "", sigfig: int = 4) -> Optional[Union[dict, pd.DataFrame]]:
 
         if hasattr(self.model, "fit"):
             regression_info = self.get_model_parameter(["params", "rsquared", "f_pvalue"])
@@ -1062,11 +1059,11 @@ class Profile:
             regression_info = pd.DataFrame(None)
 
         model_info: dict = {
-            "lod": self.lod,
-            "min_loq": self.min_loq,
-            "max_loq": self.max_loq,
-            "correction_factor": self.correction_factor,
-            "forced_correction_value": self.forced_correction_value,
+            "lod": round(self.lod, sigfig),
+            "min_loq": round(self.min_loq, sigfig),
+            "max_loq": round(self.max_loq, sigfig),
+            "correction_factor": round(self.correction_factor, sigfig),
+            "forced_correction_value": round(self.forced_correction_value, sigfig),
             "number_of_serie_validation": len(self.model.list_of_series()),
             "number_of_levels_validation": len(self.model.list_of_levels()),
             "list_of_series_validation": self.model.list_of_series().tolist(),
@@ -1092,13 +1089,13 @@ class Profile:
             "introduced_concentration",
             "calculated_concentration",
             "acceptance_limits_abs",
-            "acceptance_limits_rel"])
+            "acceptance_limits_rel"]).applymap(lambda x: round(x, sigfig))
 
         bias_info = self.get_profile_parameter([
             "bias_abs",
             "bias_rel",
             "recovery"
-        ])
+        ]).applymap(lambda x: round(x, sigfig))
 
         repeatability_info = self.get_profile_parameter([
             "repeatability_var",
@@ -1110,36 +1107,36 @@ class Profile:
             "inter_series_var",
             "inter_series_std",
             "inter_series_cv"
-        ])
+        ]).applymap(lambda x: round(x, sigfig))
 
         intermediate_precision = self.get_profile_parameter([
             "intermediate_precision_var",
             "intermediate_precision_std",
             "intermediate_precision_cv"
-        ])
+        ]).applymap(lambda x: round(x, sigfig))
 
         total_error = self.get_profile_parameter([
             "total_error_abs",
             "total_error_rel"
-        ])
+        ]).applymap(lambda x: round(x, sigfig))
 
         misc_stats = self.get_profile_parameter([
             "ratio_var",
             "b_coefficient",
             "degree_of_freedom"
-        ])
+        ]).applymap(lambda x: round(x, sigfig))
 
         tolerance_info = self.get_profile_parameter([
             "tolerance_std",
             "tolerance_abs",
             "tolerance_rel"
-        ])
+        ]).applymap(lambda x: round(x, sigfig))
 
         uncertainty_info = self.get_profile_parameter([
             "uncertainty_abs",
             "uncertainty_rel",
             "uncertainty_pc"
-        ])
+        ]).applymap(lambda x: round(x, sigfig))
 
         return_dict = {
             "model_info": model_info,
@@ -1240,22 +1237,26 @@ class Profile:
             corrected_value: pd.Series = pd.Series(self.model.data_x_calc * self.correction_factor)
             self.model.add_corrected_value(corrected_value)
 
-    def output_profile( self, data_type: str = "", format: str = "dict" ) -> Optional[str]:
+    def output_profile( self, data_type: str = "", format: str = "dict", sigfig: int = 4 ) -> Optional[str]:
 
         return_dict = {
-            "model_info": self.profile_data("model_info"),
-            "regression_info": self.profile_data("regression_info").to_dict(orient="row"),
-            "levels_info": self.profile_data("levels_info").to_dict(orient="row"),
-            "bias_info": self.profile_data("bias_info").to_dict(orient="row"),
-            "repeatability_info": self.profile_data("repeatability_info").to_dict(orient="row"),
-            "intermediate_precision": self.profile_data("intermediate_precision").to_dict(orient="row"),
-            "total_error": self.profile_data("total_error").to_dict(orient="row"),
-            "misc_stats": self.profile_data("misc_stats").to_dict(orient="row"),
-            "tolerance_info": self.profile_data("tolerance_info").to_dict(orient="row"),
-            "uncertainty_info": self.profile_data("uncertainty_info").to_dict(orient="row"),
+            "model_info": self.profile_data("model_info", sigfig),
+            "regression_info": self.profile_data("regression_info", sigfig).to_dict(orient="row"),
+            "levels_info": self.profile_data("levels_info", sigfig).to_dict(orient="row"),
+            "bias_info": self.profile_data("bias_info", sigfig).to_dict(orient="row"),
+            "repeatability_info": self.profile_data("repeatability_info", sigfig).to_dict(orient="row"),
+            "intermediate_precision": self.profile_data("intermediate_precision", sigfig).to_dict(orient="row"),
+            "total_error": self.profile_data("total_error", sigfig).to_dict(orient="row"),
+            "misc_stats": self.profile_data("misc_stats", sigfig).to_dict(orient="row"),
+            "tolerance_info": self.profile_data("tolerance_info", sigfig).to_dict(orient="row"),
+            "uncertainty_info": self.profile_data("uncertainty_info", sigfig).to_dict(orient="row"),
             "graph": self.plot_data("graph").to_dict(orient="row"),
-            "scatter": self.plot_data("scatter").to_dict(orient="row")
+            "scatter": self.plot_data("scatter").to_dict(orient="row"),
+            "validation_data": self.model.validation_data.to_dict(orient="row")
         }
+
+        if self.model.calibration_data is not None:
+            return_dict["calibration_data"] = self.model.calibration_data.to_dict(orient="row")
 
         if format == "dict":
             if data_type == "":

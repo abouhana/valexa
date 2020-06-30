@@ -6,7 +6,7 @@
                 color="blue-grey"
                 dark
         >
-            <v-app-bar-nav-icon v-if="validationAccepted===true" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+            <v-app-bar-nav-icon v-show="validationAccepted===true" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
             <v-toolbar-title>Valexa</v-toolbar-title>
             <v-spacer></v-spacer>
         </v-app-bar>
@@ -27,8 +27,10 @@
                         justify="center"
                         align="center"
                 >
-                    <LoadingPage v-if="validationAccepted===true"/>
-                    <MainPage v-else/>
+                    <v-col>
+                        <LoadingPage v-if="validationAccepted!==true"/>
+                        <MainPage v-show="validationAccepted===true"/>
+                    </v-col>
                 </v-row>
             </v-container>
         </v-main>
@@ -63,7 +65,8 @@
             LoadingPage,
             ValidationProgress,
             AccuracyProfile,
-            MainPage},
+            MainPage
+        },
         props: {
             source: String,
         },

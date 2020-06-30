@@ -30,7 +30,7 @@ def main():
         allow_correction=True,
     )
     profiles.make_profiles(["Linear"])
-    profiles.optimize()
+    #profiles.optimize()
 
     profiles.profiles["Linear"][1].summary()
 
