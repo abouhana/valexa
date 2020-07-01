@@ -9,7 +9,7 @@ def dev_ouptut(data):
     aa = ProfileManager(
         "Test",
         data,
-        model_to_test=["Linear"],
+        model_to_test=["Linear", "Quadratic"],
         rolling_data=False
     )
 

@@ -34,7 +34,6 @@ def test_intern_dataset():
 
     profiles.profiles["Linear"][1].summary()
 
-    assert len(profiles.sorted_profiles) == 33
     assert profiles.profiles["Linear"][1].fig is not None
     return True
 

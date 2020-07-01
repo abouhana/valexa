@@ -37,7 +37,7 @@ class ProfileManager:
             allow_correction: bool = False,
             correction_threshold: Optional[List[float]] = None,
             forced_correction_value: Optional[float] = None,
-            correction_round_to: int = 1,
+            correction_round_to: int = 2,
             optimizer_parameter: Optional[OptimizerParams] = None,
             minimum_validation_points: int = 5
     ):
@@ -70,7 +70,7 @@ class ProfileManager:
         value to the indicated value instead of calculating it. Note: the value of the average recovery ratio must still
         be outside the threshold for this to take effect. Default is None
         :param correction_round_to: (Optional) If allow_correction is set to True, the generated correction will be
-        rounded to this decimal place. Default is 1.
+        rounded to this number of significant figures. Default is 2.
         :param optimizer_parameter: (Optional) These are the value used to sort the profile from best to worst when
         using the optimizer. Default is None
         """
