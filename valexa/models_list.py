@@ -20,13 +20,37 @@ def model_list(
         "Linear through 0": {"formula": "y ~ x - 1", "weight": None, "min_points": 1},
         "Quadratic": {"formula": "y ~ x + I(x**2)", "weight": None, "min_points": 3},
         "1/X Weighted Linear": {"formula": "y ~ x", "weight": "1/x", "min_points": 2},
-        "1/X^2 Weighted Linear": {"formula": "y ~ x", "weight": "1/x**2", "min_points": 2},
+        "1/X^2 Weighted Linear": {
+            "formula": "y ~ x",
+            "weight": "1/x**2",
+            "min_points": 2,
+        },
         "1/Y Weighted Linear": {"formula": "y ~ x", "weight": "1/y", "min_points": 2},
-        "1/Y^2 Weighted Linear": {"formula": "y ~ x", "weight": "1/y**2", "min_points": 2},
-        "1/X Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/x", "min_points": 3},
-        "1/X^2 Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/x**2", "min_points": 3},
-        "1/Y Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/y", "min_points": 3},
-        "1/Y^2 Weighted Quadratic": {"formula": "y ~ x + I(x**2)", "weight": "1/y**2", "min_points": 3},
+        "1/Y^2 Weighted Linear": {
+            "formula": "y ~ x",
+            "weight": "1/y**2",
+            "min_points": 2,
+        },
+        "1/X Weighted Quadratic": {
+            "formula": "y ~ x + I(x**2)",
+            "weight": "1/x",
+            "min_points": 3,
+        },
+        "1/X^2 Weighted Quadratic": {
+            "formula": "y ~ x + I(x**2)",
+            "weight": "1/x**2",
+            "min_points": 3,
+        },
+        "1/Y Weighted Quadratic": {
+            "formula": "y ~ x + I(x**2)",
+            "weight": "1/y",
+            "min_points": 3,
+        },
+        "1/Y^2 Weighted Quadratic": {
+            "formula": "y ~ x + I(x**2)",
+            "weight": "1/y**2",
+            "min_points": 3,
+        },
     }
 
     if model_name is None:

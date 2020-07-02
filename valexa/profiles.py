@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import List, Dict, Optional, Union, Callable
 import matplotlib.pyplot as plt
-from warnings import warn
-from valexa.helper import round
+from warnings import warn, resetwarnings, filterwarnings
+from valexa.helper import roundsf
 
 from scipy.stats import t
 import shapely.geometry
@@ -23,23 +23,23 @@ OptimizerParams = Dict[str, Union[str, bool]]
 
 class ProfileManager:
     def __init__(
-            self,
-            compound_name: str,
-            data: Dict[str, pd.DataFrame],
-            tolerance_limit: float = 80,
-            acceptance_limit: float = 20,
-            absolute_acceptance: bool = False,
-            quantity_units: str = None,
-            rolling_data: bool = False,
-            rolling_data_limit: Union[list, int] = 3,
-            model_to_test: Union[List[str], str] = None,
-            generate_figure: bool = False,
-            allow_correction: bool = False,
-            correction_threshold: Optional[List[float]] = None,
-            forced_correction_value: Optional[float] = None,
-            correction_round_to: int = 2,
-            optimizer_parameter: Optional[OptimizerParams] = None,
-            minimum_validation_points: int = 5
+        self,
+        compound_name: str,
+        data: Dict[str, pd.DataFrame],
+        tolerance_limit: float = 80,
+        acceptance_limit: float = 20,
+        absolute_acceptance: bool = False,
+        quantity_units: str = None,
+        rolling_data: bool = False,
+        rolling_data_limit: Union[list, int] = 3,
+        model_to_test: Union[List[str], str] = None,
+        generate_figure: bool = False,
+        allow_correction: bool = False,
+        correction_threshold: Optional[List[float]] = None,
+        forced_correction_value: Optional[float] = None,
+        correction_round_to: int = 2,
+        optimizer_parameter: Optional[OptimizerParams] = None,
+        significant_figure: int = 4,
     ):
         """
         Init ProfileManager with the necessary dataset
@@ -73,6 +73,8 @@ class ProfileManager:
         rounded to this number of significant figures. Default is 2.
         :param optimizer_parameter: (Optional) These are the value used to sort the profile from best to worst when
         using the optimizer. Default is None
+        :param significant_figure: (Optional) Set the number of significant figure to take into account during the
+        analysis. Setting this to 0 will remove any rounding. Default is 4
         """
         self.compound_name: str = compound_name
         self.quantity_units: str = quantity_units
@@ -84,6 +86,7 @@ class ProfileManager:
         self.acceptance_limit: float = acceptance_limit
         self.absolute_acceptance: bool = absolute_acceptance
         self.data: Dict[str, pd.DataFrame] = data
+        self.sigfig: int = significant_figure
 
         if type(model_to_test) == str:
             model_to_test = [model_to_test]
@@ -114,7 +117,7 @@ class ProfileManager:
         self.profiles: Optional[Dict[str, Profile]] = None
         self.sorted_profiles: Optional[pd.DataFrame] = None
 
-    def __set_rolling_data_limit( self, rolling_data_limit: Union[list, int] ) -> None:
+    def __set_rolling_data_limit(self, rolling_data_limit: Union[list, int]) -> None:
         if type(rolling_data_limit) == list:
             self.rolling_data_limit_validation = rolling_data_limit[0]
             self.rolling_data_limit_calibration = rolling_data_limit[1]
@@ -122,18 +125,36 @@ class ProfileManager:
             self.rolling_data_limit_validation = rolling_data_limit
             self.rolling_data_limit_calibration = rolling_data_limit
 
-        if self.rolling_data_limit_validation > self.data["Validation"]["Level"].nunique():
-            warn("Minimum amount of data for Validation is " + str(self.data["Validation"][
-                "Level"].nunique()) + ". Limit set at this value.")
-            self.rolling_data_limit_validation = self.data["Validation"]["Level"].nunique()
+        if (
+            self.rolling_data_limit_validation
+            > self.data["Validation"]["Level"].nunique()
+        ):
+            warn(
+                "Minimum amount of data for Validation is "
+                + str(self.data["Validation"]["Level"].nunique())
+                + ". Limit set at this value."
+            )
+            self.rolling_data_limit_validation = self.data["Validation"][
+                "Level"
+            ].nunique()
 
         if "Calibration" in self.data:
-            if self.rolling_data_limit_calibration > self.data["Calibration"]["Level"].nunique():
-                warn("Minimum amount of data for Validation is " + str(self.data["Validation"][
-                "Level"].nunique()) + ". Limit set at this value.")
-                self.rolling_data_limit_calibration = self.data["Calibration"]["Level"].nunique()
+            if (
+                self.rolling_data_limit_calibration
+                > self.data["Calibration"]["Level"].nunique()
+            ):
+                warn(
+                    "Minimum amount of data for Validation is "
+                    + str(self.data["Validation"]["Level"].nunique())
+                    + ". Limit set at this value."
+                )
+                self.rolling_data_limit_calibration = self.data["Calibration"][
+                    "Level"
+                ].nunique()
 
-    def best( self, type_of_model: Optional[str] = None, number: Optional[int] = None ) -> Optional[Profile]:
+    def best(
+        self, type_of_model: Optional[str] = None, number: Optional[int] = None
+    ) -> Optional[Profile]:
 
         if self.sorted_profiles is not None:
             profiles_list = self.sorted_profiles
@@ -146,30 +167,35 @@ class ProfileManager:
             profiles_list = pd.DataFrame(profile_dict)
 
         if type_of_model in self.profiles and type_of_model is not None:
-            profiles_list = profiles_list[profiles_list["Model"]==type_of_model]
+            profiles_list = profiles_list[profiles_list["Model"] == type_of_model]
         elif type_of_model not in self.profiles and type_of_model is not None:
             warn("No profile of model " + type_of_model + " found.")
             return None
 
         if number is None:
-            model, index = profiles_list[["Model","Index"]].iloc[0]
+            model, index = profiles_list[["Model", "Index"]].iloc[0]
             return self.profiles[model][index]
 
         elif number < len(profiles_list):
             model, index = profiles_list[["Model", "Index"]].iloc[number]
             return self.profiles[model][number]
         else:
-            warn("The profile number must be less or equal to " + str(len(profiles_list) - 1))
+            warn(
+                "The profile number must be less or equal to "
+                + str(len(profiles_list) - 1)
+            )
             return None
 
-    def output_profiles( self , format: str = "dict"):
+    def output_profiles(self, format: str = "dict"):
         output_dict = {}
         profile_number = 0
         temp_profile_data = {}
 
         if self.sorted_profiles is not None:
             for index, profile in self.sorted_profiles.iterrows():
-                temp_profile_data = self.profiles[profile["Model"]][profile["Index"]].output_profile()
+                temp_profile_data = self.profiles[profile["Model"]][
+                    profile["Index"]
+                ].output_profile()
                 temp_profile_data["id"] = profile_number
                 output_dict[profile_number] = temp_profile_data
                 profile_number += 1
@@ -190,7 +216,7 @@ class ProfileManager:
             warn("Available format are: dict, json")
             return None
 
-    def optimize( self ) -> None:
+    def optimize(self) -> None:
         if self.optimizer_parameters is None:
             warn("No Optimizer parameter set. Optimizer cannot be run.")
         elif "Calibration" not in self.data:
@@ -200,7 +226,7 @@ class ProfileManager:
                 self.profiles, self.optimizer_parameters
             ).sort_profile()
 
-    def make_profiles( self, models_names: Optional[Union[list, str]] = None ) -> None:
+    def make_profiles(self, models_names: Optional[Union[list, str]] = None) -> None:
         profiles: Dict[str, List[Profile]] = {}
         if "Calibration" in self.data:
             if type(models_names) == str:
@@ -220,14 +246,24 @@ class ProfileManager:
 
         self.profiles = profiles
 
-    def __get_profiles( self, model_name: str = None ) -> List[Profile]:
+    def __get_profiles(self, model_name: str = None) -> List[Profile]:
         profiles: List[Profile] = []
         for data_object in self.data_objects:
             if "Calibration" in self.data:
-                if data_object.calibration_levels >= self.model_manager.get_model_min_point(model_name):
+                if (
+                    data_object.calibration_levels
+                    >= self.model_manager.get_model_min_point(model_name)
+                ):
                     data_to_model = self.model_manager.modelize(model_name, data_object)
                 else:
-                    warn(model_name + " require at least " + str(self.model_manager.get_model_min_point(model_name)) + " level to generate. Skipped possibility with only " + str(data_object.calibration_levels) + " point(s)" )
+                    warn(
+                        model_name
+                        + " require at least "
+                        + str(self.model_manager.get_model_min_point(model_name))
+                        + " level to generate. Skipped possibility with only "
+                        + str(data_object.calibration_levels)
+                        + " point(s)"
+                    )
                     data_to_model = None
             else:
                 data_to_model = data_object
@@ -239,7 +275,8 @@ class ProfileManager:
                     self.correction_threshold,
                     self.forced_correction_value,
                     self.absolute_acceptance,
-                    self.correction_round_to
+                    self.correction_round_to,
+                    self.sigfig,
                 )
                 current_profile.calculate(self.stats_limits)
 
@@ -250,14 +287,18 @@ class ProfileManager:
         return profiles
 
     @property
-    def __get_dataobject( self ) -> List[DataObject]:
+    def __get_dataobject(self) -> List[DataObject]:
         validation_dict: Dict[str, pd.DataFrame] = {}
         data_to_model: List[DataObject] = []
         if "Calibration" in self.data:
             calibration_dict: Dict[str, pd.DataFrame] = {}
             if self.rolling_data:
-                validation_dict = self.__sliding_window_data(self.data["Validation"], self.rolling_data_limit_validation)
-                calibration_dict = self.__sliding_window_data(self.data["Calibration"], self.rolling_data_limit_calibration)
+                validation_dict = self.__sliding_window_data(
+                    self.data["Validation"], self.rolling_data_limit_validation
+                )
+                calibration_dict = self.__sliding_window_data(
+                    self.data["Calibration"], self.rolling_data_limit_calibration
+                )
             else:
                 validation_dict["All"] = self.data["Validation"]
                 calibration_dict["All"] = self.data["Calibration"]
@@ -273,7 +314,9 @@ class ProfileManager:
 
         else:
             if self.rolling_data:
-                validation_dict = self.__sliding_window_data(self.data["Validation"], self.rolling_data_limit_validation)
+                validation_dict = self.__sliding_window_data(
+                    self.data["Validation"], self.rolling_data_limit_validation
+                )
             else:
                 validation_dict["All"] = self.data["Validation"]
 
@@ -281,11 +324,13 @@ class ProfileManager:
                 data_to_model.append(DataObject(validation_dict[validation_key]))
                 data_to_model[-1].add_calculated_value(data_to_model[-1].data_y())
 
-        #data_to_model = self.__sanitize_data_to_model(data_to_model)
+        # data_to_model = self.__sanitize_data_to_model(data_to_model)
 
         return data_to_model
 
-    def __sliding_window_data( self, data: pd.DataFrame, size_limit: int) -> Dict[str, pd.DataFrame]:
+    def __sliding_window_data(
+        self, data: pd.DataFrame, size_limit: int
+    ) -> Dict[str, pd.DataFrame]:
         data_level: np.ndarray = data["Level"].unique()
         data_dict: Dict[str, pd.DataFrame] = dict()
         for window_size in range(size_limit - 1, len(data_level) + 1):
@@ -295,22 +340,22 @@ class ProfileManager:
                 level_name: str = str(start_level) + "->" + str(end_level)
                 data_dict[level_name]: pd.DataFrame = data[
                     (data["Level"] >= start_level) & (data["Level"] <= end_level)
-                    ]
+                ]
                 data_dict[level_name].reset_index(drop=True, inplace=True)
 
         return data_dict
 
     def __sanitize_data_to_model(
-            self, data_to_model: List[DataObject]
+        self, data_to_model: List[DataObject]
     ) -> List[DataObject]:
         data_to_keep: List[DataObject] = []
         for data_object in data_to_model:
             if data_object.calibration_data is not None:
                 if (
-                        (data_object.calibration_first_concentration / 2)
-                        < data_object.validation_first_concentration
-                        and data_object.calibration_last_concentration
-                        <= 1.5 * data_object.validation_last_concentration
+                    (data_object.calibration_first_concentration / 2)
+                    < data_object.validation_first_concentration
+                    and data_object.calibration_last_concentration
+                    <= 1.5 * data_object.validation_last_concentration
                 ):
                     data_to_keep.append(data_object)
             else:
@@ -320,8 +365,14 @@ class ProfileManager:
 
 
 class ProfileLevel:
-    def __init__( self, level_data: pd.DataFrame, absolute_acceptance: bool = False ):
+    def __init__(
+        self,
+        level_data: pd.DataFrame,
+        absolute_acceptance: bool = False,
+        sigfig: int = 4,
+    ):
         self.data: pd.DataFrame = level_data
+        self.sigfig: int = sigfig
         self.introduced_concentration: Optional[np.float] = None
         self.calculated_concentration: Optional[np.float] = None
         self.bias_abs: Optional[float] = None
@@ -358,167 +409,304 @@ class ProfileLevel:
         self.intra_series_std: Optional[float] = None
         self.intra_series_cv: Optional[float] = None
 
-    def calculate( self, tolerance_limit: float, acceptance_limit: float ) -> None:
+    def calculate(self, tolerance_limit: float, acceptance_limit: float) -> None:
         self.nb_series = self.data["Serie"].nunique()
         self.nb_measures = len(self.data.index)
         self.nb_rep = self.nb_measures / self.nb_series
 
-        self.introduced_concentration = self.data["x"].mean()
-        self.calculated_concentration = self.data["x_calc"].mean()
-        self.acceptance_limits_abs = self.get_acceptance_limits_abs(acceptance_limit)
-        self.acceptance_limits_rel = self.get_acceptance_limits_rel(acceptance_limit)
+        self.introduced_concentration = roundsf(self.data["x"].mean(), self.sigfig)
+        self.calculated_concentration = roundsf(self.data["x_calc"].mean(), self.sigfig)
+        self.acceptance_limits_abs = self.get_acceptance_limits_abs(
+            acceptance_limit
+        ).map(lambda x: roundsf(x, self.sigfig))
+        self.acceptance_limits_rel = self.get_acceptance_limits_rel(
+            acceptance_limit
+        ).map(lambda x: roundsf(x, self.sigfig))
 
-        self.bias_abs = self.calculated_concentration - self.introduced_concentration
-        self.bias_rel = (self.bias_abs / self.introduced_concentration) * 100
-        self.recovery = self.get_recovery()
+        self.bias_abs = roundsf(
+            self.calculated_concentration - self.introduced_concentration, self.sigfig
+        )
+        self.bias_rel = roundsf(
+            (self.bias_abs / self.introduced_concentration) * 100, self.sigfig
+        )
+        self.recovery = roundsf(self.get_recovery(), self.sigfig)
 
-        self.repeatability_var = self.get_repeatability_var
-        self.repeatability_std = math.sqrt(self.repeatability_var)
-        self.repeatability_cv = (
-                self.repeatability_std / self.introduced_concentration * 100
+        self.repeatability_var = roundsf(self.get_repeatability_var, self.sigfig)
+        self.repeatability_std = roundsf(math.sqrt(self.repeatability_var), self.sigfig)
+        self.repeatability_cv = roundsf(
+            self.repeatability_std / self.introduced_concentration * 100, self.sigfig
         )
 
-        self.intra_series_var = self.repeatability_var
-        self.intra_series_std = self.repeatability_std
-        self.intra_series_cv = self.repeatability_cv
+        self.intra_series_var = roundsf(self.repeatability_var, self.sigfig)
+        self.intra_series_std = roundsf(self.repeatability_std, self.sigfig)
+        self.intra_series_cv = roundsf(self.repeatability_cv, self.sigfig)
 
-        self.inter_series_var = self.get_inter_series_var
-        self.inter_series_std = math.sqrt(self.inter_series_var)
-        self.inter_series_cv = (
-                self.inter_series_std / self.calculated_concentration * 100
+        self.inter_series_var = roundsf(self.get_inter_series_var, self.sigfig)
+        self.inter_series_std = roundsf(math.sqrt(self.inter_series_var), self.sigfig)
+        self.inter_series_cv = roundsf(
+            self.inter_series_std / self.calculated_concentration * 100, self.sigfig
         )
-        self.intermediate_precision_var = self.repeatability_var + self.inter_series_var
-        self.intermediate_precision_std = math.sqrt(self.intermediate_precision_var)
-        self.intermediate_precision_cv = self.intermediate_precision_std / self.introduced_concentration * 100
+        self.intermediate_precision_var = roundsf(
+            self.repeatability_var + self.inter_series_var, self.sigfig
+        )
+        self.intermediate_precision_std = roundsf(
+            math.sqrt(self.intermediate_precision_var), self.sigfig
+        )
+        self.intermediate_precision_cv = roundsf(
+            self.intermediate_precision_std / self.introduced_concentration * 100,
+            self.sigfig,
+        )
 
-        self.total_error_abs = abs(self.bias_abs) + abs(self.intermediate_precision_std)
-        self.total_error_rel = self.total_error_abs / self.introduced_concentration * 100
+        self.total_error_abs = roundsf(
+            abs(self.bias_abs) + abs(self.intermediate_precision_std), self.sigfig
+        )
+        self.total_error_rel = roundsf(
+            self.total_error_abs / self.introduced_concentration * 100, self.sigfig
+        )
 
-        self.ratio_var = self.get_ratio_var
+        self.ratio_var = roundsf(self.get_ratio_var, self.sigfig)
 
-        self.b_coefficient = math.sqrt((self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1))
-        self.degree_of_freedom = (self.ratio_var + 1) ** 2 / (
+        self.b_coefficient = roundsf(
+            math.sqrt((self.ratio_var + 1) / (self.nb_rep * self.ratio_var + 1)),
+            self.sigfig,
+        )
+        self.degree_of_freedom = roundsf(
+            (self.ratio_var + 1) ** 2
+            / (
                 (self.ratio_var + (1 / self.nb_rep)) ** 2 / (self.nb_series - 1)
                 + (1 - (1 / self.nb_rep)) / self.nb_measures
+            ),
+            self.sigfig,
         )
-        self.tolerance_std = self.intermediate_precision_std * (
-            math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient)))
+        self.tolerance_std = roundsf(
+            self.intermediate_precision_std
+            * (math.sqrt(1 + (1 / (self.nb_measures * self.b_coefficient)))),
+            self.sigfig,
         )
-        self.tolerance_abs = self.get_absolute_tolerance(tolerance_limit)
-        self.tolerance_rel = self.get_tolerance_rel(tolerance_limit)
+        self.tolerance_abs = self.get_absolute_tolerance(tolerance_limit).map(
+            lambda x: roundsf(x, self.sigfig)
+        )
+        self.tolerance_rel = self.get_tolerance_rel(tolerance_limit).map(
+            lambda x: roundsf(x, self.sigfig)
+        )
 
-        self.uncertainty_abs = self.tolerance_std * 2
-        self.uncertainty_rel = self.uncertainty_abs / self.calculated_concentration
-        self.uncertainty_pc = self.uncertainty_abs / self.introduced_concentration * 100
+        self.uncertainty_abs = roundsf(self.tolerance_std * 2, self.sigfig)
+        self.uncertainty_rel = roundsf(
+            self.uncertainty_abs / self.calculated_concentration, self.sigfig
+        )
+        self.uncertainty_pc = roundsf(
+            self.uncertainty_abs / self.introduced_concentration * 100, self.sigfig
+        )
 
-    def get_recovery( self ) -> float:
+    def get_recovery(self) -> float:
         if self.absolute_acceptance:
             return self.bias_abs
         else:
             return (self.calculated_concentration / self.introduced_concentration) * 100
 
-    def get_tolerance_rel( self, tolerance_limit: float ) -> pd.Series:
+    def get_tolerance_rel(self, tolerance_limit: float) -> pd.Series:
         if self.absolute_acceptance:
             return self.tolerance_abs
         else:
-            return pd.Series({
-                "tolerance_rel_low": self.tolerance_abs["tolerance_abs_low"] / self.introduced_concentration * 100,
-                "tolerance_rel_high": self.tolerance_abs["tolerance_abs_high"] / self.introduced_concentration * 100
-            })
+            return pd.Series(
+                {
+                    "tolerance_rel_low": self.tolerance_abs["tolerance_abs_low"]
+                    / self.introduced_concentration
+                    * 100,
+                    "tolerance_rel_high": self.tolerance_abs["tolerance_abs_high"]
+                    / self.introduced_concentration
+                    * 100,
+                }
+            )
 
-    def get_acceptance_limits_abs( self, acceptance_limit: float ) -> pd.Series:
+    def get_acceptance_limits_abs(self, acceptance_limit: float) -> pd.Series:
         if self.absolute_acceptance:
             introduced_limit: float = acceptance_limit
         else:
             introduced_limit: float = acceptance_limit / 100 * self.introduced_concentration
-        return pd.Series({
-            "acceptance_limits_abs_low": self.introduced_concentration - introduced_limit,
-            "acceptance_limits_abs_high": self.introduced_concentration + introduced_limit,
-        })
+        return pd.Series(
+            {
+                "acceptance_limits_abs_low": self.introduced_concentration
+                - introduced_limit,
+                "acceptance_limits_abs_high": self.introduced_concentration
+                + introduced_limit,
+            }
+        )
 
-    def get_acceptance_limits_rel( self, acceptance_limit: float ) -> pd.Series:
+    def get_acceptance_limits_rel(self, acceptance_limit: float) -> pd.Series:
         if self.absolute_acceptance:
-            return pd.Series({
-                "acceptance_limits_rel_low": 0 - acceptance_limit,
-                "acceptance_limits_rel_high": 0 + acceptance_limit
-            })
+            return pd.Series(
+                {
+                    "acceptance_limits_rel_low": 0 - acceptance_limit,
+                    "acceptance_limits_rel_high": 0 + acceptance_limit,
+                }
+            )
         else:
-            return pd.Series({
-                "acceptance_limits_rel_low": 100 - acceptance_limit,
-                "acceptance_limits_rel_high": 100 + acceptance_limit
-            })
+            return pd.Series(
+                {
+                    "acceptance_limits_rel_low": 100 - acceptance_limit,
+                    "acceptance_limits_rel_high": 100 + acceptance_limit,
+                }
+            )
+
+    def get_absolute_tolerance(self, tolerance_limit: float) -> pd.Series:
+
+        student = t.ppf(
+            (1 + (tolerance_limit / 100)) / 2, np.float32(self.degree_of_freedom)
+        )
+
+        self.cover_factor = student * math.sqrt(
+            1 + (1 / (self.nb_measures * np.power(self.b_coefficient, 2)))
+        )
+
+        tolerance_low = (
+            self.calculated_concentration
+            - self.cover_factor * self.intermediate_precision_std
+        )
+
+        tolerance_high = (
+            self.calculated_concentration
+            + self.cover_factor * self.intermediate_precision_std
+        )
+
+        if self.absolute_acceptance:
+            tolerance_low = tolerance_low - self.introduced_concentration
+            tolerance_high = tolerance_high - self.introduced_concentration
+
+        return pd.Series(
+            {"tolerance_abs_low": tolerance_low, "tolerance_abs_high": tolerance_high}
+        )
 
     @property
-    def mean_square_model( self ) -> float:
+    def mean_square_model(self) -> float:
         mean_x_level = self.data["x_calc"].mean()
-        mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
-                              self.data["Serie"].unique()]
-        number_item_in_serie = [len(self.data[self.data["Serie"] == serie]) for serie in self.data["Serie"].unique()]
+        mean_x_level_serie = [
+            self.data[self.data["Serie"] == serie]["x_calc"].mean()
+            for serie in self.data["Serie"].unique()
+        ]
+        number_item_in_serie = [
+            len(self.data[self.data["Serie"] == serie])
+            for serie in self.data["Serie"].unique()
+        ]
         number_of_serie = self.data["Serie"].nunique()
 
         return (1 / (number_of_serie - 1)) * np.sum(
-            np.multiply(number_item_in_serie, np.power(np.subtract(mean_x_level_serie, mean_x_level), 2)))
+            np.multiply(
+                number_item_in_serie,
+                np.power(np.subtract(mean_x_level_serie, mean_x_level), 2),
+            )
+        )
 
     @property
-    def mean_square_error( self ) -> float:
-        mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
-                              self.data["Serie"].unique()]
-        number_item_in_serie = [len(self.data[self.data["Serie"] == serie]) for serie in self.data["Serie"].unique()]
+    def mean_square_error(self) -> float:
+        mean_x_level_serie = [
+            self.data[self.data["Serie"] == serie]["x_calc"].mean()
+            for serie in self.data["Serie"].unique()
+        ]
+        number_item_in_serie = [
+            len(self.data[self.data["Serie"] == serie])
+            for serie in self.data["Serie"].unique()
+        ]
         number_of_serie = self.data["Serie"].nunique()
-        x_calc = [self.data[self.data["Serie"] == serie]["x_calc"] for serie in self.data["Serie"].unique()]
+        x_calc = [
+            self.data[self.data["Serie"] == serie]["x_calc"]
+            for serie in self.data["Serie"].unique()
+        ]
 
         return (1 / (np.sum(number_item_in_serie) - number_of_serie)) * np.sum(
-            [np.sum(np.power(np.subtract(x_calc[mean_x_level_serie.index(mean_serie)], mean_serie), 2)) for mean_serie
-             in mean_x_level_serie])
+            [
+                np.sum(
+                    np.power(
+                        np.subtract(
+                            x_calc[mean_x_level_serie.index(mean_serie)], mean_serie
+                        ),
+                        2,
+                    )
+                )
+                for mean_serie in mean_x_level_serie
+            ]
+        )
 
     @property
-    def get_inter_series_var( self ) -> float:
-        number_item_in_serie = [len(self.data[self.data["Serie"] == serie]) for serie in
-                                self.data["Serie"].unique()]
+    def get_inter_series_var(self) -> float:
+        number_item_in_serie = [
+            len(self.data[self.data["Serie"] == serie])
+            for serie in self.data["Serie"].unique()
+        ]
         if self.mean_square_error < self.mean_square_model:
-            inter_serie_var = (self.mean_square_model - self.mean_square_error) / number_item_in_serie[0]
+            inter_serie_var = (
+                self.mean_square_model - self.mean_square_error
+            ) / number_item_in_serie[0]
         else:
             inter_serie_var = 0
 
         return inter_serie_var
 
     @property
-    def sum_of_square_residual( self ) -> np.ndarray:
-        mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
-                              self.data["Serie"].unique()]
-        x_calc = [self.data[self.data["Serie"] == serie]["x_calc"] for serie in self.data["Serie"].unique()]
+    def sum_of_square_residual(self) -> np.ndarray:
+        mean_x_level_serie = [
+            self.data[self.data["Serie"] == serie]["x_calc"].mean()
+            for serie in self.data["Serie"].unique()
+        ]
+        x_calc = [
+            self.data[self.data["Serie"] == serie]["x_calc"]
+            for serie in self.data["Serie"].unique()
+        ]
 
         return np.sum(
-            [np.sum(np.power(np.subtract(x_calc[mean_x_level_serie.index(mean_serie)], mean_serie), 2)) for mean_serie
-             in mean_x_level_serie])
+            [
+                np.sum(
+                    np.power(
+                        np.subtract(
+                            x_calc[mean_x_level_serie.index(mean_serie)], mean_serie
+                        ),
+                        2,
+                    )
+                )
+                for mean_serie in mean_x_level_serie
+            ]
+        )
 
     @property
-    def sum_of_square_total( self ) -> np.ndarray:
+    def sum_of_square_total(self) -> np.ndarray:
         mean_x_level = self.data["x_calc"].mean()
-        mean_x_level_serie = [self.data[self.data["Serie"] == serie]["x_calc"].mean() for serie in
-                              self.data["Serie"].unique()]
-        number_item_in_serie = [len(self.data[self.data["Serie"] == serie]) for serie in self.data["Serie"].unique()]
+        mean_x_level_serie = [
+            self.data[self.data["Serie"] == serie]["x_calc"].mean()
+            for serie in self.data["Serie"].unique()
+        ]
+        number_item_in_serie = [
+            len(self.data[self.data["Serie"] == serie])
+            for serie in self.data["Serie"].unique()
+        ]
 
-        return np.sum(np.multiply(number_item_in_serie, np.power(np.subtract(mean_x_level_serie, mean_x_level), 2)))
+        return np.sum(
+            np.multiply(
+                number_item_in_serie,
+                np.power(np.subtract(mean_x_level_serie, mean_x_level), 2),
+            )
+        )
 
     @property
-    def get_repeatability_var( self ) -> float:
+    def get_repeatability_var(self) -> float:
         if self.mean_square_error < self.mean_square_model:
             repeatability_var = self.mean_square_error
         else:
             mean_x_level = self.data["x_calc"].mean()
-            number_item_in_serie = [len(self.data[self.data["Serie"] == serie]) for serie in
-                                    self.data["Serie"].unique()]
+            number_item_in_serie = [
+                len(self.data[self.data["Serie"] == serie])
+                for serie in self.data["Serie"].unique()
+            ]
             number_of_serie = self.data["Serie"].nunique()
             x_calc = self.data["x_calc"]
 
-            repeatability_var = (1 / (number_item_in_serie[0] * number_of_serie - 1)) * np.sum(
-                np.power(np.subtract(x_calc, mean_x_level), 2))
+            repeatability_var = (
+                1 / (number_item_in_serie[0] * number_of_serie - 1)
+            ) * np.sum(np.power(np.subtract(x_calc, mean_x_level), 2))
 
         return repeatability_var
 
     @property
-    def get_ratio_var( self ) -> float:
+    def get_ratio_var(self) -> float:
         if self.inter_series_var == 0 or self.repeatability_var == 0:
             ratio_var = 0
         else:
@@ -526,39 +714,17 @@ class ProfileLevel:
 
         return ratio_var
 
-    def get_absolute_tolerance( self, tolerance_limit: float ) -> pd.Series:
-
-        student = t.ppf((1 + (tolerance_limit / 100)) / 2, np.float32(self.degree_of_freedom))
-
-        self.cover_factor = student * math.sqrt(1 + (1 / (self.nb_measures * np.power(self.b_coefficient, 2))))
-
-        tolerance_low = (
-                self.calculated_concentration - self.cover_factor * self.intermediate_precision_std
-        )
-
-        tolerance_high = (
-                self.calculated_concentration + self.cover_factor * self.intermediate_precision_std
-        )
-
-        if self.absolute_acceptance:
-            tolerance_low = tolerance_low - self.introduced_concentration
-            tolerance_high = tolerance_high - self.introduced_concentration
-
-        return pd.Series({
-            "tolerance_abs_low": tolerance_low,
-            "tolerance_abs_high": tolerance_high
-        })
 
 class Profile:
-
     def __init__(
-            self,
-            model: Union[models.Model, DataObject],
-            correction_allowed: bool = False,
-            correction_threshold: List[float] = None,
-            forced_correction_value: float = None,
-            absolute_acceptance: bool = False,
-            correction_round_to: int = 1
+        self,
+        model: Union[models.Model, DataObject],
+        correction_allowed: bool = False,
+        correction_threshold: List[float] = None,
+        forced_correction_value: float = None,
+        absolute_acceptance: bool = False,
+        correction_round_to: int = 2,
+        sigfig: int = 4,
     ):
         self.model = model
         self.acceptance_interval: List[float] = []
@@ -569,6 +735,7 @@ class Profile:
         self.has_limits: bool = False
         self.image_data = None
         self.fig = None
+        self.sigfig = sigfig
         self.correction_allowed: bool = correction_allowed
         self.correction_threshold: Optional[List[float]] = correction_threshold
         self.forced_correction_value: Optional[float] = forced_correction_value
@@ -579,119 +746,57 @@ class Profile:
             self.generate_correction()
         self.profile_levels: Dict[ProfileLevel] = {}
         for level in self.model.list_of_levels("validation"):
-            self.profile_levels[level] = ProfileLevel(self.model.get_level(level), self.absolute_acceptance)
+            self.profile_levels[level] = ProfileLevel(
+                self.model.get_level(level), self.absolute_acceptance, self.sigfig
+            )
 
-    def summary( self, nb_of_figure: int = 3 ) -> None:
-        if type(self.model) == models.Model:
-            regression_stats: Dict[int, Dict[str, float]] = {}
-            if self.model.multiple_calibration:
-                for key, fit_data in self.model.fit.items():
-                    regression_stats[key] = fit_data.params.to_dict()
-                    regression_stats[key].update({"R-Squared": fit_data.rsquared})
-                    regression_stats[key].update({"P-Value": fit_data.f_pvalue})
-            else:
-                regression_stats[1] = self.model.fit.params.to_dict()
-                regression_stats[1].update({"R-Squared": self.model.fit.rsquared})
-                regression_stats[1].update({"P-Value": self.model.fit.f_pvalue})
-            regression_dataframe: pd.DataFrame = pd.DataFrame(regression_stats)
+    def summary( self ) -> None:
 
-        model_stats: dict = {
-            "LOD": self.lod,
-            "Min LOQ": self.min_loq,
-            "Max LOQ": self.max_loq,
-            "Correction Factor": self.correction_factor,
-        }
-        model_dataframe: pd.DataFrame = pd.DataFrame([model_stats]).transpose()
+        filterwarnings("ignore")
 
-        level_stats: Dict[ProfileLevel, dict] = {}
-        fidelity_stats: Dict[ProfileLevel, dict] = {}
-        accuracy_stats: Dict[ProfileLevel, dict] = {}
-        tolerance_interval_stats: Dict[ProfileLevel, dict] = {}
-        accuracy_profile_stats: Dict[ProfileLevel, dict] = {}
-        uncertainty_stats: Dict[ProfileLevel, dict] = {}
+        print("Model Info\n")
+        print(pd.Series(self.profile_data("model_info")))
 
-        for key, level in self.profile_levels.items():
-            level_stats[key]: Dict[ProfileLevel, float] = {}
-            fidelity_stats[key]: Dict[ProfileLevel, float] = {}
-            accuracy_stats[key]: Dict[ProfileLevel, float] = {}
-            tolerance_interval_stats[key]: Dict[ProfileLevel, float] = {}
-            accuracy_profile_stats[key]: Dict[ProfileLevel, float] = {}
-            uncertainty_stats[key]: Dict[ProfileLevel, float] = {}
+        if self.profile_data("regression_info").size > 0:
+            print("\nRegression Info\n")
+            print(self.profile_data("regression_info").transpose())
 
-            level_stats[key]["Introduced Concentration"] = level.introduced_concentration
-            level_stats[key]["Calculated Concentration"] = level.calculated_concentration
-            fidelity_stats[key]["Repeatability standard deviation (sr)"] = level.repeatability_std
-            fidelity_stats[key]["Inter-series standard deviation (sB)"] = level.inter_series_std
-            fidelity_stats[key]["Intermediate Fidelity standard deviation (sFI)"] = level.intermediate_precision_std
-            fidelity_stats[key]["Intermediate Fidelity variation coefficient"] = level.intermediate_precision_cv
+        print("\nLevels Info\n")
+        print(self.profile_data("levels_info").transpose())
 
-            accuracy_stats[key]["Absolute Bias"] = level.bias_abs
-            accuracy_stats[key]["Bias %"] = level.bias_rel
+        print("\nBias Info\n")
+        print(self.profile_data("bias_info").transpose())
 
-            tolerance_interval_stats[key]["Degree of freedom"] = level.degree_of_freedom
-            tolerance_interval_stats[key]["Coverage factor (kIT)"] = level.cover_factor
-            tolerance_interval_stats[key]["Tolerance standard deviation (sIT)"] = level.tolerance_std
-            tolerance_interval_stats[key]["B^2 coefficient"] = level.b_coefficient
-            tolerance_interval_stats[key]["Lower tolerance interval limit"] = level.tolerance_abs[0]
-            tolerance_interval_stats[key]["Upper tolerance interval limit"] = level.tolerance_abs[1]
-            tolerance_interval_stats[key]["Lower acceptability limit"] = level.acceptance_limits_abs[0]
-            tolerance_interval_stats[key]["Upper acceptability limit"] = level.acceptance_limits_abs[1]
+        print("\nRepeatability Info\n")
+        print(self.profile_data("repeatability_info").transpose())
 
-            if self.absolute_acceptance:
-                accuracy_profile_stats[key]["Bias"] = level.bias_abs
-                accuracy_profile_stats[key]["Lower tolerance interval limit"] = level.tolerance_abs[0]
-                accuracy_profile_stats[key]["Upper tolerance interval limit"] = level.tolerance_abs[1]
-                accuracy_profile_stats[key]["Lower acceptability limit"] = level.acceptance_limits_abs[0]
-                accuracy_profile_stats[key]["Upper acceptability limit"] = level.acceptance_limits_abs[1]
+        print("\nIntermediate Precision\n")
+        print(self.profile_data("intermediate_precision").transpose())
 
-            else:
-                accuracy_profile_stats[key]["Recovery"] = level.recovery
-                accuracy_profile_stats[key]["Lower tolerance interval limit in %"] = level.tolerance_rel[0]
-                accuracy_profile_stats[key]["Upper tolerance interval limit in %"] = level.tolerance_rel[1]
-                accuracy_profile_stats[key]["Lower acceptability limit in %"] = level.acceptance_limits_abs[0]
-                accuracy_profile_stats[key]["Upper acceptability limit in %"] = level.acceptance_limits_abs[1]
+        print("\nTotal Error\n")
+        print(self.profile_data("total_error").transpose())
 
-            uncertainty_stats[key]["Absolute uncertainty"] = level.uncertainty_abs
-            uncertainty_stats[key]["Relative uncertainty"] = level.uncertainty_rel
-            uncertainty_stats[key]["Relative uncertainty in %"] = level.uncertainty_pc
+        print("\nMiscellaneous Stats\n")
+        print(self.profile_data("misc_stats").transpose())
 
-        level_dataframe: pd.DataFrame = pd.DataFrame(level_stats)
-        fidelity_dataframe: pd.DataFrame = pd.DataFrame(fidelity_stats)
-        accuracy_dataframe: pd.DataFrame = pd.DataFrame(accuracy_stats)
-        tolerance_interval_dataframe: pd.DataFrame = pd.DataFrame(
-            tolerance_interval_stats
-        )
-        accuracy_profile_dataframe: pd.DataFrame = pd.DataFrame(accuracy_profile_stats)
-        uncertainty_datafram: pd.DataFrame = pd.DataFrame(uncertainty_stats)
+        print("\nTolerance Info\n")
+        print(self.profile_data("tolerance_info").transpose())
 
-        print("\n\nModel information")
-        if type(self.model) == models.Model:
-            print("Model type: Regression")
-            print("Model name: " + str(self.model.name))
-            print("Formula: " + str(self.model.formula))
-            print("Weight: " + str(self.model.weight))
-        else:
-            print("Model type: Direct")
-        print(model_dataframe.astype(float).round(nb_of_figure))
-        if type(self.model) == models.Model:
-            print("\n\nRegression information")
-            print(regression_dataframe.astype(float).round(nb_of_figure))
-        print("\n\nProfile Level Information")
-        print(level_dataframe.astype(float).round(nb_of_figure))
-        print("\n\nFidelity statistics")
-        print(fidelity_dataframe.astype(float).round(nb_of_figure))
-        print("\n\nAccuracy statistics")
-        print(accuracy_dataframe.astype(float).round(nb_of_figure))
-        print("\n\nTolerance interval statistics")
-        print(tolerance_interval_dataframe.astype(float).round(nb_of_figure))
-        print("\n\nAccuracy profile dataset")
-        print(accuracy_profile_dataframe.astype(float).round(nb_of_figure))
-        print("\n\nResults uncertainty")
-        print(uncertainty_datafram.astype(float).round(nb_of_figure))
+        print("\nUncertainty Info\n")
+        print(self.profile_data("uncertainty_info").transpose())
 
-        return True
+        print("\nValidation Data\n")
+        print(self.model.validation_data)
 
-    def average_profile_parameter( self, profile_parameter: str ) -> Optional[Union[pd.DataFrame, np.ndarray]]:
+        if self.profile_data("regression_info").size > 0:
+            print("\nCalibration Data\n")
+            print(self.model.calibration_data)
+
+        resetwarnings()
+
+    def average_profile_parameter(
+        self, profile_parameter: str
+    ) -> Optional[Union[pd.DataFrame, np.ndarray]]:
         if type(profile_parameter) == str:
             profile_parameter = [profile_parameter]
         params_list: dict = {}
@@ -710,7 +815,9 @@ class Profile:
         else:
             return None
 
-    def get_profile_parameter( self, profile_parameter: Union[str, list] ) -> Optional[Union[pd.DataFrame, np.ndarray]]:
+    def get_profile_parameter(
+        self, profile_parameter: Union[str, list]
+    ) -> Optional[pd.DataFrame]:
         if type(profile_parameter) == str:
             profile_parameter = [profile_parameter]
         params_list: pd.DataFrame = pd.DataFrame()
@@ -722,7 +829,9 @@ class Profile:
                 if np.array(list(value_dict.values())[0]).size > 1:
                     params_list = pd.concat([params_list, pd.DataFrame(value_dict)])
                 else:
-                    params_list = pd.concat([params_list, pd.DataFrame(value_dict, index=[parameter])])
+                    params_list = pd.concat(
+                        [params_list, pd.DataFrame(value_dict, index=[parameter])]
+                    )
             else:
                 warn("The profile levels do not have attribute named " + parameter)
         if len(params_list) > 0:
@@ -730,11 +839,13 @@ class Profile:
         else:
             return None
 
-    def get_model_parameter( self, model_parameter: Union[str, list] ) -> Optional[Union[pd.DataFrame, np.ndarray]]:
+    def get_model_parameter(
+        self, model_parameter: Union[str, list]
+    ) -> Optional[pd.DataFrame]:
         if type(model_parameter) == str:
             model_parameter = [model_parameter]
         params_list = pd.DataFrame()
-        if hasattr(self, 'model'):
+        if hasattr(self, "model"):
             for parameter in model_parameter:
                 if type(self.model.fit) == dict:
                     if hasattr(list(self.model.fit.values())[1], parameter):
@@ -743,11 +854,20 @@ class Profile:
                             value_dict[index] = getattr(fit, parameter)
 
                         if np.array(list(value_dict.values())[0]).size > 1:
-                            params_list = pd.concat([params_list, pd.DataFrame(value_dict)])
+                            params_list = pd.concat(
+                                [params_list, pd.DataFrame(value_dict)]
+                            )
                         else:
-                            params_list = pd.concat([params_list, pd.DataFrame(value_dict, index=[parameter])])
+                            params_list = pd.concat(
+                                [
+                                    params_list,
+                                    pd.DataFrame(value_dict, index=[parameter]),
+                                ]
+                            )
                     else:
-                        warn("The model fits do not have an attribute named " + parameter)
+                        warn(
+                            "The model fits do not have an attribute named " + parameter
+                        )
                 else:
                     if hasattr(self.model.fit, parameter):
                         value = getattr(self.model.fit, parameter)
@@ -755,9 +875,13 @@ class Profile:
                         if np.array(value).size > 1:
                             params_list = pd.concat([params_list, pd.DataFrame(value)])
                         else:
-                            params_list = pd.concat([params_list, pd.DataFrame([value], index=[parameter])])
+                            params_list = pd.concat(
+                                [params_list, pd.DataFrame([value], index=[parameter])]
+                            )
                     else:
-                        warn("The model fits do not have an attribute named " + parameter)
+                        warn(
+                            "The model fits do not have an attribute named " + parameter
+                        )
 
             if len(params_list) > 0:
                 return params_list.transpose()
@@ -767,7 +891,7 @@ class Profile:
             warn("This profile has no model")
             return None
 
-    def calculate( self, stats_limits: Optional[Union[Dict[str, float]]] = None ) -> None:
+    def calculate(self, stats_limits: Optional[Union[Dict[str, float]]] = None) -> None:
         if stats_limits is None:
             stats_limits = {"Tolerance": 80, "Acceptance": 20}
         acceptance_limit = stats_limits["Acceptance"]
@@ -783,20 +907,7 @@ class Profile:
         else:
             self.lod = None
 
-    def get_intersection_from_points( self, point1, point2, point3, point4 ):
-        x1, y1 = point1
-        x2, y2 = point2
-        x3, y3 = point3
-        x4, y4 = point4
-
-        x = ((x1 * y2 - x2 * y1) * (x3 - x4) - (x3 * y4 - x4 * y3) * (x1 - x2)) / (
-                    (x1 - x2) * (y3 - y4) - (x3 - x4) * (y1 - y2))
-        y = ((x1 * y2 - x2 * y1) * (y3 - y4) - (x3 * y4 - x4 * y3) * (y1 - y2)) / (
-                    (x1 - x2) * (y3 - y4) - (x3 - x4) * (y1 - y2))
-
-        return [x, y]
-
-    def get_limits_of_quantification( self ) -> (float, float):
+    def get_limits_of_quantification(self) -> (float, float):
 
         acceptance_limit_point: List[List[shapely.geometry.Point]] = [[], []]
         tolerance_limit_point: List[List[shapely.geometry.Point]] = [[], []]
@@ -805,26 +916,32 @@ class Profile:
         for key, level in self.profile_levels.items():
             acceptance_limit_point[0].append(
                 shapely.geometry.Point(
-                    round(level.introduced_concentration, 3),
-                    round(level.acceptance_limits_abs["acceptance_limits_abs_low"], 3),
+                    roundsf(level.introduced_concentration, self.sigfig),
+                    roundsf(
+                        level.acceptance_limits_abs["acceptance_limits_abs_low"],
+                        self.sigfig,
+                    ),
                 )
             )
             acceptance_limit_point[1].append(
                 shapely.geometry.Point(
-                    round(level.introduced_concentration, 3),
-                    round(level.acceptance_limits_abs["acceptance_limits_abs_high"], 3),
+                    roundsf(level.introduced_concentration, self.sigfig),
+                    roundsf(
+                        level.acceptance_limits_abs["acceptance_limits_abs_high"],
+                        self.sigfig,
+                    ),
                 )
             )
             tolerance_limit_point[0].append(
                 shapely.geometry.Point(
-                    round(level.introduced_concentration, 3),
-                    round(level.tolerance_abs["tolerance_abs_low"], 3),
+                    roundsf(level.introduced_concentration, self.sigfig),
+                    roundsf(level.tolerance_abs["tolerance_abs_low"], self.sigfig),
                 )
             )
             tolerance_limit_point[1].append(
                 shapely.geometry.Point(
-                    round(level.introduced_concentration, 3),
-                    round(level.tolerance_abs["tolerance_abs_high"], 3),
+                    roundsf(level.introduced_concentration, self.sigfig),
+                    roundsf(level.tolerance_abs["tolerance_abs_high"], self.sigfig),
                 )
             )
             level_tolerance_list.append(
@@ -832,13 +949,17 @@ class Profile:
                     "level_id": key,
                     "x_coord": level.introduced_concentration,
                     "lower_tol_y_coord": level.tolerance_abs["tolerance_abs_low"],
-                    "lower_acc_y_coord": level.acceptance_limits_abs["acceptance_limits_abs_low"],
+                    "lower_acc_y_coord": level.acceptance_limits_abs[
+                        "acceptance_limits_abs_low"
+                    ],
                     "lower_inside": level.tolerance_abs["tolerance_abs_low"]
-                                    > level.acceptance_limits_abs["acceptance_limits_abs_low"],
+                    > level.acceptance_limits_abs["acceptance_limits_abs_low"],
                     "upper_tol_y_coord": level.tolerance_abs["tolerance_abs_high"],
-                    "upper_acc_y_coord": level.acceptance_limits_abs["acceptance_limits_abs_high"],
+                    "upper_acc_y_coord": level.acceptance_limits_abs[
+                        "acceptance_limits_abs_high"
+                    ],
                     "upper_inside": level.tolerance_abs["tolerance_abs_high"]
-                                    < level.acceptance_limits_abs["acceptance_limits_abs_high"],
+                    < level.acceptance_limits_abs["acceptance_limits_abs_high"],
                 }
             )
 
@@ -908,10 +1029,10 @@ class Profile:
 
             point_left: pd.Series = level_tolerance[
                 level_tolerance["x_coord"] < intersects_data.at[index, "x_value"]
-                ].iloc[-1]
+            ].iloc[-1]
             point_right: pd.Series = level_tolerance[
                 level_tolerance["x_coord"] > intersects_data.at[index, "x_value"]
-                ].iloc[0]
+            ].iloc[0]
 
             cur_x_coord: float = intersects_data.at[index, "x_value"]
 
@@ -926,12 +1047,12 @@ class Profile:
             left_opp_tol: float = point_left[level_switch[switch - 1] + "_tol_y_coord"]
             right_opp_tol: float = point_right[
                 level_switch[switch - 1] + "_tol_y_coord"
-                ]
+            ]
 
             left_opp_acc: float = point_left[level_switch[switch - 1] + "_acc_y_coord"]
             right_opp_acc: float = point_right[
                 level_switch[switch - 1] + "_acc_y_coord"
-                ]
+            ]
 
             opposite_tol: float = vx.get_value_between(
                 cur_x_coord,
@@ -950,26 +1071,26 @@ class Profile:
             intersects_data.at[index, "opposite_value"] = opposite_tol
 
             if (
-                    min([right_opp_acc, right_acc])
-                    < right_tol
-                    < max([right_opp_acc, right_acc])
+                min([right_opp_acc, right_acc])
+                < right_tol
+                < max([right_opp_acc, right_acc])
             ):
                 intersects_data.at[index, "going_in"] = 1
             else:
                 intersects_data.at[index, "going_in"] = 0
 
             if (
-                    min([cur_acc, opposite_acc])
-                    < opposite_tol
-                    < max([cur_acc, opposite_acc])
+                min([cur_acc, opposite_acc])
+                < opposite_tol
+                < max([cur_acc, opposite_acc])
             ):
                 intersects_data.at[index, "opposite_in"] = 1
             else:
                 intersects_data.at[index, "opposite_in"] = 0
 
             if (
-                    intersects_data.at[index, "opposite_in"]
-                    and intersects_data.at[index, "going_in"]
+                intersects_data.at[index, "opposite_in"]
+                and intersects_data.at[index, "going_in"]
             ):
                 intersects_data.at[index, "valid"] = 1
             else:
@@ -980,66 +1101,87 @@ class Profile:
         min_loq: Optional[float] = None
         max_loq: Optional[float] = None
 
-        if len(intersects_data): #if there are intersect
+        if len(intersects_data):  # if there are intersect
             # pick the last one going in that is valid
-            if len(intersects_data[(intersects_data["valid"] == 1) & (intersects_data["going_in"] == 1)]):
+            if len(
+                intersects_data[
+                    (intersects_data["valid"] == 1) & (intersects_data["going_in"] == 1)
+                ]
+            ):
                 min_loq = intersects_data["x_value"][
                     (intersects_data["valid"] == 1) & (intersects_data["going_in"] == 1)
-                    ].iloc[-1]
+                ].iloc[-1]
             elif (
-                    level_tolerance.iloc[0]["lower_tol_y_coord"]
-                    > level_tolerance.iloc[0]["lower_acc_y_coord"]
-                    and level_tolerance.iloc[0]["upper_tol_y_coord"]
-                    < level_tolerance.iloc[0]["upper_acc_y_coord"]
-            ): #check if first point is in bounds
+                level_tolerance.iloc[0]["lower_tol_y_coord"]
+                > level_tolerance.iloc[0]["lower_acc_y_coord"]
+                and level_tolerance.iloc[0]["upper_tol_y_coord"]
+                < level_tolerance.iloc[0]["upper_acc_y_coord"]
+            ):  # check if first point is in bounds
                 min_loq = level_tolerance.iloc[0]["x_coord"]
 
             # pick the last one going out that is valid
-            if len(intersects_data[(intersects_data["valid"] == 1) & (intersects_data["going_in"] == 0)]):
+            if len(
+                intersects_data[
+                    (intersects_data["valid"] == 1) & (intersects_data["going_in"] == 0)
+                ]
+            ):
                 max_loq = min_loq = intersects_data["x_value"][
                     (intersects_data["valid"] == 1) & (intersects_data["going_in"] == 0)
-                    ].iloc[-1]
-            elif ( #check if the last point is in bounds
-                    level_tolerance.iloc[-1]["lower_tol_y_coord"]
-                    > level_tolerance.iloc[-1]["lower_acc_y_coord"]
-                    and level_tolerance.iloc[-1]["upper_tol_y_coord"]
-                    < level_tolerance.iloc[-1]["upper_acc_y_coord"]
+                ].iloc[-1]
+            elif (  # check if the last point is in bounds
+                level_tolerance.iloc[-1]["lower_tol_y_coord"]
+                > level_tolerance.iloc[-1]["lower_acc_y_coord"]
+                and level_tolerance.iloc[-1]["upper_tol_y_coord"]
+                < level_tolerance.iloc[-1]["upper_acc_y_coord"]
             ):
                 max_loq = level_tolerance.iloc[-1]["x_coord"]
             if intersects_data.iloc[-1]["valid"]:
                 max_loq = level_tolerance.iloc[-1]["x_coord"]
 
-        else: #no intersect
+        else:  # no intersect
 
             if (
-                    level_tolerance.iloc[0]["lower_tol_y_coord"]
-                    > level_tolerance.iloc[0]["lower_acc_y_coord"]
-                    and level_tolerance.iloc[0]["upper_tol_y_coord"]
-                    < level_tolerance.iloc[0]["upper_acc_y_coord"]
-            ): #check if first point is between bound, since there are no intersect, the last point should be in bounds
+                level_tolerance.iloc[0]["lower_tol_y_coord"]
+                > level_tolerance.iloc[0]["lower_acc_y_coord"]
+                and level_tolerance.iloc[0]["upper_tol_y_coord"]
+                < level_tolerance.iloc[0]["upper_acc_y_coord"]
+            ):  # check if first point is between bound, since there are no intersect, the last point should be in bounds
                 max_loq = level_tolerance.iloc[-1]["x_coord"]
                 min_loq = level_tolerance.iloc[0]["x_coord"]
 
-        #debug check
+        # debug check
         if min_loq is not None and max_loq is not None:
-            if min_loq > max_loq: #ensure that the min_loq is smaller than the max_loq
+            if min_loq > max_loq:  # ensure that the min_loq is smaller than the max_loq
                 print("Error here \/")
 
         return [min_loq, max_loq]
 
-    def plot_data( self, data_type: str = "") -> Optional[Union[dict, pd.DataFrame]]:
+    def plot_data(self, data_type: str = "") -> Optional[Union[dict, pd.DataFrame]]:
 
         graph = self.get_profile_parameter(
-            ["introduced_concentration", "recovery", "tolerance_rel", "acceptance_limits_rel"])
+            [
+                "introduced_concentration",
+                "recovery",
+                "tolerance_rel",
+                "acceptance_limits_rel",
+            ]
+        )
 
         scatter = pd.DataFrame(self.model.validation_data["x"])
         if self.absolute_acceptance:
-            scatter["y"] = self.model.validation_data["x_calc"] - self.model.validation_data["x"]
-            graph["error"] = self.get_profile_parameter("uncertainty_abs")["uncertainty_abs"]
+            scatter["y"] = (
+                self.model.validation_data["x_calc"] - self.model.validation_data["x"]
+            )
+            graph["error"] = self.get_profile_parameter("uncertainty_abs")[
+                "uncertainty_abs"
+            ]
         else:
-            scatter["y"] = (self.model.validation_data["x_calc"] - self.model.validation_data["x"]) / \
-                           self.model.validation_data["x"] * 100 + 100
-            graph["error"] = self.get_profile_parameter("uncertainty_pc")["uncertainty_pc"]
+            scatter["y"] = (
+                self.model.validation_data["x_calc"] - self.model.validation_data["x"]
+            ) / self.model.validation_data["x"] * 100 + 100
+            graph["error"] = self.get_profile_parameter("uncertainty_pc")[
+                "uncertainty_pc"
+            ]
 
         return_dict = {"graph": graph, "scatter": scatter}
 
@@ -1048,95 +1190,111 @@ class Profile:
         elif data_type in return_dict:
             return return_dict[data_type]
         else:
-            warn("No data of type: " + data_type + ". The available data types are: " + ", ".join(return_dict.keys()))
+            warn(
+                "No data of type: "
+                + data_type
+                + ". The available data types are: "
+                + ", ".join(return_dict.keys())
+            )
             return None
 
-    def profile_data( self , data_type: str = "", sigfig: int = 4) -> Optional[Union[dict, pd.DataFrame]]:
+    def profile_data(
+        self, data_type: str = "", sigfig: int = 4
+    ) -> Optional[Union[dict, pd.DataFrame]]:
 
         if hasattr(self.model, "fit"):
-            regression_info = self.get_model_parameter(["params", "rsquared", "f_pvalue"])
+            regression_info = self.get_model_parameter(
+                ["params", "rsquared", "f_pvalue"]
+            )
         else:
             regression_info = pd.DataFrame(None)
 
-        model_info: dict = {
-            "lod": round(self.lod, sigfig),
-            "min_loq": round(self.min_loq, sigfig),
-            "max_loq": round(self.max_loq, sigfig),
-            "correction_factor": round(self.correction_factor, sigfig),
-            "forced_correction_value": round(self.forced_correction_value, sigfig),
+        model_info = {}
+
+        if hasattr(self.model, "fit"):
+            model_info["model_name"] = self.model.name
+            model_info["model_formula"] = self.model.formula
+            model_info["model_weight"] = self.model.weight
+            model_info["number_of_series_calibration"] = len(
+                self.model.list_of_series("calibration")
+            )
+            model_info["number_of_levels_calibration"] = len(
+                self.model.list_of_levels("calibration")
+            )
+            model_info["list_of_series_calibration"] = self.model.list_of_series(
+                "calibration"
+            ).tolist()
+            model_info["list_of_levels_calibration"] = self.model.list_of_levels(
+                "calibration"
+            ).tolist()
+        else:
+            model_info["model_name"] = ("Direct",)
+            model_info["model_formula"] = ("",)
+            model_info["model_weight"] = ""
+
+        model_info.update({
+            "lod": roundsf(self.lod, sigfig),
+            "min_loq": roundsf(self.min_loq, sigfig),
+            "max_loq": roundsf(self.max_loq, sigfig),
+            "correction_factor": roundsf(self.correction_factor, sigfig),
+            "forced_correction_value": roundsf(self.forced_correction_value, sigfig),
             "number_of_serie_validation": len(self.model.list_of_series()),
             "number_of_levels_validation": len(self.model.list_of_levels()),
             "list_of_series_validation": self.model.list_of_series().tolist(),
             "list_of_levels_validation": self.model.list_of_levels().tolist(),
-            "absolute_acceptance": self.absolute_acceptance
-        }
+            "absolute_acceptance": self.absolute_acceptance,
+        })
 
-        if hasattr(self.model, "fit"):
-            model_info["number_of_series_calibration"] = len(self.model.list_of_series("calibration"))
-            model_info["number_of_levels_calibration"] = len(self.model.list_of_levels("calibration"))
-            model_info["list_of_series_calibration"] = self.model.list_of_series("calibration").tolist()
-            model_info["list_of_levels_calibration"] = self.model.list_of_levels("calibration").tolist()
-            model_info["model_name"] = self.model.name
-            model_info["model_formula"] = self.model.formula
-            model_info["model_weight"] = self.model.weight
-        else:
-            model_info["model_name"] = "Direct",
-            model_info["model_formula"] = "",
-            model_info["model_weight"] = ""
+        levels_info = self.get_profile_parameter(
+            [
+                "introduced_concentration",
+                "calculated_concentration",
+                "acceptance_limits_abs",
+                "acceptance_limits_rel",
+            ]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
+        bias_info = self.get_profile_parameter(
+            ["bias_abs", "bias_rel", "recovery"]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
-        levels_info = self.get_profile_parameter([
-            "introduced_concentration",
-            "calculated_concentration",
-            "acceptance_limits_abs",
-            "acceptance_limits_rel"]).applymap(lambda x: round(x, sigfig))
+        repeatability_info = self.get_profile_parameter(
+            [
+                "repeatability_var",
+                "repeatability_std",
+                "repeatability_cv",
+                "intra_series_var",
+                "intra_series_std",
+                "intra_series_cv",
+                "inter_series_var",
+                "inter_series_std",
+                "inter_series_cv",
+            ]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
-        bias_info = self.get_profile_parameter([
-            "bias_abs",
-            "bias_rel",
-            "recovery"
-        ]).applymap(lambda x: round(x, sigfig))
+        intermediate_precision = self.get_profile_parameter(
+            [
+                "intermediate_precision_var",
+                "intermediate_precision_std",
+                "intermediate_precision_cv",
+            ]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
-        repeatability_info = self.get_profile_parameter([
-            "repeatability_var",
-            "repeatability_std",
-            "repeatability_cv",
-            "intra_series_var",
-            "intra_series_std",
-            "intra_series_cv",
-            "inter_series_var",
-            "inter_series_std",
-            "inter_series_cv"
-        ]).applymap(lambda x: round(x, sigfig))
+        total_error = self.get_profile_parameter(
+            ["total_error_abs", "total_error_rel"]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
-        intermediate_precision = self.get_profile_parameter([
-            "intermediate_precision_var",
-            "intermediate_precision_std",
-            "intermediate_precision_cv"
-        ]).applymap(lambda x: round(x, sigfig))
+        misc_stats = self.get_profile_parameter(
+            ["ratio_var", "b_coefficient", "degree_of_freedom"]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
-        total_error = self.get_profile_parameter([
-            "total_error_abs",
-            "total_error_rel"
-        ]).applymap(lambda x: round(x, sigfig))
+        tolerance_info = self.get_profile_parameter(
+            ["tolerance_std", "tolerance_abs", "tolerance_rel"]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
-        misc_stats = self.get_profile_parameter([
-            "ratio_var",
-            "b_coefficient",
-            "degree_of_freedom"
-        ]).applymap(lambda x: round(x, sigfig))
-
-        tolerance_info = self.get_profile_parameter([
-            "tolerance_std",
-            "tolerance_abs",
-            "tolerance_rel"
-        ]).applymap(lambda x: round(x, sigfig))
-
-        uncertainty_info = self.get_profile_parameter([
-            "uncertainty_abs",
-            "uncertainty_rel",
-            "uncertainty_pc"
-        ]).applymap(lambda x: round(x, sigfig))
+        uncertainty_info = self.get_profile_parameter(
+            ["uncertainty_abs", "uncertainty_rel", "uncertainty_pc"]
+        ).applymap(lambda x: roundsf(x, sigfig))
 
         return_dict = {
             "model_info": model_info,
@@ -1148,7 +1306,7 @@ class Profile:
             "total_error": total_error,
             "misc_stats": misc_stats,
             "tolerance_info": tolerance_info,
-            "uncertainty_info": uncertainty_info
+            "uncertainty_info": uncertainty_info,
         }
 
         if data_type == "":
@@ -1156,10 +1314,15 @@ class Profile:
         elif data_type in return_dict:
             return return_dict[data_type]
         else:
-            warn("No data of type: " + data_type + ". The available data types are: " + ", ".join(return_dict.keys()))
+            warn(
+                "No data of type: "
+                + data_type
+                + ". The available data types are: "
+                + ", ".join(return_dict.keys())
+            )
             return None
 
-    def make_plot( self ):
+    def make_plot(self):
 
         fig = plt.figure()
         ax = aa.Subplot(fig, 111)
@@ -1187,14 +1350,18 @@ class Profile:
 
         ax.plot(
             plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["tolerance_rel_low"] if "tolerance_rel_low" in plot_data["graph"] else plot_data["graph"]["tolerance_abs_low"],
+            plot_data["graph"]["tolerance_rel_low"]
+            if "tolerance_rel_low" in plot_data["graph"]
+            else plot_data["graph"]["tolerance_abs_low"],
             linewidth=1.0,
             color="b",
             label="Min tolerance limit",
         )
         ax.plot(
             plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["tolerance_rel_high"] if "tolerance_rel_high" in plot_data["graph"] else plot_data["graph"]["tolerance_abs_high"],
+            plot_data["graph"]["tolerance_rel_high"]
+            if "tolerance_rel_high" in plot_data["graph"]
+            else plot_data["graph"]["tolerance_abs_high"],
             linewidth=1.0,
             color="g",
             label="Max tolerance limit",
@@ -1211,12 +1378,7 @@ class Profile:
             "k--",
         )
 
-        ax.scatter(
-            plot_data["scatter"]["x"],
-            plot_data["scatter"]["y"],
-            s=5,
-            color="k"
-        )
+        ax.scatter(plot_data["scatter"]["x"], plot_data["scatter"]["y"], s=5, color="k")
 
         ax.set_xlabel("Concentration")
 
@@ -1226,37 +1388,59 @@ class Profile:
 
         self.image_data = io.BytesIO()
 
-    def generate_correction( self ):
-        ratio: float = np.mean(self.model.data_x_calc / self.model.data_x()).round(2)
+    def generate_correction(self):
+        ratio: float = roundsf(
+            np.mean(self.model.data_x_calc / self.model.data_x()), self.sigfig
+        )
         if ratio < self.correction_threshold[0] or ratio > self.correction_threshold[1]:
             if self.forced_correction_value is not None:
                 ratio = 1 / self.forced_correction_value
             self.has_correction = True
-            self.correction_factor = round(1 / ratio, self.correction_round_to)
+            self.correction_factor = roundsf(1 / ratio, self.correction_round_to)
 
-            corrected_value: pd.Series = pd.Series(self.model.data_x_calc * self.correction_factor)
+            corrected_value: pd.Series = pd.Series(
+                self.model.data_x_calc * self.correction_factor
+            )
             self.model.add_corrected_value(corrected_value)
 
-    def output_profile( self, data_type: str = "", format: str = "dict", sigfig: int = 4 ) -> Optional[str]:
+    def output_profile(
+        self, data_type: str = "", format: str = "dict", sigfig: int = 4
+    ) -> Optional[str]:
 
         return_dict = {
             "model_info": self.profile_data("model_info", sigfig),
-            "regression_info": self.profile_data("regression_info", sigfig).to_dict(orient="row"),
-            "levels_info": self.profile_data("levels_info", sigfig).to_dict(orient="row"),
+            "regression_info": self.profile_data("regression_info", sigfig).to_dict(
+                orient="row"
+            ),
+            "levels_info": self.profile_data("levels_info", sigfig).to_dict(
+                orient="row"
+            ),
             "bias_info": self.profile_data("bias_info", sigfig).to_dict(orient="row"),
-            "repeatability_info": self.profile_data("repeatability_info", sigfig).to_dict(orient="row"),
-            "intermediate_precision": self.profile_data("intermediate_precision", sigfig).to_dict(orient="row"),
-            "total_error": self.profile_data("total_error", sigfig).to_dict(orient="row"),
+            "repeatability_info": self.profile_data(
+                "repeatability_info", sigfig
+            ).to_dict(orient="row"),
+            "intermediate_precision": self.profile_data(
+                "intermediate_precision", sigfig
+            ).to_dict(orient="row"),
+            "total_error": self.profile_data("total_error", sigfig).to_dict(
+                orient="row"
+            ),
             "misc_stats": self.profile_data("misc_stats", sigfig).to_dict(orient="row"),
-            "tolerance_info": self.profile_data("tolerance_info", sigfig).to_dict(orient="row"),
-            "uncertainty_info": self.profile_data("uncertainty_info", sigfig).to_dict(orient="row"),
+            "tolerance_info": self.profile_data("tolerance_info", sigfig).to_dict(
+                orient="row"
+            ),
+            "uncertainty_info": self.profile_data("uncertainty_info", sigfig).to_dict(
+                orient="row"
+            ),
             "graph": self.plot_data("graph").to_dict(orient="row"),
             "scatter": self.plot_data("scatter").to_dict(orient="row"),
-            "validation_data": self.model.validation_data.to_dict(orient="row")
+            "validation_data": self.model.validation_data.to_dict(orient="row"),
         }
 
         if self.model.calibration_data is not None:
-            return_dict["calibration_data"] = self.model.calibration_data.to_dict(orient="row")
+            return_dict["calibration_data"] = self.model.calibration_data.to_dict(
+                orient="row"
+            )
 
         if format == "dict":
             if data_type == "":
@@ -1264,7 +1448,12 @@ class Profile:
             elif data_type in return_dict:
                 return return_dict[data_type]
             else:
-                warn("No data of type: " + data_type + ". The available data types are: " + ", ".join(return_dict.keys()))
+                warn(
+                    "No data of type: "
+                    + data_type
+                    + ". The available data types are: "
+                    + ", ".join(return_dict.keys())
+                )
                 return None
         elif format == "json":
             if data_type == "":
@@ -1272,17 +1461,23 @@ class Profile:
             elif data_type in return_dict:
                 return json.dumps(return_dict[data_type])
             else:
-                warn("No data of type: " + data_type + ". The available data types are: " + ", ".join(return_dict.keys()))
+                warn(
+                    "No data of type: "
+                    + data_type
+                    + ". The available data types are: "
+                    + ", ".join(return_dict.keys())
+                )
                 return None
         else:
             warn("Available format are: dict, json")
             return None
 
+
 class Optimizer:
     def __init__(
-            self,
-            profiles: Dict[str, Profile],
-            optimizer_parameters: Dict[str, Union[str, bool]],
+        self,
+        profiles: Dict[str, Profile],
+        optimizer_parameters: Dict[str, Union[str, bool]],
     ):
 
         self.parameter_function: Dict[str, Callable] = {
@@ -1301,7 +1496,7 @@ class Optimizer:
 
         self.profile_value = self.get_profile_value()
 
-    def sort_profile( self ) -> pd.DataFrame:
+    def sort_profile(self) -> pd.DataFrame:
         boolean_parameter: Dict[str, bool] = {}
         ascending_parameter: Dict[str, bool] = {}
         final_dataframe: pd.DataFrame = self.profile_value
@@ -1318,7 +1513,7 @@ class Optimizer:
         for parameter in boolean_parameter:
             final_dataframe = final_dataframe[
                 final_dataframe[parameter] == self.parameters[parameter]
-                ]
+            ]
 
         final_dataframe = final_dataframe.sort_values(
             by=list(ascending_parameter.keys()), ascending=ascending_parameter.values()
@@ -1326,7 +1521,7 @@ class Optimizer:
 
         return final_dataframe
 
-    def get_profile_value( self ) -> pd.DataFrame:
+    def get_profile_value(self) -> pd.DataFrame:
         results: pd.DataFrame = pd.DataFrame()
         for parameter in self.parameters.keys():
             if len(results) == 0:
@@ -1338,38 +1533,38 @@ class Optimizer:
 
         return results
 
-    def __get_validation_range( self ) -> pd.DataFrame:
+    def __get_validation_range(self) -> pd.DataFrame:
         valid_range: pd.DataFrame = pd.merge(
             self.__get_max_loq(), self.__get_min_loq(), on=["Model", "Index"]
         )
         valid_range["validation_range"] = (
-                valid_range["max_loq"] - valid_range["min_loq"]
+            valid_range["max_loq"] - valid_range["min_loq"]
         )
         valid_range = valid_range.drop(["min_loq", "max_loq"], axis=1)
         return valid_range
 
-    def __get_model_rsquared( self ) -> pd.DataFrame:
+    def __get_model_rsquared(self) -> pd.DataFrame:
         return self.__get_profile_model("rsquared")
 
-    def __get_average_bias_abs( self ) -> pd.DataFrame:
+    def __get_average_bias_abs(self) -> pd.DataFrame:
         return self.__get_profile_average("bias_abs")
 
-    def __get_model_data_calibration_levels( self ) -> pd.DataFrame:
+    def __get_model_data_calibration_levels(self) -> pd.DataFrame:
         return self.__get_profile_model_data("calibration_levels")
 
-    def __get_min_loq( self ) -> pd.DataFrame:
+    def __get_min_loq(self) -> pd.DataFrame:
         return self.__get_profile_value("min_loq")
 
-    def __get_max_loq( self ) -> pd.DataFrame:
+    def __get_max_loq(self) -> pd.DataFrame:
         return self.__get_profile_value("max_loq")
 
-    def __get_lod( self ) -> pd.DataFrame:
+    def __get_lod(self) -> pd.DataFrame:
         return self.__get_profile_value("lod")
 
-    def __get_has_limits( self ) -> pd.DataFrame:
+    def __get_has_limits(self) -> pd.DataFrame:
         return self.__get_profile_value("has_limits")
 
-    def __get_profile_value( self, parameter ) -> pd.DataFrame:
+    def __get_profile_value(self, parameter) -> pd.DataFrame:
         return_value: pd.DataFrame = pd.DataFrame()
         for profile_type in self.profiles.keys():
             for key, profile in enumerate(self.profiles[profile_type]):
@@ -1380,7 +1575,7 @@ class Optimizer:
                 return_value = return_value.append(temp_dataframe, ignore_index=True)
         return return_value
 
-    def __get_profile_model( self, parameter ) -> pd.DataFrame:
+    def __get_profile_model(self, parameter) -> pd.DataFrame:
         return_value: pd.DataFrame = pd.DataFrame()
         for profile_type in self.profiles.keys():
             for key, profile in enumerate(self.profiles[profile_type]):
@@ -1391,7 +1586,7 @@ class Optimizer:
                 return_value = return_value.append(temp_dataframe, ignore_index=True)
         return return_value
 
-    def __get_profile_model_data( self, parameter ) -> pd.DataFrame:
+    def __get_profile_model_data(self, parameter) -> pd.DataFrame:
         return_value: pd.DataFrame = pd.DataFrame()
         for profile_type in self.profiles.keys():
             for key, profile in enumerate(self.profiles[profile_type]):
@@ -1402,7 +1597,7 @@ class Optimizer:
                 return_value = return_value.append(temp_dataframe, ignore_index=True)
         return return_value
 
-    def __get_profile_average( self, parameter ) -> pd.DataFrame:
+    def __get_profile_average(self, parameter) -> pd.DataFrame:
         return_value: pd.DataFrame = pd.DataFrame()
         for profile_type in self.profiles.keys():
             for key, profile in enumerate(self.profiles[profile_type]):
@@ -1414,5 +1609,5 @@ class Optimizer:
         return return_value
 
     @property
-    def available_parameters( self ):
+    def available_parameters(self):
         return self.parameter_function.keys()

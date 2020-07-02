@@ -32,9 +32,14 @@ def test_sfstp():
         data,
         acceptance_limit=20,
         tolerance_limit=90,
-        model_to_test=["Linear through 0", "Linear", "1/X Weighted Linear", "Quadratic", "1/X Weighted Quadratic"],
-        rolling_data_limit=4,
-        rolling_data=False
+        model_to_test=[
+            "Linear through 0",
+            "Linear",
+            "1/X Weighted Linear",
+            "Quadratic",
+            "1/X Weighted Quadratic",
+        ],
+        significant_figure=6,
     )
     profiles.make_profiles()
 
@@ -55,7 +60,7 @@ def test_sfstp():
                 11: "Quadratic",
                 12: "1/X Weighted Quadratic",
                 13: "1/X Weighted Quadratic",
-                14: "1/X Weighted Quadratic"
+                14: "1/X Weighted Quadratic",
             },
             "Series": {
                 0: "Serie 1",
@@ -72,7 +77,7 @@ def test_sfstp():
                 11: "Serie 3",
                 12: "Serie 1",
                 13: "Serie 2",
-                14: "Serie 3"
+                14: "Serie 3",
             },
             "Intercept": {
                 0: 0,
@@ -89,7 +94,7 @@ def test_sfstp():
                 11: -5.271e-2,
                 12: -2.531e-2,
                 13: -2.171e-2,
-                14: -3.233e-2
+                14: -3.233e-2,
             },
             "Slope": {
                 0: 2.478e-3,
@@ -106,7 +111,7 @@ def test_sfstp():
                 11: 2.910e-3,
                 12: 2.570e-3,
                 13: 2.415e-3,
-                14: 2.705e-3
+                14: 2.705e-3,
             },
             "Quad. term.": {
                 0: 0,
@@ -123,8 +128,8 @@ def test_sfstp():
                 11: -3.946e-7,
                 12: -6.084e-8,
                 13: -4.193e-8,
-                14: -1.875e-7
-            }
+                14: -1.875e-7,
+            },
         }
     )
 
@@ -178,7 +183,7 @@ def test_sfstp():
                 44: "Serie 3",
                 45: "Serie 3",
                 46: "Serie 3",
-                47: "Serie 3"
+                47: "Serie 3",
             },
             "Concentration (ng/ml)": {
                 0: 25.3533,
@@ -228,7 +233,7 @@ def test_sfstp():
                 44: 838.6479,
                 45: 838.6479,
                 46: 838.6479,
-                47: 838.6479
+                47: 838.6479,
             },
             "Linear through 0": {
                 0: 17.71,
@@ -278,7 +283,7 @@ def test_sfstp():
                 44: 861,
                 45: 895.6,
                 46: 918.7,
-                47: 912.5
+                47: 912.5,
             },
             "Linear": {
                 0: 25.19,
@@ -328,7 +333,7 @@ def test_sfstp():
                 44: 849.6,
                 45: 883.5,
                 46: 906.2,
-                47: 900.2
+                47: 900.2,
             },
             "1/X Weighted Linear": {
                 0: 26.54,
@@ -378,7 +383,7 @@ def test_sfstp():
                 44: 841.3,
                 45: 874.8,
                 46: 897.1,
-                47: 891.1
+                47: 891.1,
             },
             "Quadratic": {
                 0: 29.33,
@@ -428,7 +433,7 @@ def test_sfstp():
                 44: 846.2,
                 45: 884.6,
                 46: 910.6,
-                47: 903.6
+                47: 903.6,
             },
             "1/X Weighted Quadratic": {
                 0: 26.94,
@@ -478,7 +483,7 @@ def test_sfstp():
                 44: 848.1,
                 45: 884,
                 46: 908.1,
-                47: 901.7
+                47: 901.7,
             },
         }
     )
@@ -505,7 +510,7 @@ def test_sfstp():
                 16: "1/X Weighted Quadratic",
                 17: "1/X Weighted Quadratic",
                 18: "1/X Weighted Quadratic",
-                19: "1/X Weighted Quadratic"
+                19: "1/X Weighted Quadratic",
             },
             "Introduced concentration (ng/ml)": {
                 0: 25.35,
@@ -527,7 +532,7 @@ def test_sfstp():
                 16: 25.35,
                 17: 48.24,
                 18: 437.8,
-                19: 838.6
+                19: 838.6,
             },
             "Mean calculated concentration (ng/ml)": {
                 0: 18.72,
@@ -549,7 +554,7 @@ def test_sfstp():
                 16: 28.08,
                 17: 47.62,
                 18: 423.2,
-                19: 850.2
+                19: 850.2,
             },
             "Bias (ng/ml)": {
                 0: -6.629,
@@ -571,7 +576,7 @@ def test_sfstp():
                 16: 2.729,
                 17: -0.6233,
                 18: -14.65,
-                19: 11.51
+                19: 11.51,
             },
             "Repeatability standard deviation (ng/ml)": {
                 0: 1.229,
@@ -593,7 +598,7 @@ def test_sfstp():
                 16: 1.207,
                 17: 1.874,
                 18: 13.19,
-                19: 22.26
+                19: 22.26,
             },
             "Between series standard deviation (ng/ml)": {
                 0: 0,
@@ -601,7 +606,7 @@ def test_sfstp():
                 2: 16.13,
                 3: 37.43,
                 4: 1.026,
-                5: 0.,
+                5: 0.0,
                 6: 14.04,
                 7: 32.26,
                 8: 0.8223,
@@ -615,7 +620,7 @@ def test_sfstp():
                 16: 1.239,
                 17: 1.651,
                 18: 12.22,
-                19: 32.98
+                19: 32.98,
             },
             "Intermediate precision standard deviation (ng/ml)": {
                 0: 1.229,
@@ -637,7 +642,7 @@ def test_sfstp():
                 16: 1.73,
                 17: 2.498,
                 18: 17.98,
-                19: 39.79
+                19: 39.79,
             },
         }
     )
@@ -664,7 +669,7 @@ def test_sfstp():
                 16: "1/X Weighted Quadratic",
                 17: "1/X Weighted Quadratic",
                 18: "1/X Weighted Quadratic",
-                19: "1/X Weighted Quadratic"
+                19: "1/X Weighted Quadratic",
             },
             "Relative bias (%)": {
                 0: -26.15,
@@ -686,7 +691,7 @@ def test_sfstp():
                 16: 10.76,
                 17: -1.292,
                 18: -3.345,
-                19: 1.373
+                19: 1.373,
             },
             "Recovery (%)": {
                 0: 73.85,
@@ -708,7 +713,7 @@ def test_sfstp():
                 16: 110.8,
                 17: 98.71,
                 18: 96.65,
-                19: 101.4
+                19: 101.4,
             },
             "CV repeatability (%)": {
                 0: 4.846,
@@ -730,7 +735,7 @@ def test_sfstp():
                 16: 4.762,
                 17: 3.885,
                 18: 3.013,
-                19: 2.654
+                19: 2.654,
             },
             "CV intermediate precision (%)": {
                 0: 4.846,
@@ -752,8 +757,8 @@ def test_sfstp():
                 16: 6.824,
                 17: 5.177,
                 18: 4.107,
-                19: 4.744
-            }
+                19: 4.744,
+            },
         }
     )
 
@@ -807,7 +812,7 @@ def test_sfstp():
                 44: "Serie 3",
                 45: "Serie 3",
                 46: "Serie 3",
-                47: "Serie 3"
+                47: "Serie 3",
             },
             "Concentration (ng/ml)": {
                 0: 25.3533,
@@ -857,7 +862,7 @@ def test_sfstp():
                 44: 838.6479,
                 45: 838.6479,
                 46: 838.6479,
-                47: 838.6479
+                47: 838.6479,
             },
             "Linear through 0": {
                 0: -30.15,
@@ -907,7 +912,7 @@ def test_sfstp():
                 44: 2.67,
                 45: 6.79,
                 46: 9.55,
-                47: 8.81
+                47: 8.81,
             },
             "Linear": {
                 0: -0.64,
@@ -957,7 +962,7 @@ def test_sfstp():
                 44: 1.31,
                 45: 5.35,
                 46: 8.05,
-                47: 7.34
+                47: 7.34,
             },
             "1/X Weighted Linear": {
                 0: 4.68,
@@ -1007,7 +1012,7 @@ def test_sfstp():
                 44: 0.32,
                 45: 4.31,
                 46: 6.97,
-                47: 6.25
+                47: 6.25,
             },
             "Quadratic": {
                 0: 15.69,
@@ -1057,7 +1062,7 @@ def test_sfstp():
                 44: 0.90,
                 45: 5.48,
                 46: 8.58,
-                47: 7.74
+                47: 7.74,
             },
             "1/X Weighted Quadratic": {
                 0: 6.26,
@@ -1107,7 +1112,7 @@ def test_sfstp():
                 44: 1.13,
                 45: 5.41,
                 46: 8.28,
-                47: 7.52
+                47: 7.52,
             },
         }
     )
@@ -1134,7 +1139,7 @@ def test_sfstp():
                 16: "1/X Weighted Quadratic",
                 17: "1/X Weighted Quadratic",
                 18: "1/X Weighted Quadratic",
-                19: "1/X Weighted Quadratic"
+                19: "1/X Weighted Quadratic",
             },
             "Concentration (ng/ml)": {
                 0: 25.35,
@@ -1156,7 +1161,7 @@ def test_sfstp():
                 16: 25.35,
                 17: 48.24,
                 18: 437.8,
-                19: 838.6
+                19: 838.6,
             },
             "Intermediate precision (ng/ml)": {
                 0: 1.229,
@@ -1178,14 +1183,14 @@ def test_sfstp():
                 16: 1.73,
                 17: 2.498,
                 18: 17.98,
-                19: 39.79
+                19: 39.79,
             },
             "Trueness (ng/ml)": {
                 0: -6.629,
                 1: -8.99,
                 2: -10.13,
                 3: 16.82,
-                4: -2.02E-02,
+                4: -2.02e-02,
                 5: -2.669,
                 6: -9.192,
                 7: 11.77,
@@ -1200,7 +1205,7 @@ def test_sfstp():
                 16: 2.729,
                 17: -0.6233,
                 18: -14.65,
-                19: 11.51
+                19: 11.51,
             },
             "Absolute total error (ng/ml)": {
                 0: 7.858,
@@ -1222,7 +1227,7 @@ def test_sfstp():
                 16: 4.459,
                 17: 3.1213,
                 18: 32.63,
-                19: 51.3
+                19: 51.3,
             },
         }
     )
@@ -1249,7 +1254,7 @@ def test_sfstp():
                 16: "1/X Weighted Quadratic",
                 17: "1/X Weighted Quadratic",
                 18: "1/X Weighted Quadratic",
-                19: "1/X Weighted Quadratic"
+                19: "1/X Weighted Quadratic",
             },
             "Relative total error (%)": {
                 0: 31.0,
@@ -1271,8 +1276,8 @@ def test_sfstp():
                 16: 17.6,
                 17: 6.5,
                 18: 7.5,
-                19: 6.1
-            }
+                19: 6.1,
+            },
         }
     )
 
@@ -1298,7 +1303,7 @@ def test_sfstp():
                 16: "1/X Weighted Quadratic",
                 17: "1/X Weighted Quadratic",
                 18: "1/X Weighted Quadratic",
-                19: "1/X Weighted Quadratic"
+                19: "1/X Weighted Quadratic",
             },
             "Introduced concentration (ng/ml)": {
                 0: 25.35,
@@ -1320,7 +1325,7 @@ def test_sfstp():
                 16: 25.35,
                 17: 48.24,
                 18: 437.8,
-                19: 838.6
+                19: 838.6,
             },
             "Absolute tolerance limits (ng/ml) low": {
                 0: 16.42,
@@ -1342,7 +1347,7 @@ def test_sfstp():
                 16: 24.17,
                 17: 42.20,
                 18: 383.7,
-                19: 749.5
+                19: 749.5,
             },
             "Absolute tolerance limits (ng/ml) high": {
                 0: 21.03,
@@ -1364,7 +1369,7 @@ def test_sfstp():
                 16: 31.99,
                 17: 53.03,
                 18: 462.7,
-                19: 950.8
+                19: 950.8,
             },
         }
     )
@@ -1391,7 +1396,7 @@ def test_sfstp():
                 16: "1/X Weighted Quadratic",
                 17: "1/X Weighted Quadratic",
                 18: "1/X Weighted Quadratic",
-                19: "1/X Weighted Quadratic"
+                19: "1/X Weighted Quadratic",
             },
             "Relative tolerance limits (%) low": {
                 0: -35.23,
@@ -1413,7 +1418,7 @@ def test_sfstp():
                 16: -4.648,
                 17: -12.52,
                 18: -12.37,
-                19: -10.63
+                19: -10.63,
             },
             "Relative tolerance limits (%) high": {
                 0: -17.06,
@@ -1435,7 +1440,7 @@ def test_sfstp():
                 16: 26.18,
                 17: 9.935,
                 18: 5.675,
-                19: 13.37
+                19: 13.37,
             },
         }
     )
@@ -1445,7 +1450,7 @@ def test_sfstp():
         "Series_str": [],
         "Intercept": [],
         "Slope": [],
-        "Quad. term.": []
+        "Quad. term.": [],
     }
 
     true_prec_dict_abs: dict = {
@@ -1463,7 +1468,7 @@ def test_sfstp():
         "Relative bias (%)": [],
         "Recovery (%)": [],
         "CV repeatability (%)": [],
-        "CV intermediate precision (%)": []
+        "CV intermediate precision (%)": [],
     }
 
     p_t_te_me_dict_abs: dict = {
@@ -1492,13 +1497,25 @@ def test_sfstp():
         "Relative tolerance limits (%) high": [],
     }
 
-    calc_x_dataframe: pd.DataFrame = profiles.data_objects[0].validation_data[["Serie", "Level", "x"]]
-    rel_acc_dataframe: pd.DataFrame = profiles.data_objects[0].validation_data[["Serie", "Level", "x"]]
-
+    calc_x_dataframe: pd.DataFrame = profiles.data_objects[0].validation_data[
+        ["Serie", "Level", "x"]
+    ]
+    rel_acc_dataframe: pd.DataFrame = profiles.data_objects[0].validation_data[
+        ["Serie", "Level", "x"]
+    ]
 
     for key, value in profiles.profiles.items():
-        calc_x_dataframe[key] = np.array([np.float32(num) for num in value[0].model.data_x_calc])
-        rel_acc_dataframe[key] = ((value[0].model.validation_data["x_calc"] - value[0].model.validation_data["x"])/value[0].model.validation_data["x"]*100).astype(float)
+        calc_x_dataframe[key] = np.array(
+            [np.float32(num) for num in value[0].model.data_x_calc]
+        )
+        rel_acc_dataframe[key] = (
+            (
+                value[0].model.validation_data["x_calc"]
+                - value[0].model.validation_data["x"]
+            )
+            / value[0].model.validation_data["x"]
+            * 100
+        ).astype(float)
 
         for serie, serie_value in value[0].model.fit.items():
             reg_params_dict["Model_str"].append(key)
@@ -1517,33 +1534,64 @@ def test_sfstp():
 
             true_prec_dict_abs["Model_str"].append(key)
             true_prec_dict_per["Model_str"].append(key)
-            true_prec_dict_abs["Introduced concentration (ng/ml)"].append(level_value.introduced_concentration)
-            true_prec_dict_abs["Mean calculated concentration (ng/ml)"].append(level_value.calculated_concentration)
+            true_prec_dict_abs["Introduced concentration (ng/ml)"].append(
+                level_value.introduced_concentration
+            )
+            true_prec_dict_abs["Mean calculated concentration (ng/ml)"].append(
+                level_value.calculated_concentration
+            )
             true_prec_dict_abs["Bias (ng/ml)"].append(level_value.bias_abs)
             true_prec_dict_per["Relative bias (%)"].append(level_value.bias_rel)
             true_prec_dict_per["Recovery (%)"].append(level_value.recovery)
-            true_prec_dict_abs["Repeatability standard deviation (ng/ml)"].append(level_value.repeatability_std)
-            true_prec_dict_abs["Between series standard deviation (ng/ml)"].append(level_value.inter_series_std)
-            true_prec_dict_abs["Intermediate precision standard deviation (ng/ml)"].append(level_value.intermediate_precision_std)
-            true_prec_dict_per["CV repeatability (%)"].append(level_value.repeatability_cv)
-            true_prec_dict_per["CV intermediate precision (%)"].append(level_value.intermediate_precision_cv)
+            true_prec_dict_abs["Repeatability standard deviation (ng/ml)"].append(
+                level_value.repeatability_std
+            )
+            true_prec_dict_abs["Between series standard deviation (ng/ml)"].append(
+                level_value.inter_series_std
+            )
+            true_prec_dict_abs[
+                "Intermediate precision standard deviation (ng/ml)"
+            ].append(level_value.intermediate_precision_std)
+            true_prec_dict_per["CV repeatability (%)"].append(
+                level_value.repeatability_cv
+            )
+            true_prec_dict_per["CV intermediate precision (%)"].append(
+                level_value.intermediate_precision_cv
+            )
 
             p_t_te_me_dict_abs["Model_str"].append(key)
             p_t_te_me_dict_per["Model_str"].append(key)
-            p_t_te_me_dict_abs["Concentration (ng/ml)"].append(level_value.introduced_concentration)
-            p_t_te_me_dict_abs["Intermediate precision (ng/ml)"].append(level_value.intermediate_precision_std)
+            p_t_te_me_dict_abs["Concentration (ng/ml)"].append(
+                level_value.introduced_concentration
+            )
+            p_t_te_me_dict_abs["Intermediate precision (ng/ml)"].append(
+                level_value.intermediate_precision_std
+            )
             p_t_te_me_dict_abs["Trueness (ng/ml)"].append(level_value.bias_abs)
-            p_t_te_me_dict_abs["Absolute total error (ng/ml)"].append(level_value.total_error_abs)
-            p_t_te_me_dict_per["Relative total error (%)"].append(level_value.total_error_rel)
+            p_t_te_me_dict_abs["Absolute total error (ng/ml)"].append(
+                level_value.total_error_abs
+            )
+            p_t_te_me_dict_per["Relative total error (%)"].append(
+                level_value.total_error_rel
+            )
 
             tol_interval_dict_abs["Model_str"].append(key)
             tol_interval_dict_per["Model_str"].append(key)
-            tol_interval_dict_abs["Introduced concentration (ng/ml)"].append(level_value.introduced_concentration)
-            tol_interval_dict_abs["Absolute tolerance limits (ng/ml) low"].append(level_value.tolerance_abs[0])
-            tol_interval_dict_abs["Absolute tolerance limits (ng/ml) high"].append(level_value.tolerance_abs[1])
-            tol_interval_dict_per["Relative tolerance limits (%) low"].append(level_value.tolerance_rel[0] - 100)
-            tol_interval_dict_per["Relative tolerance limits (%) high"].append(level_value.tolerance_rel[1] - 100)
-
+            tol_interval_dict_abs["Introduced concentration (ng/ml)"].append(
+                level_value.introduced_concentration
+            )
+            tol_interval_dict_abs["Absolute tolerance limits (ng/ml) low"].append(
+                level_value.tolerance_abs[0]
+            )
+            tol_interval_dict_abs["Absolute tolerance limits (ng/ml) high"].append(
+                level_value.tolerance_abs[1]
+            )
+            tol_interval_dict_per["Relative tolerance limits (%) low"].append(
+                level_value.tolerance_rel[0] - 100
+            )
+            tol_interval_dict_per["Relative tolerance limits (%) high"].append(
+                level_value.tolerance_rel[1] - 100
+            )
 
     reg_params_dataframe: pd.DataFrame = pd.DataFrame(reg_params_dict)
     true_prec_dataframe_abs: pd.DataFrame = pd.DataFrame(true_prec_dict_abs)
@@ -1556,27 +1604,59 @@ def test_sfstp():
     # We calculate an assertion matrice based on the percentage of error from the litterature value, for those in
     # absolute unit
 
-    reg_params_assertion = np.abs(reg_params_dataframe.sub(litterature_reg_params).divide(litterature_reg_params)*100)
-    x_calc_assertion = np.abs(calc_x_dataframe.sub(litterature_calc_x).divide(litterature_calc_x)*100)
-    true_prec_assertion_abs = np.abs(true_prec_dataframe_abs.sub(litterature_true_prec_abs).divide(litterature_true_prec_abs)*100)
-    p_t_te_me_assertion_abs = np.abs(p_t_te_me_dataframe_abs.sub(litterature_p_t_te_me_abs).divide(litterature_p_t_te_me_abs)*100)
-    tol_interval_assertion_abs = np.abs(tol_interval_dataframe_abs.sub(litterature_tol_interval_abs).divide(litterature_tol_interval_abs)*100)
+    reg_params_assertion = np.abs(
+        reg_params_dataframe.sub(litterature_reg_params).divide(litterature_reg_params)
+        * 100
+    )
+    x_calc_assertion = np.abs(
+        calc_x_dataframe.sub(litterature_calc_x).divide(litterature_calc_x) * 100
+    )
+    true_prec_assertion_abs = np.abs(
+        true_prec_dataframe_abs.sub(litterature_true_prec_abs).divide(
+            litterature_true_prec_abs
+        )
+        * 100
+    )
+    p_t_te_me_assertion_abs = np.abs(
+        p_t_te_me_dataframe_abs.sub(litterature_p_t_te_me_abs).divide(
+            litterature_p_t_te_me_abs
+        )
+        * 100
+    )
+    tol_interval_assertion_abs = np.abs(
+        tol_interval_dataframe_abs.sub(litterature_tol_interval_abs).divide(
+            litterature_tol_interval_abs
+        )
+        * 100
+    )
 
     # We calculate an assertion matrice based on the difference in percentage from the litterature value, for already in
     # percentage
 
     rel_acc_assertion = np.abs(rel_acc_dataframe.sub(litterature_rel_acc))
-    true_prec_assertion_per = np.abs(true_prec_dataframe_per.sub(litterature_true_prec_per))
-    p_t_te_me_assertion_per = np.abs(p_t_te_me_dataframe_per.sub(litterature_p_t_te_me_per))
-    tol_interval_assertion_per = np.abs(tol_interval_dataframe_per.sub(litterature_tol_interval_per))
+    true_prec_assertion_per = np.abs(
+        true_prec_dataframe_per.sub(litterature_true_prec_per)
+    )
+    p_t_te_me_assertion_per = np.abs(
+        p_t_te_me_dataframe_per.sub(litterature_p_t_te_me_per)
+    )
+    tol_interval_assertion_per = np.abs(
+        tol_interval_dataframe_per.sub(litterature_tol_interval_per)
+    )
 
     # We concatenate into only one matrice for each table
 
-    true_prec_assertion = pd.concat([true_prec_assertion_abs, true_prec_assertion_per], axis=1)
-    p_t_te_me_assertion = pd.concat([p_t_te_me_assertion_abs, p_t_te_me_assertion_per], axis=1)
-    tol_interval_assertion = pd.concat([tol_interval_assertion_abs, tol_interval_assertion_per], axis=1)
+    true_prec_assertion = pd.concat(
+        [true_prec_assertion_abs, true_prec_assertion_per], axis=1
+    )
+    p_t_te_me_assertion = pd.concat(
+        [p_t_te_me_assertion_abs, p_t_te_me_assertion_per], axis=1
+    )
+    tol_interval_assertion = pd.concat(
+        [tol_interval_assertion_abs, tol_interval_assertion_per], axis=1
+    )
 
-    #Linear model that pass through 0 are failing at the moment and need to be dropped from the test
+    # Linear model that pass through 0 are failing at the moment and need to be dropped from the test
 
     reg_params_assertion.drop(reg_params_assertion.index[0:3], inplace=True)
     x_calc_assertion.drop(columns=["Linear through 0"], inplace=True)
@@ -1586,12 +1666,10 @@ def test_sfstp():
     tol_interval_assertion.drop(tol_interval_assertion.index[0:4], inplace=True)
 
     # We accept a maximum of 0.05% deviation from the literature value
-    # However, due to rounding in the absolute bias of the linear model in the literature we need to allow one value to
-    # be over 0.05% variation (Literature value: 2.202e-3, Valexa value: 2.02016e-3)
 
     assert len(reg_params_assertion[reg_params_assertion.ge(0.05).any(axis=1)]) == 0
     assert len(x_calc_assertion[x_calc_assertion.ge(0.05).any(axis=1)]) == 0
-    assert len(true_prec_assertion[true_prec_assertion.ge(0.05).any(axis=1)]) == 1
+    assert len(true_prec_assertion[true_prec_assertion.ge(0.05).any(axis=1)]) == 0
     assert len(rel_acc_assertion[rel_acc_assertion.ge(0.05).any(axis=1)]) == 0
     assert len(tol_interval_assertion[tol_interval_assertion.ge(0.05).any(axis=1)]) == 0
 

@@ -66,28 +66,36 @@ class ModelsManager:
         if model_name in self.available_models:
             return self.available_models[model_name]["weight"]
         else:
-            warn("Model name not found, try get_available_models() for a list of available models")
+            warn(
+                "Model name not found, try get_available_models() for a list of available models"
+            )
             return None
 
     def get_model_formula(self, model_name: str) -> Optional[str]:
         if model_name in self.available_models:
             return self.available_models[model_name]["formula"]
         else:
-            warn("Model name not found, try get_available_models() for a list of available models")
+            warn(
+                "Model name not found, try get_available_models() for a list of available models"
+            )
             return None
 
     def get_model_info(self, model_name: str) -> Optional[Dict[str, str]]:
         if model_name in self.available_models:
             return self.available_models[model_name]
         else:
-            warn("Model name not found, try get_available_models() for a list of available models")
+            warn(
+                "Model name not found, try get_available_models() for a list of available models"
+            )
             return None
 
-    def get_model_min_point( self, model_name:str ) -> Optional[str]:
+    def get_model_min_point(self, model_name: str) -> Optional[str]:
         if model_name in self.available_models:
             return self.available_models[model_name]["min_points"]
         else:
-            warn("Model name not found, try get_available_models() for a list of available models")
+            warn(
+                "Model name not found, try get_available_models() for a list of available models"
+            )
             return None
 
     @property
@@ -99,7 +107,7 @@ class ModelsManager:
         return list(self.models.keys())
 
 
-class Model():
+class Model:
     def __init__(
         self, data: DataObject, model_formula: str, model_weight: str, model_name: str
     ):
@@ -146,7 +154,7 @@ class Model():
             data=calibration_data,
         ).fit()
 
-    def __sanitize_roots( self, root_set ):
+    def __sanitize_roots(self, root_set):
         if type(root_set) != EmptySet:
             return pd.DataFrame(root_set.evalf())
         else:
@@ -159,19 +167,19 @@ class Model():
             root_value: pd.DataFrame = pd.DataFrame()
             if self.multiple_calibration:
                 root_value = self.__sanitize_roots(
-                        solveset(
-                            self.root_function[validation_value[1]["Serie"]](x)
-                            - validation_value[1]["y"],
-                            x,
-                            S.Reals
-                        )
+                    solveset(
+                        self.root_function[validation_value[1]["Serie"]](x)
+                        - validation_value[1]["y"],
+                        x,
+                        S.Reals,
                     )
+                )
             else:
                 root_value = self.__sanitize_roots(
-                        solveset(
-                            self.root_function(x) - validation_value[1]["y"], x, S.Reals
-                        )
+                    solveset(
+                        self.root_function(x) - validation_value[1]["y"], x, S.Reals
                     )
+                )
 
             if len(root_value) > 0:
                 list_of_roots.append(float(root_value[0][0]))
@@ -224,7 +232,7 @@ class Model():
     def list_of_levels(self, serie_type: str = "validation") -> Optional[np.ndarray]:
         return self.data.list_of_levels(serie_type)
 
-    def add_corrected_value( self, corrected_value: pd.Series) -> None:
+    def add_corrected_value(self, corrected_value: pd.Series) -> None:
         return self.data.add_corrected_value(corrected_value)
 
     @property

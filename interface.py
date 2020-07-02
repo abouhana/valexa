@@ -4,6 +4,7 @@ from valexa.electron_interface.boot_validation import valexa_validate
 from valexa.electron_interface.dev_ouput import dev_ouptut
 from warnings import filterwarnings
 
+
 def main(arguments):
 
     if len(arguments) > 1:
@@ -17,6 +18,6 @@ def main(arguments):
     exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     filterwarnings("ignore")
     main(sys.argv)

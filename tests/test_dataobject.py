@@ -7,7 +7,7 @@ from valexa.dataobject import DataObject
 
 class TestDataObject:
     @pytest.fixture()
-    def calibration_data( self ):
+    def calibration_data(self):
         return pd.DataFrame(
             [
                 [1, 1, 0.1, 0.0131990354713203],
@@ -63,7 +63,7 @@ class TestDataObject:
         )
 
     @pytest.fixture()
-    def validation_data( self ):
+    def validation_data(self):
         return pd.DataFrame(
             [
                 [1, 1, 0.1, 0.0123186375477679],
@@ -131,7 +131,7 @@ class TestDataObject:
         )
 
     @pytest.fixture()
-    def calculated_data( self ):
+    def calculated_data(self):
         return pd.Series(
             [
                 0.0971882842930686,
@@ -198,63 +198,80 @@ class TestDataObject:
         )
 
     @pytest.fixture()
-    def test_object_with_calib( self, validation_data, calibration_data ):
+    def test_object_with_calib(self, validation_data, calibration_data):
         return DataObject(validation_data, calibration_data)
 
     @pytest.fixture()
-    def test_object_without_calib( self, validation_data ):
+    def test_object_without_calib(self, validation_data):
         return DataObject(validation_data)
 
-    def test_create_dataobject_with_calibration( self, test_object_with_calib ):
+    def test_create_dataobject_with_calibration(self, test_object_with_calib):
         assert isinstance(test_object_with_calib, DataObject)
         assert test_object_with_calib.calibration_data is not None
 
-    def test_create_dataobject_without_calibration( self, test_object_without_calib ):
+    def test_create_dataobject_without_calibration(self, test_object_without_calib):
         assert isinstance(test_object_without_calib, DataObject)
         assert test_object_without_calib.calibration_data is None
 
-    def test_add_calculated_value( self, calculated_data, test_object_with_calib ):
+    def test_add_calculated_value(self, calculated_data, test_object_with_calib):
         test_object_with_calib.add_calculated_value(calculated_data)
         assert test_object_with_calib.validation_data["x_calc"] is not None
 
-    def test_get_level( self, test_object_with_calib ):
+    def test_get_level(self, test_object_with_calib):
         assert isinstance(test_object_with_calib.get_level(1), pd.DataFrame)
-        assert isinstance(test_object_with_calib.get_level(1, "calibration"), pd.DataFrame)
+        assert isinstance(
+            test_object_with_calib.get_level(1, "calibration"), pd.DataFrame
+        )
         assert test_object_with_calib.get_level(1, "") is None
 
-    def test_get_serie( self, test_object_with_calib ):
+    def test_get_serie(self, test_object_with_calib):
         assert isinstance(test_object_with_calib.get_serie(1), pd.DataFrame)
-        assert isinstance(test_object_with_calib.get_serie(1, "calibration"), pd.DataFrame)
+        assert isinstance(
+            test_object_with_calib.get_serie(1, "calibration"), pd.DataFrame
+        )
         assert test_object_with_calib.get_serie(1, "") is None
 
-    def test_data_x( self, test_object_with_calib, validation_data, calibration_data ):
+    def test_data_x(self, test_object_with_calib, validation_data, calibration_data):
         assert test_object_with_calib.data_x().equals(validation_data["x"])
-        assert test_object_with_calib.data_x("calibration").equals(calibration_data["x"])
+        assert test_object_with_calib.data_x("calibration").equals(
+            calibration_data["x"]
+        )
         assert test_object_with_calib.data_x("") is None
 
     def test_data_x_calc(
-            self, test_object_with_calib, test_object_without_calib, calculated_data
+        self, test_object_with_calib, test_object_without_calib, calculated_data
     ):
         test_object_with_calib.add_calculated_value(calculated_data)
-        assert test_object_without_calib.data_x_calc is test_object_without_calib.data_y()
+        assert (
+            test_object_without_calib.data_x_calc is test_object_without_calib.data_y()
+        )
         assert test_object_with_calib.data_x_calc.equals(calculated_data)
 
-    def test_data_y( self, test_object_with_calib, validation_data, calibration_data ):
+    def test_data_y(self, test_object_with_calib, validation_data, calibration_data):
         assert test_object_with_calib.data_y().equals(validation_data["y"])
-        assert test_object_with_calib.data_y("calibration").equals(calibration_data["y"])
+        assert test_object_with_calib.data_y("calibration").equals(
+            calibration_data["y"]
+        )
         assert test_object_with_calib.data_y("") is None
 
-    def test_list_of_series( self, test_object_with_calib ):
+    def test_list_of_series(self, test_object_with_calib):
         assert isinstance(test_object_with_calib.list_of_series(), np.ndarray)
-        assert isinstance(test_object_with_calib.list_of_series("calibration"), np.ndarray)
+        assert isinstance(
+            test_object_with_calib.list_of_series("calibration"), np.ndarray
+        )
         assert test_object_with_calib.list_of_series("") is None
 
-    def test_list_of_levels( self, test_object_with_calib ):
+    def test_list_of_levels(self, test_object_with_calib):
         assert isinstance(test_object_with_calib.list_of_levels(), np.ndarray)
-        assert isinstance(test_object_with_calib.list_of_levels("calibration"), np.ndarray)
+        assert isinstance(
+            test_object_with_calib.list_of_levels("calibration"), np.ndarray
+        )
         assert test_object_with_calib.list_of_levels("") is None
 
     def test_add_corrected_value(self, test_object_with_calib, calculated_data):
         test_object_with_calib.add_calculated_value(calculated_data)
-        test_object_with_calib.add_corrected_value(calculated_data+1)
-        assert test_object_with_calib.data_x_calc.tolist() == (calculated_data+1).to_list()
+        test_object_with_calib.add_corrected_value(calculated_data + 1)
+        assert (
+            test_object_with_calib.data_x_calc.tolist()
+            == (calculated_data + 1).to_list()
+        )

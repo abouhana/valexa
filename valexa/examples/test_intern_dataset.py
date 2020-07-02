@@ -1,6 +1,7 @@
 from valexa.profiles import ProfileManager
 from valexa.examples.dataset import sample_dataset
 
+
 def test_intern_dataset():
     """
     This dataset is internal and is mainly use to show some of the other parameter for the profile manager such as:
@@ -27,7 +28,7 @@ def test_intern_dataset():
         rolling_data=True,
         optimizer_parameter=optimizer_parameter,
         allow_correction=True,
-        generate_figure=True
+        generate_figure=True,
     )
     profiles.make_profiles(["Linear"])
     profiles.optimize()
@@ -36,4 +37,3 @@ def test_intern_dataset():
 
     assert profiles.profiles["Linear"][1].fig is not None
     return True
-

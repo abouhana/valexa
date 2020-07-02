@@ -5,6 +5,7 @@ from valexa.examples.test_intern_dataset import test_intern_dataset
 from valexa.examples.test_feinberg_labostat import test_feinberg_labostat
 from valexa.examples.test_inra_pyrene import test_inra_pyrene
 
+
 def valexa_validate():
 
     test_feinberg_labostat()

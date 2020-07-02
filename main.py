@@ -1,6 +1,7 @@
 from valexa.profiles import ProfileManager
 from valexa.examples.dataset import sample_dataset
 import numpy as np
+import json
 
 
 def main():
@@ -25,17 +26,17 @@ def main():
     profiles: ProfileManager = ProfileManager(
         "Test",
         data,
-        rolling_data=True,
+        rolling_data=False,
         optimizer_parameter=optimizer_parameter,
         allow_correction=True,
     )
     profiles.make_profiles(["Linear"])
-    #profiles.optimize()
+    # profiles.optimize()
 
-    profiles.profiles["Linear"][1].summary()
+    aa = json.dumps(profiles.output_profiles())
 
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

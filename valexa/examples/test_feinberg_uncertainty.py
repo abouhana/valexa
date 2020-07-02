@@ -21,47 +21,48 @@ def test_feinberg_uncertainty():
         acceptance_limit=20,
         tolerance_limit=90,
         model_to_test=["1/X^2 Weighted Linear"],
+        significant_figure=5,
     )
     profiles.make_profiles()
 
+    literature_composite_uncertainty = pd.DataFrame(
+        {1: 1.399, 2: 20.628, 3: 36.385}, index=["tolerance_std"]
+    ).transpose()
 
-    literature_composite_uncertainty: pd.Series = pd.Series(
-        {
-            1: 1.399,
-            2: 20.628,
-            3: 36.385
-        }
+    literature_relative_expanded_uncertainty = pd.DataFrame(
+        {1: 11.0, 2: 9.4, 3: 8.7}, index=["uncertainty_pc"]
+    ).transpose()
+
+    calculated_composite_uncertainty = profiles.best().get_profile_parameter(
+        "tolerance_std"
     )
 
-    literature_relative_expanded_uncertainty: pd.Series = pd.Series(
-        {
-            1: 11.0,
-            2: 9.4,
-            3: 8.7
-        }
+    calculated_relative_expanded_uncertainty = profiles.best().get_profile_parameter(
+        "uncertainty_pc"
     )
 
-    calculated_composite_uncertainty: pd.Series = profiles.profiles["1/X^2 Weighted Linear"][0].get_profile_parameter("tolerance_std")
-
-    calculated_relative_expanded_uncertainty: pd.Series = profiles.profiles["1/X^2 Weighted Linear"][0].get_profile_parameter("uncertainty_pc")
-
-
-    # We calculate an assertion matrice based on the percentage of error from the litterature value, for those in
+    # We calculate an assertion matrix based on the percentage of error from the literature value, for those in
     # absolute unit
 
     composite_uncertainty_assertion = np.abs(
-        calculated_composite_uncertainty.sub(literature_composite_uncertainty).divide(literature_composite_uncertainty)*100
+        calculated_composite_uncertainty.sub(literature_composite_uncertainty).divide(
+            literature_composite_uncertainty
+        )
+        * 100
     )
 
-    # We calculate an assertion matrice based on the difference in percentage from the litterature value, for already in
+    # We calculate an assertion matrix based on the difference in percentage from the literature value, for already in
     # percentage
 
-    relative_expanded_uncertainty_assertion = np.abs(calculated_relative_expanded_uncertainty.sub(literature_relative_expanded_uncertainty))
+    relative_expanded_uncertainty_assertion = np.abs(
+        calculated_relative_expanded_uncertainty.sub(
+            literature_relative_expanded_uncertainty
+        )
+    )
 
+    # We accept a maximum of 2.5% deviation from the literature value. This is mainly due to rounding error
 
-    # We accept a maximum of 5% deviation from the literature value. This is mainly due to rounding error
-
-    assert composite_uncertainty_assertion.ge(5).any() is not True
-    assert relative_expanded_uncertainty_assertion.ge(0.5).any() is not True
+    assert composite_uncertainty_assertion.ge(2.5).any() is not True
+    assert relative_expanded_uncertainty_assertion.ge(0.25).any() is not True
 
     return True

@@ -36,59 +36,43 @@ def test_feinberg_coli():
     data["Validation"]["x"] = np.log10(data["Validation"]["x"])
     data["Validation"]["y"] = np.log10(data["Validation"]["y"])
     for level in data["Validation"]["Level"].unique():
-        data["Validation"].loc[data["Validation"]["Level"] == level,"x"] = \
-            np.median(data["Validation"][data["Validation"]["Level"] == level]["x"])
-
+        data["Validation"].loc[data["Validation"]["Level"] == level, "x"] = np.median(
+            data["Validation"][data["Validation"]["Level"] == level]["x"]
+        )
 
     profiles: ProfileManager = ProfileManager(
-        "Test",
-        data,
-        absolute_acceptance=True,
-        acceptance_limit=0.3
+        "Test", data, absolute_acceptance=True, acceptance_limit=0.3,
     )
     profiles.make_profiles()
 
     litterature_dataframe: pd.DataFrame = pd.DataFrame(
         {
-            "repeatability_std": {
-                1: 0.141,
-                2: 0.093,
-                3: 0.099
-            },
-            "inter_series_std": {
-                1: 0.092,
-                2: 0.081,
-                3: 0.141
-            },
-            "tolerance_std": {
-                1: 0.173,
-                2: 0.127,
-                3: 0.178
-            },
-            "bias_abs": {
-                1: 0.024,
-                2: 0.055,
-                3: 0.093
-            },
-            "tolerance_abs_low": {
-                1: -0.206,
-                2: -0.115,
-                3: -0.147
-            },
-            "tolerance_abs_high": {
-                1: 0.254,
-                2: 0.225,
-                3: 0.333
-            },
-        })
+            "repeatability_std": {1: 0.141, 2: 0.093, 3: 0.099},
+            "inter_series_std": {1: 0.092, 2: 0.081, 3: 0.141},
+            "tolerance_std": {1: 0.173, 2: 0.127, 3: 0.178},
+            "bias_abs": {1: 0.024, 2: 0.055, 3: 0.093},
+            "tolerance_abs_low": {1: -0.206, 2: -0.115, 3: -0.147},
+            "tolerance_abs_high": {1: 0.254, 2: 0.225, 3: 0.333},
+        }
+    )
 
-    results_dataframe: pd.DataFrame = profiles.profiles["Direct"][0].get_profile_parameter(["repeatability_std",
-                                                                                            "inter_series_std",
-                                                                                            "tolerance_std",
-                                                                                            "bias_abs",
-                                                                                            "tolerance_abs"]).round(3)
+    results_dataframe: pd.DataFrame = profiles.profiles["Direct"][
+        0
+    ].get_profile_parameter(
+        [
+            "repeatability_std",
+            "inter_series_std",
+            "tolerance_std",
+            "bias_abs",
+            "tolerance_abs",
+        ]
+    ).round(
+        3
+    )
 
-    assertion_dataframe = np.abs(litterature_dataframe.sub(results_dataframe).divide(litterature_dataframe)*100)
+    assertion_dataframe = np.abs(
+        litterature_dataframe.sub(results_dataframe).divide(litterature_dataframe) * 100
+    )
 
     # We allow 0.5% since most number have only 3 significants figures. One the data has a 0.001 absolute deviation
     # which translate to a > 0.5% error (Literature: 0.178, Valexa: 0.177), probably due to rounding. We take it into
