@@ -21,20 +21,29 @@ def main():
         "min_loq": "min",
         "model.rsquared": "max",
     }
-    data = sample_dataset.dataset("sfstp")
+    data = sample_dataset.dataset("feinberg_coli")
+
+    data["Validation"]["x"] = np.log10(data["Validation"]["x"])
+    data["Validation"]["y"] = np.log10(data["Validation"]["y"])
+    for level in data["Validation"]["Level"].unique():
+        data["Validation"].loc[data["Validation"]["Level"] == level, "x"] = np.median(
+            data["Validation"][data["Validation"]["Level"] == level]["x"]
+        )
 
     profiles: ProfileManager = ProfileManager(
         "Test",
         data,
+        acceptance_limit=0.3,
         rolling_data=False,
         optimizer_parameter=optimizer_parameter,
         allow_correction=True,
+        absolute_acceptance=True
     )
-    profiles.make_profiles(["Linear"])
+    profiles.make_profiles(["1/X Weighted Linear"])
     # profiles.optimize()
 
-    aa = json.dumps(profiles.output_profiles())
-
+    aa = profiles.output_profiles()
+    profiles.best().make_plot()
     pass
 
 

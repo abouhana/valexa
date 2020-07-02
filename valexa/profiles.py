@@ -1156,34 +1156,62 @@ class Profile:
 
         return [min_loq, max_loq]
 
-    def plot_data(self, data_type: str = "") -> Optional[Union[dict, pd.DataFrame]]:
+    def accuracy_plot_data(self, data_type: str = "") -> Optional[Union[dict, pd.DataFrame]]:
 
-        graph = self.get_profile_parameter(
-            [
-                "introduced_concentration",
-                "recovery",
-                "tolerance_rel",
-                "acceptance_limits_rel",
-            ]
-        )
 
-        scatter = pd.DataFrame(self.model.validation_data["x"])
+        scatter = {}
+        calculated_scatter = self.model.validation_data
         if self.absolute_acceptance:
-            scatter["y"] = (
-                self.model.validation_data["x_calc"] - self.model.validation_data["x"]
+            calculated_scatter["x_scatter"] =  calculated_scatter["x_calc"] - calculated_scatter["x"]
+            graph = self.get_profile_parameter(
+                [
+                    "introduced_concentration",
+                    "recovery",
+                    "tolerance_abs",
+                    "acceptance_limits_abs",
+                ]
             )
+            graph.rename(columns={
+                "tolerance_abs_high": "tolerance_high",
+                "tolerance_abs_low": "tolerance_low",
+                "acceptance_limits_abs_high": "acceptance_limits_high",
+                "acceptance_limits_abs_low": "acceptance_limits_low"
+            }, inplace=True)
             graph["error"] = self.get_profile_parameter("uncertainty_abs")[
                 "uncertainty_abs"
             ]
         else:
-            scatter["y"] = (
-                self.model.validation_data["x_calc"] - self.model.validation_data["x"]
-            ) / self.model.validation_data["x"] * 100 + 100
-            graph["error"] = self.get_profile_parameter("uncertainty_pc")[
-                "uncertainty_pc"
-            ]
+            calculated_scatter["x_scatter"] = (calculated_scatter["x_calc"] - calculated_scatter["x"]) / calculated_scatter["x"] * 100 + 100
+            graph = self.get_profile_parameter(
+                [
+                    "introduced_concentration",
+                    "recovery",
+                    "tolerance_rel",
+                    "acceptance_limits_rel",
+                ]
+            )
+            graph.rename(columns={
+                "tolerance_rel_high": "tolerance_high",
+                "tolerance_rel_low": "tolerance_low",
+                "acceptance_limits_rel_high": "acceptance_limits_high",
+                "acceptance_limits_rel_low": "acceptance_limits_low"
+                }, inplace=True)
+            graph["error"] = self.get_profile_parameter("uncertainty_pc")["uncertainty_pc"]
 
-        return_dict = {"graph": graph, "scatter": scatter}
+        for serie in  self.model.validation_data["Serie"].unique():
+            sub_df = calculated_scatter[calculated_scatter["Serie"]==serie]
+            scatter[serie] =  pd.DataFrame([sub_df["x"], sub_df["x_scatter"]], index=["x","y"]).transpose()
+
+
+        return_dict = {
+            "recovery": pd.DataFrame([graph["introduced_concentration"], graph["recovery"]], index=["x","y"]).transpose(),
+            "tolerance_high": pd.DataFrame([graph["introduced_concentration"], graph["tolerance_high"]], index=["x","y"]).transpose(),
+            "tolerance_low": pd.DataFrame([graph["introduced_concentration"], graph["tolerance_low"]], index=["x","y"]).transpose(),
+            "acceptance_limits_low": pd.DataFrame([graph["introduced_concentration"], graph["acceptance_limits_low"]], index=["x","y"]).transpose(),
+            "acceptance_limits_high": pd.DataFrame([graph["introduced_concentration"], graph["acceptance_limits_high"]], index=["x","y"]).transpose(),
+            "error": pd.DataFrame([graph["introduced_concentration"], graph["error"]], index=["x","y"]).transpose(),
+            "scatter": scatter
+        }
 
         if data_type == "":
             return return_dict
@@ -1328,7 +1356,7 @@ class Profile:
         ax = aa.Subplot(fig, 111)
         fig.add_subplot(ax)
 
-        plot_data = self.plot_data()
+        plot_data = self.accuracy_plot_data()
 
         ax.axis["bottom", "top", "right"].set_visible(False)
         if self.absolute_acceptance:
@@ -1339,9 +1367,9 @@ class Profile:
             ax.set_ylabel("Recovery (%)")
 
         ax.errorbar(
-            plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["recovery"],
-            yerr=plot_data["graph"]["error"],
+            plot_data["recovery"]["x"],
+            plot_data["recovery"]["y"],
+            yerr=plot_data["error"]["y"],
             color="m",
             linewidth=2.0,
             marker=".",
@@ -1349,36 +1377,39 @@ class Profile:
         )
 
         ax.plot(
-            plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["tolerance_rel_low"]
-            if "tolerance_rel_low" in plot_data["graph"]
-            else plot_data["graph"]["tolerance_abs_low"],
+            plot_data["tolerance_low"]["x"],
+            plot_data["tolerance_low"]["y"],
             linewidth=1.0,
             color="b",
             label="Min tolerance limit",
         )
         ax.plot(
-            plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["tolerance_rel_high"]
-            if "tolerance_rel_high" in plot_data["graph"]
-            else plot_data["graph"]["tolerance_abs_high"],
+            plot_data["tolerance_high"]["x"],
+            plot_data["tolerance_high"]["y"],
             linewidth=1.0,
             color="g",
             label="Max tolerance limit",
         )
         ax.plot(
-            plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["acceptance_limits_rel_low"],
+            plot_data["acceptance_limits_low"]["x"],
+            plot_data["acceptance_limits_low"]["y"],
             "k--",
             label="Acceptance limit",
         )
         ax.plot(
-            plot_data["graph"]["introduced_concentration"],
-            plot_data["graph"]["acceptance_limits_rel_high"],
+            plot_data["acceptance_limits_high"]["x"],
+            plot_data["acceptance_limits_high"]["y"],
             "k--",
         )
 
-        ax.scatter(plot_data["scatter"]["x"], plot_data["scatter"]["y"], s=5, color="k")
+        for key, scatter in plot_data["scatter"].items():
+            ax.scatter(
+                scatter["x"],
+                scatter["y"],
+                s=5,
+                c=np.random.rand(3,),
+                label="Serie " + str(key)
+            )
 
         ax.set_xlabel("Concentration")
 
@@ -1432,8 +1463,6 @@ class Profile:
             "uncertainty_info": self.profile_data("uncertainty_info", sigfig).to_dict(
                 orient="row"
             ),
-            "graph": self.plot_data("graph").to_dict(orient="row"),
-            "scatter": self.plot_data("scatter").to_dict(orient="row"),
             "validation_data": self.model.validation_data.to_dict(orient="row"),
         }
 
@@ -1441,6 +1470,16 @@ class Profile:
             return_dict["calibration_data"] = self.model.calibration_data.to_dict(
                 orient="row"
             )
+
+        plot_data = self.accuracy_plot_data()
+        return_dict["graph"] = {}
+        for key, value in plot_data.items():
+            if type(value) == dict:
+                return_dict["scatter"] = {}
+                for index, scatter in value.items():
+                    return_dict["scatter"][index] = scatter
+            else:
+                return_dict["graph"][key] = value.to_dict(orient="row")
 
         if format == "dict":
             if data_type == "":
