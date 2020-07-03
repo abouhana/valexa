@@ -52,8 +52,8 @@ class ProfileManager:
         of percentage. Default is False
         :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced dataset. This is only to
         ease the reading of the output. Default is None
-        :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the dataset and
-        generate multiple profile with each subset of dataset. Default is False.
+        :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the dataset
+        and generate multiple profile with each subset of dataset. Default is False.
         :param rolling_data_limit: (Optional) In combination with rolling_data, this is the minimum length of the subset
         that rolling_data will go to. This can also be a list if the number of minimum is different for the validation
         and the calibration data, in which case the order is [Validation, Calibration]. Default = 3.
@@ -221,6 +221,8 @@ class ProfileManager:
             warn("No Optimizer parameter set. Optimizer cannot be run.")
         elif "Calibration" not in self.data:
             warn("Optimizer cannot be run on validation using direct dataset.")
+        elif len(self.profiles) == 0:
+            warn("No profiles found. Have you calculated them by using .make_profile()?")
         else:
             self.sorted_profiles = Optimizer(
                 self.profiles, self.optimizer_parameters
@@ -508,8 +510,10 @@ class ProfileLevel:
         if self.absolute_acceptance:
             return pd.Series(
                 {
-                    "tolerance_rel_low": self.tolerance_abs["tolerance_abs_low"] - self.introduced_concentration,
-                    "tolerance_rel_high": self.tolerance_abs["tolerance_abs_high"] - self.introduced_concentration
+                    "tolerance_rel_low": self.tolerance_abs["tolerance_abs_low"]
+                    - self.introduced_concentration,
+                    "tolerance_rel_high": self.tolerance_abs["tolerance_abs_high"]
+                    - self.introduced_concentration,
                 }
             )
         else:
@@ -755,7 +759,7 @@ class Profile:
                 self.model.get_level(level), self.absolute_acceptance, self.sigfig
             )
 
-    def summary( self ) -> None:
+    def summary(self) -> None:
 
         filterwarnings("ignore")
 
@@ -804,19 +808,19 @@ class Profile:
     ) -> Optional[Union[pd.DataFrame, np.ndarray]]:
         if type(profile_parameter) == str:
             profile_parameter = [profile_parameter]
-        params_list: dict = {}
+        params_list: pd.DataFrame = pd.DataFrame()
         for parameter in profile_parameter:
             if hasattr(list(self.profile_levels.values())[1], parameter):
                 value_list: List[float] = []
                 for level in self.profile_levels.values():
                     value_list.append(getattr(level, parameter))
-                params_list[parameter] = np.mean(value_list)
+                params_list = pd.concat(
+                    [params_list, pd.DataFrame([np.mean(value_list)], index=[parameter])]
+                )
             else:
                 warn("The profile levels do not have attribute named " + parameter)
-        if len(params_list) == 1:
-            return list(params_list.values())[0]
-        elif len(params_list) > 1:
-            return pd.DataFrame(params_list)
+        if len(params_list) > 0:
+            return params_list.transpose()
         else:
             return None
 
@@ -1117,27 +1121,25 @@ class Profile:
                     (intersects_data["valid"] == 1) & (intersects_data["going_in"] == 1)
                 ].iloc[-1]
             elif (
-                level_tolerance.iloc[0]["lower_tol_y_coord"]
-                > level_tolerance.iloc[0]["lower_acc_y_coord"]
-                and level_tolerance.iloc[0]["upper_tol_y_coord"]
-                < level_tolerance.iloc[0]["upper_acc_y_coord"]
+                level_tolerance.iloc[0]["lower_inside"]
+                and level_tolerance.iloc[0]["upper_inside"]
             ):  # check if first point is in bounds
                 min_loq = level_tolerance.iloc[0]["x_coord"]
 
-            # pick the last one going out that is valid
+            # pick the last one going out that has an opposite in
             if len(
                 intersects_data[
-                    (intersects_data["valid"] == 1) & (intersects_data["going_in"] == 0)
+                    (intersects_data["opposite_in"] == 1)
+                    & (intersects_data["going_in"] == 0)
                 ]
             ):
-                max_loq = min_loq = intersects_data["x_value"][
-                    (intersects_data["valid"] == 1) & (intersects_data["going_in"] == 0)
+                max_loq = intersects_data["x_value"][
+                    (intersects_data["opposite_in"] == 1)
+                    & (intersects_data["going_in"] == 0)
                 ].iloc[-1]
             elif (  # check if the last point is in bounds
-                level_tolerance.iloc[-1]["lower_tol_y_coord"]
-                > level_tolerance.iloc[-1]["lower_acc_y_coord"]
-                and level_tolerance.iloc[-1]["upper_tol_y_coord"]
-                < level_tolerance.iloc[-1]["upper_acc_y_coord"]
+                level_tolerance.iloc[-1]["lower_inside"]
+                and level_tolerance.iloc[-1]["upper_inside"]
             ):
                 max_loq = level_tolerance.iloc[-1]["x_coord"]
             if intersects_data.iloc[-1]["valid"]:
@@ -1146,10 +1148,8 @@ class Profile:
         else:  # no intersect
 
             if (
-                level_tolerance.iloc[0]["lower_tol_y_coord"]
-                > level_tolerance.iloc[0]["lower_acc_y_coord"]
-                and level_tolerance.iloc[0]["upper_tol_y_coord"]
-                < level_tolerance.iloc[0]["upper_acc_y_coord"]
+                level_tolerance.iloc[0]["lower_inside"]
+                and level_tolerance.iloc[0]["upper_inside"]
             ):  # check if first point is between bound, since there are no intersect, the last point should be in bounds
                 max_loq = level_tolerance.iloc[-1]["x_coord"]
                 min_loq = level_tolerance.iloc[0]["x_coord"]
@@ -1161,8 +1161,9 @@ class Profile:
 
         return [min_loq, max_loq]
 
-    def accuracy_plot_data(self, data_type: str = "") -> Optional[Union[dict, pd.DataFrame]]:
-
+    def accuracy_plot_data(
+        self, data_type: str = ""
+    ) -> Optional[Union[dict, pd.DataFrame]]:
 
         scatter = {}
         graph = self.get_profile_parameter(
@@ -1173,36 +1174,62 @@ class Profile:
                 "acceptance_limits_rel",
             ]
         )
-        graph.rename(columns={
-            "tolerance_rel_high": "tolerance_high",
-            "tolerance_rel_low": "tolerance_low",
-            "acceptance_limits_rel_high": "acceptance_limits_high",
-            "acceptance_limits_rel_low": "acceptance_limits_low"
-        }, inplace=True)
+        graph.rename(
+            columns={
+                "tolerance_rel_high": "tolerance_high",
+                "tolerance_rel_low": "tolerance_low",
+                "acceptance_limits_rel_high": "acceptance_limits_high",
+                "acceptance_limits_rel_low": "acceptance_limits_low",
+            },
+            inplace=True,
+        )
 
         calculated_scatter = self.model.validation_data
         if self.absolute_acceptance:
-            calculated_scatter["x_scatter"] =  calculated_scatter["x_calc"] - calculated_scatter["x"]
+            calculated_scatter["x_scatter"] = (
+                calculated_scatter["x_calc"] - calculated_scatter["x"]
+            )
             graph["error"] = self.get_profile_parameter("uncertainty_abs")[
                 "uncertainty_abs"
             ]
         else:
-            calculated_scatter["x_scatter"] = (calculated_scatter["x_calc"] - calculated_scatter["x"]) / calculated_scatter["x"] * 100 + 100
-            graph["error"] = self.get_profile_parameter("uncertainty_pc")["uncertainty_pc"]
+            calculated_scatter["x_scatter"] = (
+                calculated_scatter["x_calc"] - calculated_scatter["x"]
+            ) / calculated_scatter["x"] * 100 + 100
+            graph["error"] = self.get_profile_parameter("uncertainty_pc")[
+                "uncertainty_pc"
+            ]
 
-        for serie in  self.model.validation_data["Serie"].unique():
-            sub_df = calculated_scatter[calculated_scatter["Serie"]==serie]
-            scatter[serie] =  pd.DataFrame([sub_df["x"], sub_df["x_scatter"]], index=["x","y"]).transpose()
-
+        for serie in self.model.validation_data["Serie"].unique():
+            sub_df = calculated_scatter[calculated_scatter["Serie"] == serie]
+            scatter[serie] = pd.DataFrame(
+                [sub_df["x"], sub_df["x_scatter"]], index=["x", "y"]
+            ).transpose()
 
         return_dict = {
-            "recovery": pd.DataFrame([graph["introduced_concentration"], graph["recovery"]], index=["x","y"]).transpose(),
-            "tolerance_high": pd.DataFrame([graph["introduced_concentration"], graph["tolerance_high"]], index=["x","y"]).transpose(),
-            "tolerance_low": pd.DataFrame([graph["introduced_concentration"], graph["tolerance_low"]], index=["x","y"]).transpose(),
-            "acceptance_limits_low": pd.DataFrame([graph["introduced_concentration"], graph["acceptance_limits_low"]], index=["x","y"]).transpose(),
-            "acceptance_limits_high": pd.DataFrame([graph["introduced_concentration"], graph["acceptance_limits_high"]], index=["x","y"]).transpose(),
-            "error": pd.DataFrame([graph["introduced_concentration"], graph["error"]], index=["x","y"]).transpose(),
-            "scatter": scatter
+            "recovery": pd.DataFrame(
+                [graph["introduced_concentration"], graph["recovery"]], index=["x", "y"]
+            ).transpose(),
+            "tolerance_high": pd.DataFrame(
+                [graph["introduced_concentration"], graph["tolerance_high"]],
+                index=["x", "y"],
+            ).transpose(),
+            "tolerance_low": pd.DataFrame(
+                [graph["introduced_concentration"], graph["tolerance_low"]],
+                index=["x", "y"],
+            ).transpose(),
+            "acceptance_limits_low": pd.DataFrame(
+                [graph["introduced_concentration"], graph["acceptance_limits_low"]],
+                index=["x", "y"],
+            ).transpose(),
+            "acceptance_limits_high": pd.DataFrame(
+                [graph["introduced_concentration"], graph["acceptance_limits_high"]],
+                index=["x", "y"],
+            ).transpose(),
+            "error": pd.DataFrame(
+                [graph["introduced_concentration"], graph["error"]], index=["x", "y"]
+            ).transpose(),
+            "scatter": scatter,
         }
 
         if data_type == "":
@@ -1252,18 +1279,22 @@ class Profile:
             model_info["model_formula"] = ("",)
             model_info["model_weight"] = ""
 
-        model_info.update({
-            "lod": roundsf(self.lod, sigfig),
-            "min_loq": roundsf(self.min_loq, sigfig),
-            "max_loq": roundsf(self.max_loq, sigfig),
-            "correction_factor": roundsf(self.correction_factor, sigfig),
-            "forced_correction_value": roundsf(self.forced_correction_value, sigfig),
-            "number_of_serie_validation": len(self.model.list_of_series()),
-            "number_of_levels_validation": len(self.model.list_of_levels()),
-            "list_of_series_validation": self.model.list_of_series().tolist(),
-            "list_of_levels_validation": self.model.list_of_levels().tolist(),
-            "absolute_acceptance": self.absolute_acceptance,
-        })
+        model_info.update(
+            {
+                "lod": roundsf(self.lod, sigfig),
+                "min_loq": roundsf(self.min_loq, sigfig),
+                "max_loq": roundsf(self.max_loq, sigfig),
+                "correction_factor": roundsf(self.correction_factor, sigfig),
+                "forced_correction_value": roundsf(
+                    self.forced_correction_value, sigfig
+                ),
+                "number_of_serie_validation": len(self.model.list_of_series()),
+                "number_of_levels_validation": len(self.model.list_of_levels()),
+                "list_of_series_validation": self.model.list_of_series().tolist(),
+                "list_of_levels_validation": self.model.list_of_levels().tolist(),
+                "absolute_acceptance": self.absolute_acceptance,
+            }
+        )
 
         levels_info = self.get_profile_parameter(
             [
@@ -1400,7 +1431,7 @@ class Profile:
                 scatter["y"],
                 s=5,
                 c=np.random.rand(3,),
-                label="Serie " + str(key)
+                label="Serie " + str(key),
             )
 
         ax.set_xlabel("Concentration")
@@ -1469,7 +1500,7 @@ class Profile:
             if type(value) == dict:
                 return_dict["scatter"] = {}
                 for index, scatter in value.items():
-                    return_dict["scatter"][index] = scatter
+                    return_dict["scatter"][index.item()] = scatter.to_dict(orient="row")
             else:
                 return_dict["graph"][key] = value.to_dict(orient="row")
 
@@ -1633,7 +1664,7 @@ class Optimizer:
         for profile_type in self.profiles.keys():
             for key, profile in enumerate(self.profiles[profile_type]):
                 temp_dataframe = pd.DataFrame(
-                    [[profile_type, key, profile.average_profile_parameter(parameter)]],
+                    [[profile_type, key, profile.average_profile_parameter(parameter)[parameter][0]]],
                     columns=["Model", "Index", "average." + parameter],
                 )
                 return_value = return_value.append(temp_dataframe, ignore_index=True)

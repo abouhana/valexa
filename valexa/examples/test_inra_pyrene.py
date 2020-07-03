@@ -17,8 +17,8 @@ def test_inra_pyrene():
     profiles: ProfileManager = ProfileManager("Test", data, allow_correction=True)
     profiles.make_profiles(["Linear"])
 
-    assert profiles.profiles["Linear"][0].correction_factor == 1.2
-    assert profiles.profiles["Linear"][0].max_loq == 28.5
-    assert np.abs((4.7 - profiles.profiles["Linear"][0].min_loq) / 4.7 * 100) < 10
+    assert profiles.best().correction_factor == 1.2
+    assert profiles.best().max_loq == 28.5
+    assert np.abs((4.7 - profiles.best().min_loq) / 4.7 * 100) < 10
 
     return True

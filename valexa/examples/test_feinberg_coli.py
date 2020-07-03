@@ -45,38 +45,78 @@ def test_feinberg_coli():
     )
     profiles.make_profiles()
 
+    profiles_with_more_acceptance: ProfileManager = ProfileManager(
+        "Test", data, absolute_acceptance=True, acceptance_limit=0.4,
+    )
+    profiles_with_more_acceptance.make_profiles()
+
+    profiles_with_correction: ProfileManager = ProfileManager(
+        "Test",
+        data,
+        absolute_acceptance=True,
+        allow_correction=True,
+        correction_threshold=[1, 1],
+    )
+    profiles_with_correction.make_profiles()
+
     litterature_dataframe: pd.DataFrame = pd.DataFrame(
         {
             "repeatability_std": {1: 0.141, 2: 0.093, 3: 0.099},
             "inter_series_std": {1: 0.092, 2: 0.081, 3: 0.141},
             "tolerance_std": {1: 0.173, 2: 0.127, 3: 0.178},
+            "intermediate_precision_std": {1: 0.168, 2: 0.123, 3: 0.172},
             "bias_abs": {1: 0.024, 2: 0.055, 3: 0.093},
-            "tolerance_abs_low": {1: -0.206, 2: -0.115, 3: -0.147},
-            "tolerance_abs_high": {1: 0.254, 2: 0.225, 3: 0.333},
+            "tolerance_rel_low": {1: -0.206, 2: -0.115, 3: -0.147},
+            "tolerance_rel_high": {1: 0.254, 2: 0.225, 3: 0.333},
+            "tolerance_abs_low": {1: 0.794, 2: 1.601, 3: 1.902},
+            "tolerance_abs_high": {1: 1.254, 2: 1.941, 3: 2.382},
         }
     )
 
-    results_dataframe: pd.DataFrame = profiles.profiles["Direct"][
-        0
-    ].get_profile_parameter(
+    results_dataframe: pd.DataFrame = profiles.best().get_profile_parameter(
         [
             "repeatability_std",
             "inter_series_std",
+            "intermediate_precision_std",
             "tolerance_std",
             "bias_abs",
+            "tolerance_rel",
             "tolerance_abs",
         ]
-    ).round(
-        3
-    )
+    ).round(3)
 
     assertion_dataframe = np.abs(
         litterature_dataframe.sub(results_dataframe).divide(litterature_dataframe) * 100
     )
 
-    # We allow 0.5% since most number have only 3 significants figures. One the data has a 0.001 absolute deviation
-    # which translate to a > 0.5% error (Literature: 0.178, Valexa: 0.177), probably due to rounding. We take it into
-    # account during the assert.
+    # We allow 0.9% since most number have only 3 significants figures. Two the data has a 0.001 absolute deviation
+    # which translate to a > 0.5% error:
+    # - Serie 3 Tolerance Std : Literature: 0.178, Valexa: 0.177
+    # - Serie 2 Intermediate Precision Std: Literature: 0.123, Valexa: 0.124
+    # This is probably due to rounding. We take them into account during the assert.
+    assert len(assertion_dataframe[assertion_dataframe.ge(0.9).any(axis=1)]) == 0
 
-    assert len(assertion_dataframe[assertion_dataframe.ge(0.5).any(axis=1)]) == 1
+    # Check if the detected max limit of quantification is the right one (max 1% deviation)
+    assert np.abs((1.96 - profiles.best().max_loq) / 1.96 * 100) < 1
+
+    # Check if the detected max limit of quantification with increased acceptance is the right one (max 1% deviation)
+    assert (
+        np.abs((2.05 - profiles_with_more_acceptance.best().max_loq) / 2.05 * 100) <= 1
+    )
+
+    # Check if the detected max limit of quantification with correction is the right one (max 1% deviation)
+    assert np.abs((2.05 - profiles_with_correction.best().max_loq) / 2.05 * 100) <= 1
+
+    # Check if the calculated correction is the right one (max 1% deviation).
+    # Note the correction factor calculation is slightly different in Valexa. Instead of using the inverse of the slope
+    # of a straight line through a plot of the expected results against the measured results, we simply use the average
+    # products between the two. The difference in the obtained results is negligible, but the other method may be
+    # implemented in the future to compare.
+    assert (
+        np.abs(
+            round(((1 / 1.02) - profiles_with_correction.best().correction_factor), 2)
+        )
+        <= 0.01
+    )
+
     return True

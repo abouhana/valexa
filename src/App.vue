@@ -28,8 +28,9 @@
                         align="center"
                 >
                     <v-col>
+                        <DataEntry/>
                         <LoadingPage v-if="validationAccepted!==true"/>
-                        <MainPage v-show="validationAccepted===true"/>
+                        <MainPage v-if="validationAccepted!==true"/>
                     </v-col>
                 </v-row>
             </v-container>
@@ -55,6 +56,7 @@
     import LoadingPage from "./pages/LoadingPage";
     import MainPage from "./pages/MainPage";
     import AccuracyProfile from "./components/profiles/AccuracyProfile";
+    import DataEntry from "./pages/DataEntry";
     const electron = require('electron')
     const ipcRenderer = electron.ipcRenderer
     const loadBalancer = require('electron-load-balancer')
@@ -62,6 +64,7 @@
 
     export default {
         components: {
+            DataEntry,
             LoadingPage,
             ValidationProgress,
             AccuracyProfile,
@@ -78,7 +81,7 @@
         },
         mounted () {
             ipcRenderer.on("GEN_MESSAGE", (event, args) => {
-                console.log(args)
+                //console.log(args)
             })
         },
         data: () => ({

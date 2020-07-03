@@ -62,7 +62,7 @@ export default new Vuex.Store({
     },
 
     makeProfileList (state, profilesData) {
-      state.listOfProfile = profilesData
+      Vue.set(state.listOfProfile, profilesData.id, profilesData)
     },
 
     setStateLoading (state, status) {

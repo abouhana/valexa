@@ -4,15 +4,23 @@ import json
 import valexa.helper as vx
 
 
-def dev_ouptut(data):
-    data = vx.format_json_to_dict(data)
+def dev_ouptut(data, config=""):
+    data = vx.format_json_to_data(data)
+
+    config = {
+        "compound_name": "test",
+        "model_to_test": "Linear",
+        "rolling_data": False
+    }
 
     aa = ProfileManager(
-        "Test", data, model_to_test=["Linear", "Quadratic"], rolling_data=False
+        "Test", data, model_to_test=["Linear"], rolling_data=True
     )
 
     aa.make_profiles()
 
     bb = aa.output_profiles()
-    oo = {"type": "PROFILE", "data": bb}
-    print(json.dumps(oo))
+    print(json.dumps({"type": "PROFILE", "data": "START"}))
+    for zz in bb.values():
+        print(json.dumps({"type": "PROFILE", "data": zz}))
+    print(json.dumps({"type": "PROFILE", "data": "STOP"}))

@@ -12,7 +12,7 @@ def get_value_between(
     return slope * (x_value - x1) + y1
 
 
-def format_json_to_dict(data):
+def format_json_to_data(data):
     return {
         "Validation": pd.DataFrame(data["Validation"]),
         "Calibration": pd.DataFrame(data["Calibration"]),
