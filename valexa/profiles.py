@@ -486,7 +486,7 @@ class ProfileLevel:
         self.tolerance_abs = self.get_absolute_tolerance(tolerance_limit).map(
             lambda x: roundsf(x, self.sigfig)
         )
-        self.tolerance_rel = self.get_tolerance_rel(tolerance_limit).map(
+        self.tolerance_rel = self.get_tolerance_rel().map(
             lambda x: roundsf(x, self.sigfig)
         )
 
@@ -504,9 +504,14 @@ class ProfileLevel:
         else:
             return (self.calculated_concentration / self.introduced_concentration) * 100
 
-    def get_tolerance_rel(self, tolerance_limit: float) -> pd.Series:
+    def get_tolerance_rel(self) -> pd.Series:
         if self.absolute_acceptance:
-            return self.tolerance_abs
+            return pd.Series(
+                {
+                    "tolerance_rel_low": self.tolerance_abs["tolerance_abs_low"] - self.introduced_concentration,
+                    "tolerance_rel_high": self.tolerance_abs["tolerance_abs_high"] - self.introduced_concentration
+                }
+            )
         else:
             return pd.Series(
                 {
@@ -570,8 +575,8 @@ class ProfileLevel:
         )
 
         if self.absolute_acceptance:
-            tolerance_low = tolerance_low - self.introduced_concentration
-            tolerance_high = tolerance_high - self.introduced_concentration
+            tolerance_low = tolerance_low
+            tolerance_high = tolerance_high
 
         return pd.Series(
             {"tolerance_abs_low": tolerance_low, "tolerance_abs_high": tolerance_high}
@@ -1160,42 +1165,29 @@ class Profile:
 
 
         scatter = {}
+        graph = self.get_profile_parameter(
+            [
+                "introduced_concentration",
+                "recovery",
+                "tolerance_rel",
+                "acceptance_limits_rel",
+            ]
+        )
+        graph.rename(columns={
+            "tolerance_rel_high": "tolerance_high",
+            "tolerance_rel_low": "tolerance_low",
+            "acceptance_limits_rel_high": "acceptance_limits_high",
+            "acceptance_limits_rel_low": "acceptance_limits_low"
+        }, inplace=True)
+
         calculated_scatter = self.model.validation_data
         if self.absolute_acceptance:
             calculated_scatter["x_scatter"] =  calculated_scatter["x_calc"] - calculated_scatter["x"]
-            graph = self.get_profile_parameter(
-                [
-                    "introduced_concentration",
-                    "recovery",
-                    "tolerance_abs",
-                    "acceptance_limits_abs",
-                ]
-            )
-            graph.rename(columns={
-                "tolerance_abs_high": "tolerance_high",
-                "tolerance_abs_low": "tolerance_low",
-                "acceptance_limits_abs_high": "acceptance_limits_high",
-                "acceptance_limits_abs_low": "acceptance_limits_low"
-            }, inplace=True)
             graph["error"] = self.get_profile_parameter("uncertainty_abs")[
                 "uncertainty_abs"
             ]
         else:
             calculated_scatter["x_scatter"] = (calculated_scatter["x_calc"] - calculated_scatter["x"]) / calculated_scatter["x"] * 100 + 100
-            graph = self.get_profile_parameter(
-                [
-                    "introduced_concentration",
-                    "recovery",
-                    "tolerance_rel",
-                    "acceptance_limits_rel",
-                ]
-            )
-            graph.rename(columns={
-                "tolerance_rel_high": "tolerance_high",
-                "tolerance_rel_low": "tolerance_low",
-                "acceptance_limits_rel_high": "acceptance_limits_high",
-                "acceptance_limits_rel_low": "acceptance_limits_low"
-                }, inplace=True)
             graph["error"] = self.get_profile_parameter("uncertainty_pc")["uncertainty_pc"]
 
         for serie in  self.model.validation_data["Serie"].unique():

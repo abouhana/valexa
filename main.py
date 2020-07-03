@@ -37,7 +37,9 @@ def main():
         rolling_data=False,
         optimizer_parameter=optimizer_parameter,
         allow_correction=True,
-        absolute_acceptance=True
+        correction_threshold=[0.99,1.01],
+        absolute_acceptance=True,
+        tolerance_limit=90
     )
     profiles.make_profiles(["1/X Weighted Linear"])
     # profiles.optimize()
