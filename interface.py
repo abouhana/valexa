@@ -11,7 +11,7 @@ def main(arguments):
             valexa_validate()
 
         if arguments[1] == "test":
-            dev_ouptut(json.loads(arguments[2]), json.load(arguments[3]))
+            dev_ouptut(json.loads(arguments[2]), None)
 
     print("EXIT")
     exit(0)

@@ -1,5 +1,7 @@
 <template>
-    <hot-table :settings="settings"></hot-table>
+    <v-container>
+        <hot-table :settings="settings"></hot-table>
+    </v-container>
 </template>
 
 <script>
@@ -26,6 +28,6 @@
     }
 </script>
 
-<style src="../../node_modules/handsontable/dist/handsontable.full.css">
-
+<style scoped>
+    @import '~handsontable/dist/handsontable.full.css';
 </style>
