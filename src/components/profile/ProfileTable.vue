@@ -17,7 +17,7 @@
             :expanded.sync="expanded"
             dense
             show-expand
-            :loading="tableLoading"
+            :loading="stateLoading"
         >
             <template v-slot:expanded-item="{ headers, item }">
                 <td :colspan="headers.length"><AccuracyProfile
@@ -35,47 +35,48 @@
     const electron = require('electron')
     const ipcRenderer = electron.ipcRenderer
     const loadBalancer = require('electron-load-balancer')
-    import AccuracyProfile from "../components/profiles/AccuracyProfile";
+    import AccuracyProfile from "./AccuracyProfile";
 
     export default {
 
 
         name: "MainPage",
-        props: {
-            tableLoading: Boolean
-        },
         components: {
             AccuracyProfile,
         },
         methods: {
             ...mapMutations([
                 'makeProfileList',
-                'setStateLoading'
+                'setStateLoading',
+                'finishListOfProfile'
             ])
         },
         computed: {
             ...mapState([
                 'stateLoading',
+                'listOfProfileCompleted'
             ]),
             ...mapGetters([
                 'getProfilesTable'
             ]),
         },
         mounted() {
-            this.setStateLoading(true)
+            if (!this.listOfProfileCompleted) {
 
-            ipcRenderer.on('PROFILE', (events, args) => {
-                if ( args.data==="START" ) {
-                    this.tableLoading = true
-                } else if ( args.data==="STOP" ) {
-                    this.tableLoading = false
-                } else {
-                    this.makeProfileList(args.data)
-                }
+                ipcRenderer.on('PROFILE', (events, args) => {
+                    if (args.data === "START") {
+                        this.setStateLoading(true)
+                    } else if (args.data === "STOP") {
+                        this.setStateLoading(false)
+                        this.finishListOfProfile()
+                    } else {
+                        this.makeProfileList(args.data)
+                    }
 
-            })
+                })
 
-            loadBalancer.start( ipcRenderer ,'test')
+                loadBalancer.start(ipcRenderer, 'test')
+            }
         },
         data () {
             return {

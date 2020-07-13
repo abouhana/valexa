@@ -1,5 +1,5 @@
 <template>
-    <v-container>
+    <div class="white">
         <v-row>
             <v-col>
                 <div class="chart-container" style="position: relative;">
@@ -12,7 +12,7 @@
                 </div>
             </v-col>
         </v-row>
-    </v-container>
+    </div>
 </template>
 
 <script>
@@ -257,4 +257,5 @@
 </script>
 
 <style scoped>
+
 </style>

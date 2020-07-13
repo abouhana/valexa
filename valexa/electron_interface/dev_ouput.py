@@ -14,7 +14,7 @@ def dev_ouptut(data, config=""):
     }
 
     aa = ProfileManager(
-        "Test", data, model_to_test=["Linear"], rolling_data=True
+        "Test", data, model_to_test=["Linear"], rolling_data=False
     )
 
     aa.make_profiles()

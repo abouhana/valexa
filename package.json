@@ -26,6 +26,7 @@
     "vue-chartjs": "^3.5.0",
     "vue-i18n": "^8.18.2",
     "vue-progress-path": "0.0.2",
+    "vue-router": "^3.3.4",
     "vuetify": "^2.3.4",
     "vuex": "^3.5.1"
   },
@@ -35,6 +36,7 @@
     "@mdi/js": "^5.3.45",
     "@vue/cli-plugin-babel": "^4.4.6",
     "@vue/cli-plugin-eslint": "^4.4.6",
+    "@vue/cli-plugin-router": "^4.4.6",
     "@vue/cli-service": "^4.4.6",
     "babel-eslint": "^10.1.0",
     "electron": "9.0.0",

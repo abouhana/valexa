@@ -18,6 +18,7 @@ export default new Vuex.Store({
     loadBalancerProc: 0,
 
     listOfProfile: {},
+    listOfProfileCompleted: false,
 
     stateLoading: false
   },
@@ -67,6 +68,15 @@ export default new Vuex.Store({
 
     setStateLoading (state, status) {
       state.stateLoading = status
+    },
+
+    finishListOfProfile (state) {
+      state.listOfProfileCompleted = true
+    },
+
+    resetListOfProfile (state) {
+      state.listOfProfile = {}
+      state.listOfProfileCompleted = false
     }
   },
   getters: {
