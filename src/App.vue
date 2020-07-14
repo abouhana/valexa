@@ -23,14 +23,13 @@
 
     <v-main>
       <v-container
-              class="fill-height"
+              class="fill-height secondary"
               fluid
       >
         <v-row
                 align-content="center"
         >
           <v-col class="text-center">
-            test
             <router-view/>
           </v-col>
         </v-row>
@@ -65,7 +64,7 @@
         'validationAccepted'
       ])
     },
-    mounted () {
+    mounted: function () {
       ipcRenderer.on("GEN_MESSAGE", (event, args) => {
         //console.log(args)
       })

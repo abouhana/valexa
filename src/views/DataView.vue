@@ -1,35 +1,67 @@
+
 <template>
-    <div class="black--text">
-        <vue-excel-editor v-model="jsondata">
-            <vue-excel-column field="user"   label="User" />
-            <vue-excel-column field="name"   label="Name" />
-            <vue-excel-column field="phone"  label="Contact" />
-            <vue-excel-column field="gender" label="Gender" />
-            <vue-excel-column field="age"    label="Age" />
-            <vue-excel-column field="birth"  label="Date Of Birth" />
-        </vue-excel-editor>
-    </div>
+
+    <v-row justify="center">
+        <v-col>
+            <v-row justify="center">
+                <v-col>
+                    <v-text-field
+                            outlined
+                            label="Series"
+                            placeholder="Number of Series"
+                            rounded
+                            dense
+                            >
+                    </v-text-field>
+                </v-col>
+                <v-col>
+                    <v-text-field
+                            outlined
+                            label="Levels"
+                            placeholder="Number of Levels"
+                            rounded
+                            dense
+                    >
+                    </v-text-field>
+                </v-col>
+                <v-col>
+                    <v-text-field
+                            outlined
+                            label="Repetitions"
+                            placeholder="Number of Repetitions"
+                            rounded
+                            dense
+                    >
+                    </v-text-field>
+                </v-col>
+            </v-row>
+            <v-row justify="center">
+                <DataTable
+                        :number-of-series="3"
+                        :number-of-level="5"
+                        :number-of-rep="2"
+                        data-type="validation"
+                />
+            </v-row>
+        </v-col>
+        <v-col>
+            <DataTable
+                    :number-of-series="3"
+                    :number-of-level="5"
+                    :number-of-rep="2"
+                    data-type="calibration"
+            />
+        </v-col>
+    </v-row>
 </template>
 
 <script>
-    import { HotTable } from '@handsontable/vue';
+    import DataTable from "../components/data/DataTable";
 
     export default {
         name: 'data-view',
-        data: function() {
-            return {
-                jsondata: [
-                    {user: '', name: '', phone: '', gender: 'M', age: 25, birth: '1997-07-01'},
-                    {user: '', name: '', phone: '', gender: 'M', age: 20, birth: '1999-11-12'},
-                    {user: '', name: '', phone: '', gender: 'M', age: 19, birth: '2000-06-11'},
-                    {user: '', name: '', phone: '', gender: 'F', age: 22, birth: '2002-08-01'},
-                    {user: '', name: '', phone: '', gender: 'M', age: 29, birth: '1990-09-01'},
-                    {user: '', name: '', phone: '', gender: 'M', age: 29, birth: '1990-09-01'}
-                ]
-            }
-        },
         components: {
-            HotTable
+            DataTable
         }
     }
 </script>

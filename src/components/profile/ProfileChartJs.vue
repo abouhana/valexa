@@ -6,7 +6,7 @@
         extends: Line,
         props: ['chartData', 'options'],
         mixins: [mixins.reactiveProp],
-        mounted () {
+        mounted: function () {
             this.addPlugin(chartjsPluginErrorBars)
             this.renderChart(this.chartData, this.options)
         }

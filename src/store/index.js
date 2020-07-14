@@ -20,7 +20,9 @@ export default new Vuex.Store({
     listOfProfile: {},
     listOfProfileCompleted: false,
 
-    stateLoading: false
+    stateLoading: false,
+
+    enteredData: { validation: [], calibration: [] }
   },
   mutations: {
     incrementValidationFail (state) {
@@ -77,6 +79,10 @@ export default new Vuex.Store({
     resetListOfProfile (state) {
       state.listOfProfile = {}
       state.listOfProfileCompleted = false
+    },
+
+    setEnteredData (state, enteredValue) {
+      state.enteredData[enteredValue.dataType] = enteredValue.tableData
     }
   },
   getters: {
@@ -90,6 +96,10 @@ export default new Vuex.Store({
 
     getProfile: (state) => (id) => {
       return state.listOfProfile[id]
+    },
+
+    getEnteredData: (state) => (dataType) => {
+      return state.enteredData[dataType]
     }
   }
 })

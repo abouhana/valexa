@@ -1,3 +1,30 @@
+<i18n>
+    {
+        "en": {
+            "validation": {
+                "loading": "Please wait while I load.",
+                "started": "I am validating myself",
+                "done": "All done!",
+                "pass": "Everything looks good :)",
+                "fail": "There seems to be a problems :(",
+                "article": "I am currently testing myself against:"
+            },
+            "continue": "Continue"
+        },
+        "fr": {
+            "validation": {
+                "loading": "Veuillez patienter pendant que je me charge",
+                "started": "Je suis en train de me valider",
+                "done": "Fini!",
+                "pass": "Tout semble bien :)",
+                "fail": "On dirait qu'il y a un problème :(",
+                "article": "Je m'évalue présentement selon:"
+            },
+            "continue": "Continuer"
+        }
+    }
+</i18n>
+
 <template>
     <div id="loading">
         <v-row
