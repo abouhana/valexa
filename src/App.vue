@@ -27,10 +27,10 @@
               fluid
       >
         <v-row
-                align="center"
-                justify="center"
+                align-content="center"
         >
           <v-col class="text-center">
+            test
             <router-view/>
           </v-col>
         </v-row>

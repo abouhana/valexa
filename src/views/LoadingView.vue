@@ -8,7 +8,7 @@
     import LoadingPage from "../components/loading/LoadingPage"
 
     export default {
-        name: "LoadingPage",
+        name: "loading-view",
         components: { LoadingPage },
     }
 </script>

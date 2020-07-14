@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import MainPage from "../views/MainPage"
+import MainView from "../views/MainView";
 import ProfileView from "../views/ProfileView";
 import DataView from "../views/DataView";
 
@@ -11,7 +11,7 @@ Vue.use(VueRouter)
   {
     path: '/',
     name: 'main',
-    component: MainPage
+    component: MainView
   },
   {
     path: '/profiles',
