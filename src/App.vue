@@ -23,7 +23,7 @@
 
     <v-main>
       <v-container
-              class="fill-height secondary"
+              class="fill-height"
               fluid
       >
         <v-row
@@ -81,6 +81,14 @@
     overflow-x: hidden !important;
   }
   .v-navigation-drawer {
+    z-index: 999999 !important;
+  }
+
+  .v-app-bar {
+    z-index: 999999 !important;
+  }
+
+  .v-footer {
     z-index: 999999 !important;
   }
 </style>

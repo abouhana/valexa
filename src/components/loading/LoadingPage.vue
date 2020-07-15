@@ -87,7 +87,7 @@
 </template>
 
 <script>
-    import ValidationProgress from "../components/ValidationProgress"
+    import ValidationProgress from "./ValidationProgress";
     import { mapMutations, mapGetters, mapState } from 'vuex'
     const electron = require('electron')
     const ipcRenderer = electron.ipcRenderer

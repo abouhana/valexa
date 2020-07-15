@@ -1,5 +1,5 @@
 <template>
-    <div class="white">
+    <div>
         <v-row>
             <v-col>
                 <div class="chart-container" style="position: relative;">

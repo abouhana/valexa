@@ -5,7 +5,7 @@
 </template>
 
 <script>
-    import LoadingPage from "../components/loading/LoadingPage"
+    import LoadingPage from "../components/loading/LoadingPage";
 
     export default {
         name: "loading-view",

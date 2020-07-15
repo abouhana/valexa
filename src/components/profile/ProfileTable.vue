@@ -10,24 +10,30 @@
 </i18n>
 
 <template>
-    <div>
-        <v-data-table
-            :headers="headers"
-            :items="getProfilesTable"
-            :expanded.sync="expanded"
-            dense
-            show-expand
-            :loading="stateLoading"
-        >
-            <template v-slot:expanded-item="{ headers, item }">
-                <td :colspan="headers.length"><AccuracyProfile
-                        :profile-id="item.id"
-                        x-axe-string="test"
-                        y-axe-string="test2"
-                ></AccuracyProfile></td>
-            </template>
-        </v-data-table>
-    </div>
+    <v-card
+            shaped
+            light
+    >
+        <v-card-title>Profiles</v-card-title>
+        <v-card-text>
+            <v-data-table
+                :headers="headers"
+                :items="getProfilesTable"
+                :expanded.sync="expanded"
+                dense
+                show-expand
+                :loading="stateLoading"
+            >
+                <template v-slot:expanded-item="{ headers, item }">
+                    <td :colspan="headers.length"><AccuracyProfile
+                            :profile-id="item.id"
+                            x-axe-string="test"
+                            y-axe-string="test2"
+                    ></AccuracyProfile></td>
+                </template>
+            </v-data-table>
+        </v-card-text>
+    </v-card>
 </template>
 
 <script>

@@ -21,15 +21,16 @@
 
 <template>
     <div class="black--text">
-        <vue-excel-editor no-header-edit v-model="tableData" @update="updateData">
-            <vue-excel-column field="series" :label="$t('series')" />
-            <vue-excel-column field="level" :label="$t('level')" />
-            <vue-excel-column field="x" :label="$t('x')" />
+        <vue-excel-editor no-header-edit v-model="tableData" @update="updateData" no-paging>
+            <vue-excel-column field="series" :label="$t('series')" type="number"/>
+            <vue-excel-column field="level" :label="$t('level')" type="number"/>
+            <vue-excel-column field="x" :label="$t('x')" type="number"/>
             <vue-excel-column
                     v-for="rep in this.numberOfRep"
                     :field="'y' + rep"
                     :label="$t('y') + rep"
                     :key="rep"
+                    type="number"
             />
         </vue-excel-editor>
     </div>
@@ -41,9 +42,9 @@
     export default {
         name: "DataTable",
         props: {
-            numberOfSeries: Number,
-            numberOfLevel: Number,
-            numberOfRep: Number,
+            numberOfSeries: [Number, String],
+            numberOfLevel: [Number, String],
+            numberOfRep: [Number, String],
             dataType: String,
         },
         data: () => ({
