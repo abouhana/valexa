@@ -1,6 +1,7 @@
 <template>
   <v-app id="inspire">
     <v-navigation-drawer
+            v-if="validationAccepted === true"
             v-model="drawer"
             app
             :clipped="$vuetify.breakpoint.lgAndUp"
@@ -16,6 +17,7 @@
             color="primary darken-3"
     >
       <v-app-bar-nav-icon
+              v-show="validationAccepted === true"
               @click.stop="drawer = !drawer"
       ></v-app-bar-nav-icon>
       <v-toolbar-title>Valexa</v-toolbar-title>
@@ -23,13 +25,10 @@
 
     <v-main>
       <v-container
-              class="fill-height"
               fluid
       >
-        <v-row
-                align-content="center"
-        >
-          <v-col class="text-center">
+        <v-row align="start" justify="center">
+          <v-col>
             <router-view/>
           </v-col>
         </v-row>

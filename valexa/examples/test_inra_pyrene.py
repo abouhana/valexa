@@ -14,7 +14,7 @@ def test_inra_pyrene():
     """
     data = sample_dataset.dataset("inra_pyrene")
 
-    profiles: ProfileManager = ProfileManager("Test", data, allow_correction=True)
+    profiles: ProfileManager = ProfileManager("Test", data, correction_allow=True)
     profiles.make_profiles(["Linear"])
 
     assert profiles.best().correction_factor == 1.2

@@ -1,0 +1,39 @@
+<script>
+    const { ipcRenderer } = require('electron');
+    const loadBalancer = require('electron-load-balancer');
+    const { PythonShell } = require('python-shell')
+    const path = require('path');
+
+    let pyshell = new PythonShell('interface.py', {
+        pythonPath: path.join(process.env['npm_config_prefix'], '\\python'),
+        pythonOptions: ['-u'],
+        args: ['get_params']
+    } )
+
+
+    loadBalancer.job(
+        ipcRenderer,
+        'get_params',
+        () => {
+            pyshell.on('message', function(message) {
+                ipcRenderer.send("GEN_MESSAGE", message)
+                if (message === 'EXIT') {
+                    loadBalancer.stop(ipcRenderer, 'get_params')
+                } else {
+                    try {
+                        const parsedJSON = JSON.parse(message)
+                        ipcRenderer.send('PARAMS_LIST', {
+                            type: parsedJSON['type'],
+                            data: parsedJSON['data']
+                        })
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            })
+        },
+        () => {
+            pyshell.terminate()
+        });
+
+</script>

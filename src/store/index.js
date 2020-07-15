@@ -12,18 +12,30 @@ export default new Vuex.Store({
     validationFail: 0,
     validationCurrentName: "",
     validationDescription: [],
-    validationStatus: "",
-    validationAccepted: true,
+    validationAccepted: false,
 
     loadBalancerProc: 0,
 
     listOfProfile: {},
     listOfProfileCompleted: false,
 
-    stateLoading: false,
+    stateLoading: {
+      validation: false,
+      backend: false,
+      profileTable: false
+    },
+    loadingStatus: {
+      validation: 'done',
+      backend: ''
+    },
 
-    enteredData: { validation: [], calibration: [] }
+    enteredData: { validation: [], calibration: [] },
+
+    profileParams: {},
+
+    modelParams: {}
   },
+
   mutations: {
     incrementValidationFail (state) {
       state.validationFail++
@@ -43,8 +55,8 @@ export default new Vuex.Store({
     setValexaIsValidTrue (state) {
       state.valexaIsValid = true
     },
-    setValidationStatus (state, status) {
-      state.validationStatus = status
+    setLoadingStatus (state, part) {
+      state.loadingStatus[part.name] = part.status
     },
     addValidationDescription (state, validationStatus) {
       state.validationDescription.push({
@@ -68,8 +80,8 @@ export default new Vuex.Store({
       Vue.set(state.listOfProfile, profilesData.id, profilesData)
     },
 
-    setStateLoading (state, status) {
-      state.stateLoading = status
+    setStateLoading (state, part) {
+      state.stateLoading[part.name] = part.status
     },
 
     finishListOfProfile (state) {
@@ -83,8 +95,27 @@ export default new Vuex.Store({
 
     setEnteredData (state, enteredValue) {
       state.enteredData[enteredValue.dataType] = enteredValue.tableData
+    },
+
+    addProfileParam (state, parameter) {
+      state.profileParams[parameter.parameter] = {
+        description: parameter.description,
+        type: parameter.type,
+        group: parameter.group,
+        default: parameter.default,
+        optional: parameter.optional
+      }
+    },
+
+    addModelParam (state, parameter) {
+      state.modelParams[parameter.name] = {
+        formula: parameter.formula,
+        weight: parameter.weight,
+        minPoints: parameter.minPoints
+      }
     }
   },
+
   getters: {
     getValidationProgress: state => {
       return state.validationCurrentNumber / state.validationTotalNumber
@@ -100,6 +131,10 @@ export default new Vuex.Store({
 
     getEnteredData: (state) => (dataType) => {
       return state.enteredData[dataType]
+    },
+
+    isSomethingLoading: (state) => {
+      return Object.values(state.stateLoading).includes(true)
     }
   }
 })

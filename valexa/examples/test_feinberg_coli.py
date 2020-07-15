@@ -41,20 +41,20 @@ def test_feinberg_coli():
         )
 
     profiles: ProfileManager = ProfileManager(
-        "Test", data, absolute_acceptance=True, acceptance_limit=0.3,
+        "Test", data, acceptance_absolute=True, acceptance_limit=0.3,
     )
     profiles.make_profiles()
 
     profiles_with_more_acceptance: ProfileManager = ProfileManager(
-        "Test", data, absolute_acceptance=True, acceptance_limit=0.4,
+        "Test", data, acceptance_absolute=True, acceptance_limit=0.4,
     )
     profiles_with_more_acceptance.make_profiles()
 
     profiles_with_correction: ProfileManager = ProfileManager(
         "Test",
         data,
-        absolute_acceptance=True,
-        allow_correction=True,
+        acceptance_absolute=True,
+        correction_allow=True,
         correction_threshold=[1, 1],
     )
     profiles_with_correction.make_profiles()

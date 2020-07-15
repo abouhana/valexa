@@ -27,7 +27,7 @@ def test_intern_dataset():
         model_to_test="Linear",
         rolling_data=True,
         optimizer_parameter=optimizer_parameter,
-        allow_correction=True,
+        correction_allow=True,
         generate_figure=True,
     )
     profiles.make_profiles(["Linear"])

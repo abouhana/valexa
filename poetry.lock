@@ -59,6 +59,14 @@ six = "*"
 
 [[package]]
 category = "main"
+description = ""
+name = "docstring-parser"
+optional = false
+python-versions = "~=3.6"
+version = "0.7.1"
+
+[[package]]
+category = "main"
 description = "A fast implementation of the Cassowary constraint solver"
 name = "kiwisolver"
 optional = false
@@ -333,7 +341,7 @@ python-versions = "*"
 version = "0.2.4"
 
 [metadata]
-content-hash = "10e26ae7ba45d4dcb8eec43db7e455779d987141a9cfc6aadf7efe3b34c749fd"
+content-hash = "f4e54d4738bcc1b27cb5ff9d69523399cb020b292ae3543d6cc36223786968f7"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -385,6 +393,9 @@ coverage = [
 cycler = [
     {file = "cycler-0.10.0-py2.py3-none-any.whl", hash = "sha256:1d8a5ae1ff6c5cf9b93e8811e581232ad8920aeec647c37316ceac982b08cb2d"},
     {file = "cycler-0.10.0.tar.gz", hash = "sha256:cd7b2d1018258d7247a71425e9f26463dfb444d411c39569972f4ce586b0c9d8"},
+]
+docstring-parser = [
+    {file = "docstring_parser-0.7.1.tar.gz", hash = "sha256:7f91d48ea2e4ad04a101f3aa24767f8475545acc93af1b3b14c617733d40c086"},
 ]
 kiwisolver = [
     {file = "kiwisolver-1.2.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:443c2320520eda0a5b930b2725b26f6175ca4453c61f739fef7a5847bd262f74"},

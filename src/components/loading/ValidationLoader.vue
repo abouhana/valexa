@@ -1,57 +1,30 @@
-<i18n>
-    {
-        "en": {
-            "validation": {
-                "loading": "Please wait while I load.",
-                "started": "I am validating myself",
-                "done": "All done!",
-                "pass": "Everything looks good :)",
-                "fail": "There seems to be a problems :(",
-                "article": "I am currently testing myself against:",
-                "accept": "Accept the verification"
-            }
-        },
-        "fr": {
-            "validation": {
-                "loading": "Veuillez patienter pendant que je me charge",
-                "started": "Je suis en train de me valider",
-                "done": "Fini!",
-                "pass": "Tout semble bien :)",
-                "fail": "On dirait qu'il y a un problème :(",
-                "article": "Je m'évalue présentement selon:",
-                "accept": "Accepter la vérification"
-            }
-        }
-    }
-</i18n>
-
 <template>
     <v-card
             shaped
             light
-            :loading="stateLoading"
+            :loading="stateLoading.validation"
     >
-        <v-card-title>Initialization</v-card-title>
+        <v-card-title>{{ validationText.title }}</v-card-title>
         <v-card-text class="black--text">
             <v-row justify="center">
-                    <h2 v-if="validationStatus === 'start'">{{ $t('validation.started') }}</h2>
-                    <h2 v-else-if="validationStatus === 'done'">{{ $t('validation.done') }}</h2>
-                    <h2 v-else>{{ $t('validation.loading') }}</h2>
+                    <h2 v-if="loadingStatus.validation === 'start'">{{ validationText.started }}</h2>
+                    <h2 v-else-if="loadingStatus.validation === 'done'">{{ validationText.done }}</h2>
+                    <h2 v-else>{{ validationText.loading }}</h2>
             </v-row>
             <v-row justify="center">
-                <h3 v-if="validationStatus === 'done' && valexaIsValid === true">{{ $t('validation.pass') }}</h3>
-                <h3 v-else-if="validationStatus === 'done' && valexaIsValid === false">{{ $t('validation.fail') }}</h3>
-                <h3 v-else>{{$t('validation.article') }}</h3>
+                <h3 v-if="loadingStatus.validation === 'done' && valexaIsValid === true">{{ validationText.pass }}</h3>
+                <h3 v-else-if="loadingStatus.validation === 'done' && valexaIsValid === false">{{ validationText.fail }}</h3>
+                <h3 v-else-if="loadingStatus.validation === 'start'">{{ validationText.article }}</h3>
             </v-row>
             <v-divider dark></v-divider>
-            <v-row v-if="validationStatus === 'start'" justify="center">
+            <v-row v-if="loadingStatus.validation === 'start'" justify="center">
                 <LoadingProgress/>
             </v-row>
-            <v-row v-if="validationStatus === 'done'" justify="center">
-                <ArticleStatusTable/>
+            <v-row v-if="loadingStatus.validation === 'done'" justify="center">
+                <ArticleStatusTable :table-text="validationText.tableText"/>
             </v-row>
-            <v-row v-if="validationStatus === 'done'" justify="center">
-                <v-btn color="success" text @click="setValidationAccepted()">{{ $t('validation.accept') }}</v-btn>
+            <v-row v-if="loadingStatus.validation === 'done'" justify="center">
+                <v-btn color="success" text @click="setValidationAccepted()">{{ validationText.accept }}</v-btn>
             </v-row>
         </v-card-text>
     </v-card>
@@ -81,7 +54,7 @@
                 'setValidationTotalNumber',
                 'setValidationCurrentName',
                 'setValexaIsValidTrue',
-                'setValidationStatus',
+                'setLoadingStatus',
                 'addValidationDescription',
                 'setValidationAccepted',
                 'setStateLoading'
@@ -96,7 +69,7 @@
                 'validationFail',
                 'validationCurrentName',
                 'validationDescription',
-                'validationStatus',
+                'loadingStatus',
                 'stateLoading'
             ]),
 
@@ -104,28 +77,21 @@
                 'getValidationProgress'
             ])
         },
-        data () {
-            return {
-                messageShown: "Please wait",
-                currentValidation: "",
-                numberOfValidation: 0,
-                numberOfFail: 0,
-                numberOfPass: 0,
-                validationName: "",
-            }
+        props: {
+            validationText: Object
         },
 
         mounted() {
-            if (this.validationStatus !== 'done') {
-                this.setStateLoading(true)
+            if (this.loadingStatus.validation !== 'done') {
+                this.setStateLoading({name: 'validation', status: true})
 
                 ipcRenderer.on("VALID_INFO", (event, args) => {
                     this.setValidationTotalNumber(args.numberOfValidation)
                     if (args.status === "start") {
-                        this.setValidationStatus("start")
+                        this.setLoadingStatus({name: 'validation', status: "start"})
                     } else if (args.status === "done") {
-                        this.setStateLoading(false)
-                        this.setValidationStatus("done")
+                        this.setStateLoading({name: 'validation', status: false})
+                        this.setLoadingStatus({name: 'validation', status: "done"})
                         if (this.validationPass === this.validationTotalNumber) {
                             this.setValexaIsValidTrue()
                         }

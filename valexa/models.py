@@ -54,7 +54,7 @@ class ModelsManager:
     def get_available_models(
         models_source: str = "hardcoded",
     ) -> Dict[str, Dict[str, str]]:
-        # This will eventually handle model through SQL or other database
+        # TODO: Handle model through SQL or other database
         list_of_models: Union[Model, Dict[str, ModelInfo]] = {}
 
         if models_source == "hardcoded":

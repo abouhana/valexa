@@ -28,53 +28,53 @@ class ProfileManager:
         data: Dict[str, pd.DataFrame],
         tolerance_limit: float = 80,
         acceptance_limit: float = 20,
-        absolute_acceptance: bool = False,
+        acceptance_absolute: bool = False,
         quantity_units: str = None,
         rolling_data: bool = False,
-        rolling_data_limit: Union[list, int] = 3,
+        rolling_limit: Union[list, int] = 3,
         model_to_test: Union[List[str], str] = None,
         generate_figure: bool = False,
-        allow_correction: bool = False,
+        correction_allow: bool = False,
         correction_threshold: Optional[List[float]] = None,
-        forced_correction_value: Optional[float] = None,
+        correction_forced_value: Optional[float] = None,
         correction_round_to: int = 2,
         optimizer_parameter: Optional[OptimizerParams] = None,
         significant_figure: int = 4,
     ):
         """
         Init ProfileManager with the necessary dataset
-        :param compound_name: This is the name of the compounds for the profile
-        :param data: These are the dataset in the form of a Dictionnary containing a DataFrame. The format should be
-        {"Validation": DataFrame, "Calibration": DataFrame}. Note that the calibration dataset are optional.
-        :param tolerance_limit: (Optional) The tolerance limit (beta). Default is 80
-        :param acceptance_limit: (Optional) The acceptance limit (lambda). Default is 20
-        :param absolute_acceptance: (Optional) If True, the acceptance will be considered to be in absolute unit instead
-        of percentage. Default is False
-        :param quantity_units: (Optional) The units (%, mg/l, ppm, ...) of the introduced dataset. This is only to
-        ease the reading of the output. Default is None
-        :param rolling_data: (Optional) If this is set to True, the system will do multiple iteration with the dataset
-        and generate multiple profile with each subset of dataset. Default is False.
-        :param rolling_data_limit: (Optional) In combination with rolling_data, this is the minimum length of the subset
+        :param str compound_name: This is the name of the compounds for the profile
+        :param dict data: These are the dataset in the form of a Dictionnary containing a DataFrame. The format should
+        be {"Validation": DataFrame, "Calibration": DataFrame}. Note that the calibration dataset are optional.
+        :param int? tolerance_limit: The tolerance limit (beta), defaults to 80
+        :param float? acceptance_limit: The acceptance limit (lambda), defaults to 20
+        :param bool? acceptance_absolute: If True, the acceptance will be considered to be in absolute unit instead
+        of percentage, defaults to False
+        :param str? quantity_units: The units (%, mg/l, ppm, ...) of the introduced dataset. This is only to
+        ease the reading of the output, defaults to None
+        :param bool? rolling_data: If this is set to True, the system will do multiple iteration with the dataset
+        and generate multiple profile with each subset of dataset, defaults to False.
+        :param int/list? rolling_limit: In combination with rolling_data, this is the minimum length of the subset
         that rolling_data will go to. This can also be a list if the number of minimum is different for the validation
-        and the calibration data, in which case the order is [Validation, Calibration]. Default = 3.
-        :param model_to_test: (Optional) A list of model to test, if not set the system will test them all. Default is
+        and the calibration data, in which case the order is [Validation, Calibration], defaults to 3.
+        :param list? model_to_test: A list of model to test, if not set the system will test them all, defaults to
         None.
-        :param generate_figure: (Optional) Generate a plot of the profile. Default is False.
-        :param allow_correction: (Optional) If set to true, the model will be multiplied by a factor to bring the
-        recovery close to 1. Default is False
-        :param correction_threshold: (Optional) If allow_correction is set to True, these will overwrite the default
+        :param bool? generate_figure: Generate a plot of the profile, defaults to False.
+        :param bool? correction_allow: If set to true, the model will be multiplied by a factor to bring the
+        recovery close to 1, defaults to False
+        :param list? correction_threshold: If allow_correction is set to True, these will overwrite the default
         correction threshold (0.9 - 1.1). Setting this to [1,1] will force a correction to be calculated. The
         correction_threshold is calculated by calculating the average recovery ratio. If the ratio is outside the
-        indicated range, a correction will be applied. Default is [0.9, 1]
-        :param forced_correction_value: (Optional) If allow_correction is set to True, this will set the correction
+        indicated range, a correction will be applied, defaults to [0.9, 1]
+        :param float? correction_forced_value: If allow_correction is set to True, this will set the correction
         value to the indicated value instead of calculating it. Note: the value of the average recovery ratio must still
-        be outside the threshold for this to take effect. Default is None
-        :param correction_round_to: (Optional) If allow_correction is set to True, the generated correction will be
-        rounded to this number of significant figures. Default is 2.
-        :param optimizer_parameter: (Optional) These are the value used to sort the profile from best to worst when
-        using the optimizer. Default is None
-        :param significant_figure: (Optional) Set the number of significant figure to take into account during the
-        analysis. Setting this to 0 will remove any rounding. Default is 4
+        be outside the threshold for this to take effect, defaults to None
+        :param int? correction_round_to: If allow_correction is set to True, the generated correction will be
+        rounded to this number of significant figures, defaults to 2.
+        :param dict? optimizer_parameter: These are the value used to sort the profile from best to worst when
+        using the optimizer, default to None
+        :param int? significant_figure: Set the number of significant figure to take into account during the
+        analysis. Setting this to 0 will remove any rounding, defaults to 4
         """
         self.compound_name: str = compound_name
         self.quantity_units: str = quantity_units
@@ -84,7 +84,7 @@ class ProfileManager:
         }
         self.tolerance_limit: float = tolerance_limit
         self.acceptance_limit: float = acceptance_limit
-        self.absolute_acceptance: bool = absolute_acceptance
+        self.absolute_acceptance: bool = acceptance_absolute
         self.data: Dict[str, pd.DataFrame] = data
         self.sigfig: int = significant_figure
 
@@ -93,16 +93,16 @@ class ProfileManager:
         self.model_to_test: List[str] = model_to_test
         self.rolling_data: bool = rolling_data
 
-        self.__set_rolling_data_limit(rolling_data_limit)
+        self.__set_rolling_data_limit(rolling_limit)
 
         self.generate_figure: bool = generate_figure
-        self.allow_correction: bool = allow_correction
+        self.allow_correction: bool = correction_allow
         self.correction_round_to: int = correction_round_to
-        if allow_correction:
+        if correction_allow:
             if correction_threshold is None:
                 correction_threshold = [0.9, 1.1]
             self.correction_threshold: Optional[List[float]] = correction_threshold
-            self.forced_correction_value = forced_correction_value
+            self.forced_correction_value = correction_forced_value
         else:
             self.correction_threshold: Optional[List[float]] = None
             self.forced_correction_value = None
@@ -189,7 +189,6 @@ class ProfileManager:
     def output_profiles(self, format: str = "dict"):
         output_dict = {}
         profile_number = 0
-        temp_profile_data = {}
 
         if self.sorted_profiles is not None:
             for index, profile in self.sorted_profiles.iterrows():
