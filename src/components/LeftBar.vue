@@ -30,7 +30,7 @@
                     main: {
                         icon: 'mdi-home',
                         text: 'Home',
-                        to: 'main'
+                        to: '/'
                     },
                     data: {
                         icon: 'mdi-table',
