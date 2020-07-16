@@ -20,7 +20,7 @@
 </i18n>
 
 <template>
-    <div class="black--text">
+    <v-row class="black--text" justify="center" :key="componentKey">
         <vue-excel-editor no-header-edit v-model="tableData" @update="updateData" no-paging>
             <vue-excel-column field="series" :label="$t('series')" type="number"/>
             <vue-excel-column field="level" :label="$t('level')" type="number"/>
@@ -33,7 +33,7 @@
                     type="number"
             />
         </vue-excel-editor>
-    </div>
+    </v-row>
 </template>
 
 <script>
@@ -45,16 +45,18 @@
             numberOfSeries: [Number, String],
             numberOfLevel: [Number, String],
             numberOfRep: [Number, String],
+            numberOfSupp: [Number],
             dataType: String,
         },
         data: () => ({
-            tableData: []
+            tableData: [],
+            componentKey: 0
         }),
         mounted: function () {
             if (this.getEnteredData(this.dataType).length === 0) {
                 this.createTable()
             } else {
-                this.tableData = this.getEnteredData(this.dataType)
+                this.modifyTable()
             }
         },
         computed: {
@@ -67,14 +69,38 @@
                 'setEnteredData'
             ]),
             createTable: function () {
-                for (var serie = 1; serie <= this.numberOfSeries; serie++) {
+                for (var series = 1; series <= this.numberOfSeries; series++) {
                     for (var level = 1; level <= this.numberOfLevel; level++) {
                         this.tableData.push({
-                            series: serie,
+                            series: series,
                             level: level
                         })
                     }
                 }
+                for (var supp = 0; supp < this.numberOfSupp; supp++) {
+                    this.tableData.push({})
+                }
+            },
+            modifyTable: function () {
+                const currentTableData = this.getEnteredData(this.dataType)
+                var tempTableData = []
+                for (var series = 1; series <= this.numberOfSeries; series++) {
+                    for (var level = 1; level <= this.numberOfLevel; level++) {
+                        if (typeof currentTableData.find( row => row.series === series && row.level === level) !== 'undefined') {
+                            tempTableData.push(currentTableData.find( row => row.series === series && row.level === level))
+                            //TODO: remove saved Y
+                        } else {
+                            tempTableData.push({
+                                series: series,
+                                level: level
+                            })
+                        }
+                    }
+                }
+                for (var supp = 0; supp < this.numberOfSupp; supp++) {
+                    tempTableData.push({})
+                }
+                this.tableData = tempTableData
             },
             updateData: function () {
                 this.setEnteredData({ dataType: this.dataType, tableData: this.tableData})

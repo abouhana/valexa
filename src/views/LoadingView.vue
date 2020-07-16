@@ -10,7 +10,7 @@
                 "pass": "Everything looks good :)",
                 "fail": "There seems to be a problems :(",
                 "article": "I am currently testing myself against:",
-                "accept": "Accept the verification",
+                "accept": "Accept the verification to continue",
                 "tableText": {
                     "article": "Article",
                     "status": "Status"
@@ -32,7 +32,7 @@
                 "pass": "Tout semble bien :)",
                 "fail": "On dirait qu'il y a un problème :(",
                 "article": "Je m'évalue présentement selon:",
-                "accept": "Accepter la vérification",
+                "accept": "Accepter la vérification pour continuer",
                 "tableText": {
                     "article": "Article",
                     "status": "Statut"
@@ -52,14 +52,15 @@
         <h1>{{ $t('title') }}</h1>
         <v-row>
             <v-col>
-                <ValidationLoader :validation-text="$t('validation')"/>
+                <BackendLoader :backend-text="$t('backend')"/>
             </v-col>
         </v-row>
         <v-row>
             <v-col>
-                <BackendLoader :backend-text="$t('backend')"/>
+                <ValidationLoader :validation-text="$t('validation')"/>
             </v-col>
         </v-row>
+
     </div>
 </template>
 

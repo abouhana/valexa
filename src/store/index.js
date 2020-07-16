@@ -12,7 +12,7 @@ export default new Vuex.Store({
     validationFail: 0,
     validationCurrentName: "",
     validationDescription: [],
-    validationAccepted: false,
+    validationAccepted: true,
 
     loadBalancerProc: 0,
 
@@ -22,10 +22,10 @@ export default new Vuex.Store({
     stateLoading: {
       validation: false,
       backend: false,
-      profileTable: false
+      profiles: false
     },
     loadingStatus: {
-      validation: 'done',
+      validation: '',
       backend: ''
     },
 
@@ -95,6 +95,10 @@ export default new Vuex.Store({
 
     setEnteredData (state, enteredValue) {
       state.enteredData[enteredValue.dataType] = enteredValue.tableData
+    },
+
+    emptyEnteredData (state, dataType) {
+      state.enteredData[dataType] = []
     },
 
     addProfileParam (state, parameter) {

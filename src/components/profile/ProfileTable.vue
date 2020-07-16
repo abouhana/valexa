@@ -22,7 +22,7 @@
                 :expanded.sync="expanded"
                 dense
                 show-expand
-                :loading="stateLoading"
+                :loading="stateLoading.profile"
             >
                 <template v-slot:expanded-item="{ headers, item }">
                     <td :colspan="headers.length"><AccuracyProfile
@@ -71,9 +71,9 @@
 
                 ipcRenderer.on('PROFILE', (events, args) => {
                     if (args.data === "START") {
-                        this.setStateLoading(true)
+                        this.setStateLoading({name: 'profiles', status: true})
                     } else if (args.data === "STOP") {
-                        this.setStateLoading(false)
+                        this.setStateLoading({name: 'profiles', status: true})
                         this.finishListOfProfile()
                     } else {
                         this.makeProfileList(args.data)

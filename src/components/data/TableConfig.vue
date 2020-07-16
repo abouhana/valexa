@@ -13,7 +13,6 @@
                             placeholder="Number of Series"
                             rounded
                             dense
-                            @input="updateDataTable(numberOfSeries)"
                             v-model.number="numberOfSeries"
                     >
                     </v-text-field>
@@ -25,7 +24,6 @@
                             placeholder="Number of Levels"
                             rounded
                             dense
-                            @input="updateDataTable(numberOfLevel)"
                             v-model.number="numberOfLevel"
                     >
                     </v-text-field>
@@ -37,30 +35,42 @@
                             placeholder="Number of Repetitions"
                             rounded
                             dense
-                            @input="updateDataTable(numberOfRep)"
                             v-model.number="numberOfRep"
                     >
                     </v-text-field>
                 </v-col>
+                <v-col>
+                    <v-text-field
+                            outlined
+                            label="Additional row"
+                            placeholder="Additional row"
+                            rounded
+                            dense
+                            v-model.number="numberOfSupp"
+                    >
+                    </v-text-field>
+                </v-col>
             </v-row>
-            <v-row justify="center">
-                <DataTable
-                        :number-of-series="numberOfSeries"
-                        :number-of-level="numberOfLevel"
-                        :number-of-rep="numberOfRep"
-                        :data-type="dataType"
-                        :key="componentKey"
-                />
-            </v-row>
+            <DataTable
+                    :number-of-series="numberOfSeries"
+                    :number-of-level="numberOfLevel"
+                    :number-of-rep="numberOfRepetition"
+                    :number-of-supp="numberOfSupp"
+                    :data-type="dataType"
+                    :key="componentKey"
+            />
             <v-row justify="center">
                 <v-btn
                         text
+                        @click="addRow()"
                 >Add Row</v-btn>
                 <v-btn
                     text
+                    @click="resetTable()"
                 >Reset</v-btn>
                 <v-btn
                     text
+                    @click="updateDataTable()"
                 >Resize</v-btn>
             </v-row>
         </v-card-text>
@@ -69,6 +79,7 @@
 
 <script>
     import DataTable from "./DataTable";
+    import { mapMutations, mapGetters, mapState } from 'vuex'
 
     export default {
         name: "TableConfig",
@@ -78,17 +89,34 @@
         props: {
             dataType: String
         },
+        computed: {
+            ...mapState([
+                'tableData'
+            ])
+        },
         data: () => ({
             componentKey: 0,
             numberOfRep: 2,
             numberOfLevel: 3,
-            numberOfSeries: 3
+            numberOfSeries: 3,
+            numberOfRepetition: 2,
+            numberOfSupp: 0
         }),
         methods: {
-            updateDataTable: function (value) {
-                if (value !== "") {
-                    this.componentKey = !this.componentKey
-                }
+            ...mapMutations([
+                'emptyEnteredData'
+            ]),
+            updateDataTable: function () {
+                this.numberOfRepetition = this.numberOfRep
+                this.componentKey = !this.componentKey
+            },
+            addRow: function () {
+                this.numberOfSupp++
+                this.componentKey = !this.componentKey
+            },
+            resetTable: function () {
+                this.emptyEnteredData(this.dataType)
+                this.componentKey = !this.componentKey
             }
         }
     }

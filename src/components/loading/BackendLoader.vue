@@ -50,9 +50,7 @@
                             break;
 
                         case 'MODEL_LIST':
-                            console.log(args.data)
                             for (const [name, model] of Object.entries(args.data)) {
-                                console.log(name)
                                 this.addModelParam({
                                     name: name,
                                     formula: model.formula,
@@ -63,7 +61,7 @@
                             break;
 
                         case 'DONE':
-                            this.setStateLoading({name: 'backend', status: 'done'})
+                            this.setLoadingStatus({name: 'backend', status: 'done'})
                             this.setStateLoading({name: 'backend', status: false})
                             break;
                     }

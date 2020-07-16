@@ -1,6 +1,25 @@
+<i18n>
+    {
+        "en": {
+            "series": "Series",
+            "level": "Level",
+            "x": "X",
+            "y": "Replicate ",
+            "validation": "Validation Data",
+            "calibration": "Calibration Data"
+        },
+        "fr": {
+            "series": "Série",
+            "level": "Niveau",
+            "x": "X",
+            "y": "Repétition ",
+            "validation": "Données de Validation",
+            "calibration": "Données de Calibration"
+        }
+    }
+</i18n>
 
 <template>
-
     <v-row justify="center">
         <v-col>
             <TableConfig
