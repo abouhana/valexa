@@ -4,6 +4,7 @@ import MainView from "../views/MainView";
 import ProfileView from "../views/ProfileView";
 import DataView from "../views/DataView";
 import LoadingView from "../views/LoadingView";
+import SettingsView from "../views/SettingsView";
 
 Vue.use(VueRouter)
 
@@ -22,6 +23,11 @@ Vue.use(VueRouter)
     path: '/data',
     name: 'data',
     component: DataView
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: SettingsView
   }
 ]
 

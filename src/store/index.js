@@ -29,9 +29,24 @@ export default new Vuex.Store({
       backend: ''
     },
 
+    tableConfig: {
+      validation: {
+        numberOfLevel: 3,
+        numberOfSeries: 3,
+        numberOfRep: 3,
+        numberOfSupp: 0
+      },
+      calibration: {
+        numberOfLevel: 3,
+        numberOfSeries: 3,
+        numberOfRep: 3,
+        numberOfSupp: 0
+      }
+    },
     enteredData: { validation: [], calibration: [] },
 
     profileParams: {},
+    profileGenerationParams: {},
 
     modelParams: {}
   },
@@ -111,12 +126,20 @@ export default new Vuex.Store({
       }
     },
 
+    addProfileGenerationParam (state, parameter) {
+      state.profileGenerationParams[parameter.name] = parameter.value
+    },
+
     addModelParam (state, parameter) {
       state.modelParams[parameter.name] = {
         formula: parameter.formula,
         weight: parameter.weight,
         minPoints: parameter.minPoints
       }
+    },
+
+    setTableConfig (state, parameter) {
+      state.tableConfig[parameter.dataType] = parameter.data
     }
   },
 
@@ -139,6 +162,10 @@ export default new Vuex.Store({
 
     isSomethingLoading: (state) => {
       return Object.values(state.stateLoading).includes(true)
+    },
+
+    getTableConfig: (state) => (dataType) => {
+      return state.tableConfig[dataType]
     }
   }
 })

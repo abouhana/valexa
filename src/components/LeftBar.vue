@@ -32,6 +32,11 @@
                         text: 'Home',
                         to: '/'
                     },
+                    settings: {
+                        icon: 'mdi-tune',
+                        text: 'Settings',
+                        to: 'settings'
+                    },
                     data: {
                         icon: 'mdi-table',
                         text: 'Data',

@@ -1,34 +1,13 @@
-<i18n>
-    {
-        "en": {
-            "series": "Series",
-            "level": "Level",
-            "x": "X",
-            "y": "Replicate ",
-            "validation": "Validation Data",
-            "calibration": "Calibration Data"
-        },
-        "fr": {
-            "series": "Série",
-            "level": "Niveau",
-            "x": "X",
-            "y": "Repétition ",
-            "validation": "Données de Validation",
-            "calibration": "Données de Calibration"
-        }
-    }
-</i18n>
-
 <template>
     <v-row class="black--text" justify="center" :key="componentKey">
         <vue-excel-editor no-header-edit v-model="tableData" @update="updateData" no-paging>
-            <vue-excel-column field="series" :label="$t('series')" type="number"/>
-            <vue-excel-column field="level" :label="$t('level')" type="number"/>
-            <vue-excel-column field="x" :label="$t('x')" type="number"/>
+            <vue-excel-column field="series" :label="dataText['series']" type="number"/>
+            <vue-excel-column field="level" :label="dataText['level']" type="number"/>
+            <vue-excel-column field="x" :label="dataText['x']" type="number"/>
             <vue-excel-column
                     v-for="rep in this.numberOfRep"
                     :field="'y' + rep"
-                    :label="$t('y') + rep"
+                    :label="dataText['y'] + rep"
                     :key="rep"
                     type="number"
             />
@@ -47,6 +26,7 @@
             numberOfRep: [Number, String],
             numberOfSupp: [Number],
             dataType: String,
+            dataText: Object
         },
         data: () => ({
             tableData: [],
@@ -87,8 +67,16 @@
                 for (var series = 1; series <= this.numberOfSeries; series++) {
                     for (var level = 1; level <= this.numberOfLevel; level++) {
                         if (typeof currentTableData.find( row => row.series === series && row.level === level) !== 'undefined') {
-                            tempTableData.push(currentTableData.find( row => row.series === series && row.level === level))
-                            //TODO: remove saved Y
+                            var foundRow = currentTableData.find( row => row.series === series && row.level === level)
+                            var tempRow = {
+                                series: foundRow.series,
+                                level: foundRow.level
+                            }
+                            if (typeof foundRow.x !== 'undefined') {tempRow.x = foundRow.x}
+                            for (var rep = 1; rep <= this.numberOfRep; rep++) {
+                                if (typeof foundRow['y' + rep] !== 'undefined') {tempRow['y' + rep] = foundRow['y' + rep]}
+                            }
+                            tempTableData.push(tempRow)
                         } else {
                             tempTableData.push({
                                 series: series,
@@ -101,6 +89,7 @@
                     tempTableData.push({})
                 }
                 this.tableData = tempTableData
+                this.setEnteredData({ dataType: this.dataType, tableData: this.tableData})
             },
             updateData: function () {
                 this.setEnteredData({ dataType: this.dataType, tableData: this.tableData})

@@ -46,32 +46,17 @@
 </i18n>
 
 <template>
-    <v-row justify="center">
-        <v-col>
-            <TableConfig
-                data-type="validation"
-                :table-text="$t('table')"
-            />
-        </v-col>
-        <v-col>
-            <TableConfig
-                data-type="calibration"
-                :table-text="$t('table')"
-            />
-        </v-col>
-    </v-row>
+    <SettingsManager/>
 </template>
 
 <script>
-    import TableConfig from "../components/data/TableConfig";
-
+    import SettingsManager from "../components/settings/SettingsManager";
     export default {
-        name: 'data-view',
-        components: {
-            TableConfig
-        }
+        name: "SettingsView",
+        components: {SettingsManager}
     }
 </script>
 
 <style scoped>
+
 </style>

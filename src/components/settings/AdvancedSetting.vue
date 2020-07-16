@@ -1,0 +1,79 @@
+<template>
+    <v-col>
+        <v-card
+            light
+            shaped
+        >
+            <v-card-title>Advanced Setting</v-card-title>
+            <v-card-text>
+                <v-row>>
+                    <v-col>
+                        <v-card
+                        outlined
+                    >
+                        <v-card-title>Correction</v-card-title>
+                        <v-card-text>
+                            <v-switch
+                                    label="correction_allow"
+                            />
+                            <v-text-field
+                                    outlined
+                                    rounded
+                                    dense
+                                    label="correction_forced_value"
+                            />
+                            <v-text-field
+                                    outlined
+                                    rounded
+                                    dense
+                                    label="correction_round_to"
+                            />
+                            <v-text-field
+                                    outlined
+                                    rounded
+                                    dense
+                                    label="correction_threshold"
+                            />
+                        </v-card-text>
+                    </v-card>
+                    </v-col>
+                    <v-col>
+                        <v-card>
+                        <v-card-title>Modelization</v-card-title>
+                        <v-card-text>
+                            <v-select
+                                    label="model_to_test"
+                            />
+                            <v-switch
+                                    label="rolling_data"
+                            />
+                            <v-text-field
+                                    outlined
+                                    rounded
+                                    dense
+                                    label="rolling_limit"
+                            />
+                            <v-text-field
+                                    outlined
+                                    rounded
+                                    dense
+                                    label="significant_figure"
+                            />
+                        </v-card-text>
+                    </v-card>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+        </v-card>
+    </v-col>
+</template>
+
+<script>
+    export default {
+        name: "AdvancedSetting"
+    }
+</script>
+
+<style scoped>
+
+</style>
