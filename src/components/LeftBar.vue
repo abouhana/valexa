@@ -32,15 +32,15 @@
                         text: 'Home',
                         to: '/'
                     },
-                    settings: {
-                        icon: 'mdi-tune',
-                        text: 'Settings',
-                        to: 'settings'
-                    },
                     data: {
                         icon: 'mdi-table',
                         text: 'Data',
                         to: 'data'
+                    },
+                    settings: {
+                        icon: 'mdi-tune',
+                        text: 'Settings',
+                        to: 'settings'
                     },
                     profile: {
                         icon: 'mdi-chart-line',

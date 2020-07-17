@@ -13,6 +13,8 @@
                         dense
                         v-model.number="toleranceLimit"
                         type="number"
+                        persistent-hint
+                        hint="Tolerance limits in percent. This correspond to a two-tailed Student's T value."
                 />
                 <v-text-field
                         outlined
@@ -21,6 +23,8 @@
                         dense
                         v-model.number="acceptanceLimit"
                         type="numeric"
+                        persistent-hint
+                        hint="Acceptance limits in percentage. This is the maximum accepted variation from the expected value."
                 />
             </v-card-text>
         </v-card>

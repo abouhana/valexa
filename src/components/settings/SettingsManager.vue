@@ -1,12 +1,16 @@
 <template>
     <div>
-        <v-row>
-            <GeneralSetting/>
-            <ProfileSetting/>
-        </v-row>
-        <v-row>
-            <AdvancedSetting/>
-        </v-row>
+        <v-card class="secondary" shaped>
+            <v-card-text>
+                <v-row>
+                    <GeneralSetting/>
+                    <ProfileSetting/>
+                </v-row>
+                <v-row>
+                    <AdvancedSetting/>
+                </v-row>
+            </v-card-text>
+        </v-card>
     </div>
 </template>
 

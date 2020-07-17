@@ -3,7 +3,6 @@
         <v-card
                 light
                 shaped
-                rounded
         >
             <v-card-title>General Setting</v-card-title>
             <v-card-text>
@@ -15,6 +14,8 @@
                         dense
                         v-model="compoundName"
                         type="text"
+                        persistent-hint
+                        hint="Enter the name of the compounds this settings apply to, leave blank to apply to every compounds not overwritten by other settings."
                 />
                 <v-text-field
                         outlined
@@ -24,6 +25,8 @@
                         dense
                         v-model="quantityUnit"
                         type="text"
+                        persistent-hint
+                        hint="Unit (%, mg/kg, ppm, etc.) for the validation report."
                 />
             </v-card-text>
         </v-card>

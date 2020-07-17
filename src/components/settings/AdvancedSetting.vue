@@ -1,68 +1,92 @@
 <template>
     <v-col>
-        <v-card
-            light
-            shaped
-        >
-            <v-card-title>Advanced Setting</v-card-title>
+        <v-card shaped light>
             <v-card-text>
-                <v-row>>
-                    <v-col>
-                        <v-card
-                        outlined
-                    >
-                        <v-card-title>Correction</v-card-title>
-                        <v-card-text>
-                            <v-switch
-                                    label="correction_allow"
-                            />
-                            <v-text-field
-                                    outlined
-                                    rounded
-                                    dense
-                                    label="correction_forced_value"
-                            />
-                            <v-text-field
-                                    outlined
-                                    rounded
-                                    dense
-                                    label="correction_round_to"
-                            />
-                            <v-text-field
-                                    outlined
-                                    rounded
-                                    dense
-                                    label="correction_threshold"
-                            />
-                        </v-card-text>
-                    </v-card>
-                    </v-col>
-                    <v-col>
-                        <v-card>
-                        <v-card-title>Modelization</v-card-title>
-                        <v-card-text>
-                            <v-select
-                                    label="model_to_test"
-                            />
-                            <v-switch
-                                    label="rolling_data"
-                            />
-                            <v-text-field
-                                    outlined
-                                    rounded
-                                    dense
-                                    label="rolling_limit"
-                            />
-                            <v-text-field
-                                    outlined
-                                    rounded
-                                    dense
-                                    label="significant_figure"
-                            />
-                        </v-card-text>
-                    </v-card>
-                    </v-col>
-                </v-row>
+                <v-expansion-panels light flat>
+                    <v-expansion-panel>
+                        <v-expansion-panel-header>Advanced Setting</v-expansion-panel-header>
+                        <v-expansion-panel-content>
+                            <v-row dense>
+                                <v-col dense>
+                                    <v-card shaped light>
+                                        <v-card-text>
+                                            <span class="text-h6 font-weight-regular black--text">Correction</span>
+                                            <v-select
+                                                    :items="items"
+                                                    outlined
+                                                    rounded
+                                                    dense
+                                                    label="correction_allow"
+                                                    persistent-hint
+                                                    hint="Allow the application of a correction factor to the data."
+                                                    menu-props="light, rounded"
+                                            />
+                                            <v-text-field
+                                                    outlined
+                                                    rounded
+                                                    dense
+                                                    label="correction_forced_value"
+                                                    persistent-hint
+                                                    hint="Force a specific correction factor to be applied."
+                                            />
+                                            <v-text-field
+                                                    outlined
+                                                    rounded
+                                                    dense
+                                                    label="correction_round_to"
+                                                    persistent-hint
+                                                    hint="The correction factor will be rounded to this number of significant value."
+                                            />
+                                            <v-text-field
+                                                    outlined
+                                                    rounded
+                                                    dense
+                                                    label="correction_threshold"
+                                                    persistent-hint
+                                                    hint="The average deviation or recovery threshold at which a correction factor will be generated, example: 0.8, 1.2."
+                                            />
+                                        </v-card-text>
+                                    </v-card>
+                                </v-col>
+                                <v-col dense>
+                                    <v-card shaped light>
+                                    <v-card-text>
+                                        <span class="text-h6 font-weight-regular black--text">Modelisation</span>
+                                        <v-select
+                                                outlined
+                                                rounded
+                                                dense
+                                                label="model_to_test"
+                                        />
+                                        <v-select
+                                                    :items="items"
+                                                    outlined
+                                                    rounded
+                                                    dense
+                                                    label="rolling_dataw"
+                                                    persistent-hint
+                                                    hint="This option will try to test every data iteration possibilty and generate multiple models. This may takes a while..."
+                                                    menu-props="light, rounded"
+                                            />
+                                        <v-text-field
+                                                outlined
+                                                rounded
+                                                dense
+                                                label="rolling_limit"
+                                        />
+                                        <v-text-field
+                                                outlined
+                                                rounded
+                                                dense
+                                                label="significant_figure"
+                                        />
+                                    </v-card-text>
+                                </v-card>
+                                </v-col>
+                            </v-row>
+                        </v-expansion-panel-content>
+                    </v-expansion-panel>
+                </v-expansion-panels>
             </v-card-text>
         </v-card>
     </v-col>
@@ -70,10 +94,14 @@
 
 <script>
     export default {
-        name: "AdvancedSetting"
+        name: "AdvancedSetting",
+        data: () => ({
+            items: ['Yes', 'No']
+        })
     }
 </script>
 
-<style scoped>
-
+<style scoped lang="sass">
+    .v-expansion-panel-header
+        font-size: 20px
 </style>
