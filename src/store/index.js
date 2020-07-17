@@ -29,21 +29,8 @@ export default new Vuex.Store({
       backend: ''
     },
 
-    tableConfig: {
-      validation: {
-        numberOfLevel: 3,
-        numberOfSeries: 3,
-        numberOfRep: 3,
-        numberOfSupp: 0
-      },
-      calibration: {
-        numberOfLevel: 3,
-        numberOfSeries: 3,
-        numberOfRep: 3,
-        numberOfSupp: 0
-      }
-    },
-    enteredData: { validation: [], calibration: [] },
+    tableConfig: {},
+    enteredData: {},
 
     profileParams: {},
     profileGenerationParams: {},
@@ -108,12 +95,12 @@ export default new Vuex.Store({
       state.listOfProfileCompleted = false
     },
 
-    setEnteredData (state, enteredValue) {
-      state.enteredData[enteredValue.dataType] = enteredValue.tableData
+    setEnteredData (state, parameter) {
+      state.enteredData[parameter.compound][parameter.dataType] = parameter.tableData
     },
 
-    emptyEnteredData (state, dataType) {
-      state.enteredData[dataType] = []
+    emptyEnteredData (state, parameter) {
+      state.enteredData[parameter.compound][parameter.dataType] = []
     },
 
     addProfileParam (state, parameter) {
@@ -139,7 +126,34 @@ export default new Vuex.Store({
     },
 
     setTableConfig (state, parameter) {
-      state.tableConfig[parameter.dataType] = parameter.data
+      state.tableConfig[parameter.compound][parameter.dataType] = parameter.data
+    },
+
+    renameData (state, parameter) {
+      if (parameter.newName !== parameter.oldName) {
+        Vue.set(state.enteredData, parameter.newName,state.enteredData[parameter.oldName])
+        Vue.set(state.tableConfig, parameter.newName, state.tableConfig[parameter.oldName])
+        delete state.enteredData[parameter.oldName]
+        delete state.tableConfig[parameter.oldName]
+      }
+    },
+
+    initCompoundData (state, parameter) {
+      Vue.set(state.enteredData, parameter.compound, { validation: [], calibration: []})
+      Vue.set(state.tableConfig, parameter.compound, {
+        validation: {
+          numberOfLevel: 3,
+          numberOfSeries: 3,
+          numberOfRep: 3,
+          numberOfSupp: 0
+        },
+        calibration: {
+          numberOfLevel: 3,
+          numberOfSeries: 3,
+          numberOfRep: 3,
+          numberOfSupp: 0
+        }
+      })
     }
   },
 
@@ -156,16 +170,21 @@ export default new Vuex.Store({
       return state.listOfProfile[id]
     },
 
-    getEnteredData: (state) => (dataType) => {
-      return state.enteredData[dataType]
+    getEnteredData: (state) => (parameter) => {
+      return state.enteredData[parameter.compound][parameter.dataType]
     },
 
     isSomethingLoading: (state) => {
       return Object.values(state.stateLoading).includes(true)
     },
 
-    getTableConfig: (state) => (dataType) => {
-      return state.tableConfig[dataType]
+    getTableConfig: (state) => (parameter) => {
+      return state.tableConfig[parameter.compound][parameter.dataType]
+    },
+
+    getNumberOfCompound: (state) => {
+      console.log(Object.keys(state.enteredData))
+      return Object.keys(state.enteredData).length
     }
   }
 })

@@ -1,16 +1,16 @@
 <template>
     <v-col>
-        <v-card shaped light>
+        <v-card shaped light elevation="2">
             <v-card-text>
-                <v-expansion-panels light flat>
+                <v-expansion-panels light flat accordion>
                     <v-expansion-panel>
                         <v-expansion-panel-header>Advanced Setting</v-expansion-panel-header>
                         <v-expansion-panel-content>
                             <v-row dense>
                                 <v-col dense>
-                                    <v-card shaped light>
+                                    <v-card shaped light elevation="2">
+                                        <v-card-title>Correction</v-card-title>
                                         <v-card-text>
-                                            <span class="text-h6 font-weight-regular black--text">Correction</span>
                                             <v-select
                                                     :items="items"
                                                     outlined
@@ -49,9 +49,9 @@
                                     </v-card>
                                 </v-col>
                                 <v-col dense>
-                                    <v-card shaped light>
-                                    <v-card-text>
-                                        <span class="text-h6 font-weight-regular black--text">Modelisation</span>
+                                    <v-card shaped light elevation="2">
+                                        <v-card-title>Modelization</v-card-title>
+                                        <v-card-text>
                                         <v-select
                                                 outlined
                                                 rounded
@@ -81,7 +81,7 @@
                                                 label="significant_figure"
                                         />
                                     </v-card-text>
-                                </v-card>
+                                    </v-card>
                                 </v-col>
                             </v-row>
                         </v-expansion-panel-content>

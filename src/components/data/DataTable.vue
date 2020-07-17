@@ -1,13 +1,13 @@
 <template>
     <v-row class="black--text" justify="center" :key="componentKey">
         <vue-excel-editor no-header-edit v-model="tableData" @update="updateData" no-paging>
-            <vue-excel-column field="series" :label="dataText['series']" type="number"/>
-            <vue-excel-column field="level" :label="dataText['level']" type="number"/>
-            <vue-excel-column field="x" :label="dataText['x']" type="number"/>
+            <vue-excel-column field="series" :label="languageText['series']" type="number"/>
+            <vue-excel-column field="level" :label="languageText['level']" type="number"/>
+            <vue-excel-column field="x" :label="languageText['x']" type="number"/>
             <vue-excel-column
                     v-for="rep in this.numberOfRep"
                     :field="'y' + rep"
-                    :label="dataText['y'] + rep"
+                    :label="languageText['y'] + rep"
                     :key="rep"
                     type="number"
             />
@@ -26,14 +26,15 @@
             numberOfRep: [Number, String],
             numberOfSupp: [Number],
             dataType: String,
-            dataText: Object
+            languageText: Object,
+            compound: String
         },
         data: () => ({
             tableData: [],
             componentKey: 0
         }),
         mounted: function () {
-            if (this.getEnteredData(this.dataType).length === 0) {
+            if (this.getEnteredData({compound: this.compound, dataType: this.dataType}).length === 0) {
                 this.createTable()
             } else {
                 this.modifyTable()
@@ -62,7 +63,7 @@
                 }
             },
             modifyTable: function () {
-                const currentTableData = this.getEnteredData(this.dataType)
+                const currentTableData = this.getEnteredData({compound: this.compound, dataType: this.dataType})
                 var tempTableData = []
                 for (var series = 1; series <= this.numberOfSeries; series++) {
                     for (var level = 1; level <= this.numberOfLevel; level++) {
@@ -89,10 +90,10 @@
                     tempTableData.push({})
                 }
                 this.tableData = tempTableData
-                this.setEnteredData({ dataType: this.dataType, tableData: this.tableData})
+                this.setEnteredData({ compound: this.compound, dataType: this.dataType, tableData: this.tableData})
             },
             updateData: function () {
-                this.setEnteredData({ dataType: this.dataType, tableData: this.tableData})
+                this.setEnteredData({ compound: this.compound, dataType: this.dataType, tableData: this.tableData})
             }
         },
     }

@@ -3,6 +3,7 @@
         <v-card
                 light
                 shaped
+                elevation="2"
         >
             <v-card-title>Profile Setting</v-card-title>
             <v-card-text>

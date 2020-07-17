@@ -84,10 +84,10 @@
   }
 
   .v-app-bar {
-    z-index: 999999 !important;
+    z-index: 99999 !important;
   }
 
   .v-footer {
-    z-index: 999999 !important;
+    z-index: 99999 !important;
   }
 </style>

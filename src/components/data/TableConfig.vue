@@ -1,15 +1,12 @@
 <template>
-    <v-card
-            shaped
-            light
-    >
-        <v-card-title>{{ tableText[dataType] }}</v-card-title>
+    <v-card shaped light elevation="2" :disabled="!enabled">
+        <v-card-title>{{ languageText[dataType] }}</v-card-title>
         <v-card-text>
             <v-row justify="center">
                 <v-col>
                     <v-text-field
                             outlined
-                            :label="tableText.lblSeries"
+                            :label="languageText.lblSeries"
                             rounded
                             dense
                             v-model.number="numberOfSeries"
@@ -20,7 +17,7 @@
                 <v-col>
                     <v-text-field
                             outlined
-                            :label="tableText.lblLevel"
+                            :label="languageText.lblLevel"
                             rounded
                             dense
                             v-model.number="numberOfLevel"
@@ -31,7 +28,7 @@
                 <v-col>
                     <v-text-field
                             outlined
-                            :label="tableText.lblRep"
+                            :label="languageText.lblRep"
                             rounded
                             dense
                             v-model.number="numberOfRep"
@@ -42,7 +39,7 @@
                 <v-col>
                     <v-text-field
                             outlined
-                            :label="tableText.lblSupp"
+                            :label="languageText.lblSupp"
                             rounded
                             dense
                             v-model.number="numberOfSupp"
@@ -52,27 +49,28 @@
                 </v-col>
             </v-row>
             <DataTable
-                    :number-of-series="getTableConfig(dataType).numberOfSeries"
-                    :number-of-level="getTableConfig(dataType).numberOfLevel"
-                    :number-of-rep="getTableConfig(dataType).numberOfRep"
-                    :number-of-supp="getTableConfig(dataType).numberOfSupp"
+                    :number-of-series="getTableConfig({compound: compound, dataType: dataType}).numberOfSeries"
+                    :number-of-level="getTableConfig({compound: compound, dataType: dataType}).numberOfLevel"
+                    :number-of-rep="getTableConfig({compound: compound, dataType: dataType}).numberOfRep"
+                    :number-of-supp="getTableConfig({compound: compound, dataType: dataType}).numberOfSupp"
                     :data-type="dataType"
+                    :compound="compound"
                     :key="componentKey"
-                    :data-text="tableText.data"
+                    :language-text="languageText.data"
             />
             <v-row justify="center">
                 <v-btn
                         text
                         @click="addRow()"
-                >{{ tableText.btnAdd }}</v-btn>
+                >{{ languageText.btnAdd }}</v-btn>
                 <v-btn
                     text
                     @click="resetTable()"
-                >{{ tableText.btnReset }}</v-btn>
+                >{{ languageText.btnReset }}</v-btn>
                 <v-btn
                     text
                     @click="updateDataTable()"
-                >{{ tableText.btnResize }}</v-btn>
+                >{{ languageText.btnResize }}</v-btn>
             </v-row>
         </v-card-text>
     </v-card>
@@ -89,7 +87,9 @@
         },
         props: {
             dataType: String,
-            tableText: Object,
+            compound: String,
+            languageText: Object,
+            enabled: Boolean
         },
         computed: {
             ...mapGetters([
@@ -105,10 +105,10 @@
 
         }),
         mounted: function () {
-            this.numberOfLevel = this.getTableConfig(this.dataType).numberOfLevel
-            this.numberOfSeries = this.getTableConfig(this.dataType).numberOfSeries
-            this.numberOfRep = this.getTableConfig(this.dataType).numberOfRep
-            this.numberOfSupp = this.getTableConfig(this.dataType).numberOfSupp
+            this.numberOfLevel = this.getTableConfig({compound: this.compound, dataType: this.dataType}).numberOfLevel
+            this.numberOfSeries = this.getTableConfig({compound: this.compound, dataType: this.dataType}).numberOfSeries
+            this.numberOfRep = this.getTableConfig({compound: this.compound, dataType: this.dataType}).numberOfRep
+            this.numberOfSupp = this.getTableConfig({compound: this.compound, dataType: this.dataType}).numberOfSupp
         },
         methods: {
             ...mapMutations([
@@ -117,6 +117,7 @@
             ]),
             updateDataTable: function () {
                 var data = {
+                    compound: this.compound,
                     dataType: this.dataType,
                     data: {
                         numberOfLevel: this.numberOfLevel,
@@ -133,7 +134,7 @@
                 this.updateDataTable()
             },
             resetTable: function () {
-                this.emptyEnteredData(this.dataType)
+                this.emptyEnteredData({compound: this.compound, dataType: this.dataType})
                 this.componentKey = !this.componentKey
             }
         }
