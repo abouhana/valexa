@@ -13,6 +13,9 @@
                 "btnContinue": "Continue",
                 "btnEdit": "Edit Name",
                 "btnSave": "Save",
+                "errNameEmpty": "The name must not be empty",
+                "errNameExist": "This compound already exist",
+                "btnDelete": "Delete this compound",
                 "table": {
                     "lblSeries": "Series",
                     "lblLevel": "Level",
@@ -47,6 +50,9 @@
                 "btnContinue": "Continuer",
                 "btnEdit": "Modifier le nom",
                 "btnSave": "Enregistrer",
+                "errNameEmpty": "Le nom ne doit pas être vide",
+                "errNameExist": "Le composé existe déjà",
+                "btnDelete": "Effacer ce composé",
                 "table": {
                     "lblSeries": "Série",
                     "lblLevel": "Niveau",
@@ -78,16 +84,12 @@
             <v-card-text>
                 <v-row>
                     <v-col>
-                        <div v-if="getNumberOfCompound>0">
-                            <v-expansion-panels light>
-                                    <DataCard :language-text="$t('card')" v-for="(value, key) in enteredData" :load-data-from="key" :key="key" />
+                        <v-card shaped flat>
+                            <v-expansion-panels light multiple accordion>
+                                <DataCard :language-text="$t('card')" v-for="(key) in getListOfCompound" :load-data-from="key" :key="key" />
+                                <DataCard :language-text="$t('card')" :key="blankCardKey"/>
                             </v-expansion-panels>
-                        </div>
-                        <div v-else>
-                            <v-expansion-panels light>
-                                <DataCard :language-text="$t('card')"/>
-                            </v-expansion-panels>
-                        </div>
+                        </v-card>
                     </v-col>
                 </v-row>
 
@@ -97,7 +99,6 @@
 </template>
 
 <script>
-    import TableConfig from "../components/data/TableConfig";
     import DataCard from "../components/data/DataCard";
     import DataHeader from "../components/data/DataHeader";
     import { mapGetters, mapState } from "vuex";
@@ -107,16 +108,24 @@
         components: {
             DataHeader,
             DataCard,
-            TableConfig
         },
         computed:{
             ...mapGetters([
-                'getNumberOfCompound'
+                'getNumberOfCompound',
+                'getListOfCompound'
             ]),
             ...mapState([
                 'enteredData'
             ])
-        }
+        },
+        watch: {
+            getNumberOfCompound: function () {
+                this.blankCardKey = !this.blankCardKey
+            }
+        } ,
+        data: () => ({
+            blankCardKey: 0
+        })
     }
 </script>
 

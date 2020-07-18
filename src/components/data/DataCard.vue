@@ -3,7 +3,7 @@
         <v-expansion-panel-header>
             <template v-slot:default="{ open }">
                 <v-row class="text-h5">
-                    <span v-if="compoundName!==''">{{compoundName}}</span>
+                    <span v-if="!!compoundName">{{compoundName}}</span>
                     <span v-else>{{ languageText.enterCompound }}</span>
                 </v-row>
             </template>
@@ -17,17 +17,28 @@
                                     outlined
                                     rounded
                                     :label="languageText.lblCompound"
+                                    :placeholder="languageText.compound"
                                     dense
                                     persistent-hint
                                     :hint="languageText.hintCompound"
                                     v-model="compoundName"
                                     :disabled="!editingMode"
+                                    :rules="[compoundNameRules]"
+                                    :error-messages="errorMessages"
+                                    @keypress.enter="updateName()"
                             />
                             <v-btn
                                     text
                                     @click="updateName()"
                             >
                                 {{ continueBtnText }}
+                            </v-btn>
+                            <v-btn
+                                    v-if="nameEntered"
+                                    text
+                                    @click="destroy()"
+                            >
+                                {{ languageText.btnDelete }}
                             </v-btn>
                         </v-col>
                     </v-row>
@@ -57,7 +68,7 @@
 
 <script>
     import TableConfig from "./TableConfig";
-    import { mapMutations } from "vuex"
+    import { mapMutations, mapGetters } from "vuex"
 
     export default {
         name: "DataCard",
@@ -70,6 +81,9 @@
             }
         },
         computed: {
+            ...mapGetters([
+                'getListOfCompound'
+            ]),
             continueBtnText: function () {
                 if (this.compoundNameState === 'init') {
                   return this.languageText.btnContinue
@@ -83,11 +97,12 @@
         methods: {
             ...mapMutations([
                 'initCompoundData',
-                'renameData'
+                'renameData',
+                'deleteCompoundData'
             ]),
             updateName: function () {
                 if (this.compoundNameState === 'init') {
-                    if (this.compoundName !== '' ) {
+                    if (!this.errorMessages) {
                         this.savedCompoundName = this.compoundName
                         this.initCompoundData({compound: this.savedCompoundName})
                         this.editingMode = false
@@ -103,6 +118,20 @@
                     this.editingMode = false
                     this.compoundNameState = 'saved'
                 }
+            },
+            compoundNameRules: function () {
+                if (!this.compoundName) {
+                    this.errorMessages = this.languageText.errNameEmpty
+                } else if (this.getListOfCompound.includes(this.compoundName)) {
+                    this.errorMessages = this.languageText.errNameExist
+                } else {
+                    this.errorMessages = ''
+                }
+
+                return true
+            },
+            destroy: function () {
+                this.deleteCompoundData({name: this.savedCompoundName})
             }
         },
         data: () => ({
@@ -110,10 +139,10 @@
             savedCompoundName: '',
             compoundNameState: 'init',
             editingMode: true,
-            compoundName: ''
+            compoundName: null,
+            errorMessages: ''
         }),
         mounted: function () {
-            console.log(this.loadDataFrom)
             if (this.loadDataFrom !== '') {
                 this.savedCompoundName = this.loadDataFrom
                 this.compoundName = this.loadDataFrom

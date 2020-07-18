@@ -29,6 +29,7 @@ export default new Vuex.Store({
       backend: ''
     },
 
+    compounds: {},
     tableConfig: {},
     enteredData: {},
 
@@ -96,11 +97,11 @@ export default new Vuex.Store({
     },
 
     setEnteredData (state, parameter) {
-      state.enteredData[parameter.compound][parameter.dataType] = parameter.tableData
+      Vue.set(state.compounds[parameter.compound].data, parameter.dataType, parameter.tableData)
     },
 
     emptyEnteredData (state, parameter) {
-      state.enteredData[parameter.compound][parameter.dataType] = []
+      Vue.set(state.compounds[parameter.compound].data, parameter.dataType, [])
     },
 
     addProfileParam (state, parameter) {
@@ -126,35 +127,40 @@ export default new Vuex.Store({
     },
 
     setTableConfig (state, parameter) {
-      state.tableConfig[parameter.compound][parameter.dataType] = parameter.data
+      Vue.set(state.compounds[parameter.compound].tableConfig, parameter.dataType, parameter.data)
     },
 
     renameData (state, parameter) {
       if (parameter.newName !== parameter.oldName) {
-        Vue.set(state.enteredData, parameter.newName,state.enteredData[parameter.oldName])
-        Vue.set(state.tableConfig, parameter.newName, state.tableConfig[parameter.oldName])
-        delete state.enteredData[parameter.oldName]
-        delete state.tableConfig[parameter.oldName]
+        Vue.set(state.compounds, parameter.newName, state.compounds[parameter.oldName])
+        Vue.delete(state.compounds, parameter.oldName)
       }
     },
 
     initCompoundData (state, parameter) {
-      Vue.set(state.enteredData, parameter.compound, { validation: [], calibration: []})
-      Vue.set(state.tableConfig, parameter.compound, {
-        validation: {
-          numberOfLevel: 3,
-          numberOfSeries: 3,
-          numberOfRep: 3,
-          numberOfSupp: 0
-        },
-        calibration: {
-          numberOfLevel: 3,
-          numberOfSeries: 3,
-          numberOfRep: 3,
-          numberOfSupp: 0
+      Vue.set(state.compounds, parameter.compound, {
+        data: {validation: [], calibration: []},
+        tableConfig: {
+          validation: {
+            numberOfLevel: 3,
+            numberOfSeries: 3,
+            numberOfRep: 3,
+            numberOfSupp: 0
+          },
+          calibration: {
+            numberOfLevel: 3,
+            numberOfSeries: 3,
+            numberOfRep: 3,
+            numberOfSupp: 0
+          }
         }
       })
+    },
+
+    deleteCompoundData (state, parameter) {
+      Vue.delete(state.compounds, parameter.name)
     }
+
   },
 
   getters: {
@@ -171,7 +177,7 @@ export default new Vuex.Store({
     },
 
     getEnteredData: (state) => (parameter) => {
-      return state.enteredData[parameter.compound][parameter.dataType]
+      return state.compounds[parameter.compound].data[parameter.dataType]
     },
 
     isSomethingLoading: (state) => {
@@ -179,12 +185,15 @@ export default new Vuex.Store({
     },
 
     getTableConfig: (state) => (parameter) => {
-      return state.tableConfig[parameter.compound][parameter.dataType]
+      return state.compounds[parameter.compound].tableConfig[parameter.dataType]
     },
 
     getNumberOfCompound: (state) => {
-      console.log(Object.keys(state.enteredData))
-      return Object.keys(state.enteredData).length
+      return Object.keys(state.compounds).length
+    },
+
+    getListOfCompound: (state) => {
+      return Object.keys(state.compounds)
     }
   }
 })

@@ -1,8 +1,7 @@
 <template>
     <v-col>
         <v-card shaped light elevation="2">
-            <v-card-text>
-                <v-expansion-panels light flat accordion>
+            <v-expansion-panels light flat accordion>
                     <v-expansion-panel>
                         <v-expansion-panel-header>Advanced Setting</v-expansion-panel-header>
                         <v-expansion-panel-content>
@@ -19,7 +18,7 @@
                                                     label="correction_allow"
                                                     persistent-hint
                                                     hint="Allow the application of a correction factor to the data."
-                                                    menu-props="light, rounded"
+                                                    menu-props="light"
                                             />
                                             <v-text-field
                                                     outlined
@@ -87,7 +86,6 @@
                         </v-expansion-panel-content>
                     </v-expansion-panel>
                 </v-expansion-panels>
-            </v-card-text>
         </v-card>
     </v-col>
 </template>

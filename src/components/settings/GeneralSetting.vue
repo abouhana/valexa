@@ -7,7 +7,7 @@
         >
             <v-card-title>General Setting</v-card-title>
             <v-card-text>
-                <v-text-field
+                <v-autocomplete
                         outlined
                         label="Compound Name"
                         placeholder="Compound Name"
@@ -17,6 +17,9 @@
                         type="text"
                         persistent-hint
                         hint="Enter the name of the compounds this settings apply to, leave blank to apply to every compounds not overwritten by other settings."
+                        multiple
+                        :items="getListOfCompound"
+                        menu-props="light"
                 />
                 <v-text-field
                         outlined
@@ -45,6 +48,9 @@
         computed: {
             ...mapState([
                 'profileParams'
+            ]),
+            ...mapGetters([
+                'getListOfCompound'
             ])
         },
         data: () => ({

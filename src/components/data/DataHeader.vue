@@ -11,7 +11,7 @@
                 </v-row>
                 <v-row>
                     <v-col>
-                        <btn>ADD</btn>
+                        <v-btn>ADD</v-btn>
                     </v-col>
                 </v-row>
 
