@@ -97,7 +97,7 @@
         methods: {
             ...mapMutations([
                 'initCompoundData',
-                'renameData',
+                'renameCompoundData',
                 'deleteCompoundData'
             ]),
             updateName: function () {
@@ -113,7 +113,7 @@
                     this.editingMode = true
                     this.compoundNameState = 'edit'
                 } else {
-                    this.renameData({oldName: this.savedCompoundName, newName: this.compoundName})
+                    this.renameCompoundData({oldName: this.savedCompoundName, newName: this.compoundName})
                     this.savedCompoundName = this.compoundName
                     this.editingMode = false
                     this.compoundNameState = 'saved'

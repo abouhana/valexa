@@ -27,7 +27,8 @@
                 'setStateLoading',
                 'setLoadingStatus',
                 'addProfileParam',
-                'addModelParam'
+                'addModelParam',
+                'addModelNameToDefaultSetting'
             ])
         },
         computed: {
@@ -42,7 +43,6 @@
         mounted() {
             if (this.loadingStatus.backend !== 'done') {
                 this.setStateLoading({name: 'backend', status: true})
-
                 ipcRenderer.on("PARAMS_LIST", (event, args) => {
                     switch (args.type) {
                         case 'PARAMS_LIST':
@@ -61,6 +61,7 @@
                             break;
 
                         case 'DONE':
+                            this.addModelNameToDefaultSetting()
                             this.setLoadingStatus({name: 'backend', status: 'done'})
                             this.setStateLoading({name: 'backend', status: false})
                             break;

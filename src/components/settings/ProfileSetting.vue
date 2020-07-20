@@ -36,19 +36,51 @@
     import { mapGetters, mapMutations, mapState } from 'vuex'
 
     export default {
-        name: "GeneralSetting",
+        name: "ProfileSetting",
         props: {
-            profileText: Object
+            languageText: Object,
+            settingsName: String
         },
         computed: {
-            ...mapState([
-                'profileParams'
-            ])
+            ...mapGetters([
+                'getSettingsValue'
+            ]),
+            toleranceLimit: {
+                get () {
+                    return this.getSettingsValue({
+                        name:this.settingsName,
+                        setting: 'tolerance_limit'
+                    })
+                },
+                set (value) {
+                    this.setSettingsValue({
+                        name:this.settingsName,
+                        setting: 'tolerance_limit',
+                        value: value
+                    })
+                }
+            },
+            acceptanceLimit: {
+                get () {
+                    return this.getSettingsValue({
+                        name:this.settingsName,
+                        setting: 'acceptance_limit'
+                    })
+                },
+                set (value) {
+                    this.setSettingsValue({
+                        name:this.settingsName,
+                        setting: 'acceptance_limit',
+                        value: value
+                    })
+                }
+            }
         },
-        data: () => ({
-            toleranceLimit: '',
-            acceptanceLimit: '',
-        })
+        methods: {
+            ...mapMutations([
+                'setSettingsValue'
+            ])
+        }
     }
 </script>
 

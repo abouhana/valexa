@@ -83,6 +83,7 @@
 
         mounted() {
             if (this.loadingStatus.validation !== 'done') {
+                var profileStartTimeMultiple, profileEndTimeMultiple, profileStartTimeSingle, profileEndTimeSingle
                 this.setStateLoading({name: 'validation', status: true})
 
                 ipcRenderer.on("VALID_INFO", (event, args) => {
@@ -94,18 +95,34 @@
                         this.setLoadingStatus({name: 'validation', status: "done"})
                         if (this.validationPass === this.validationTotalNumber) {
                             this.setValexaIsValidTrue()
+                            console.log('Single')
+                            console.log(profileEndTimeSingle-profileStartTimeSingle)
+                            console.log('Multiple')
+                            console.log(profileEndTimeMultiple-profileStartTimeMultiple)
                         }
                     }
                 })
 
                 ipcRenderer.on("VALID_NAME", (event, args) => {
                     this.setValidationCurrentName(args.validationName)
+                    if (args.validationName === "Hubert et al., Harmonization of strategies for the validation of quantitative analytical procedures. A SFSTP proposal - Part III (2004)") {
+                        profileStartTimeMultiple = new Date()
+                        console.log(profileStartTimeMultiple)
+                    } else if (args.validationName === "Huyez-Levrat, M et al., Cahier technique de l'INRA - Validation des m\u00e9thodes (2010)") {
+                        profileStartTimeSingle = new Date()
+                        console.log(profileStartTimeSingle)
+                    }
                 })
 
                 ipcRenderer.on("VALID_PASS", (event, args) => {
                     this.incrementValidationCurrentNumber()
                     this.incrementValidationPass()
                     this.addValidationDescription("pass")
+                    if (profileStartTimeMultiple) {
+                        profileEndTimeMultiple = new Date()
+                    } else if (profileStartTimeSingle) {
+                        profileEndTimeSingle = new Date()
+                    }
                 })
 
                 ipcRenderer.on("VALID_FAIL", (event, args) => {

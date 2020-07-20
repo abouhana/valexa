@@ -113,9 +113,6 @@
             ...mapGetters([
                 'getNumberOfCompound',
                 'getListOfCompound'
-            ]),
-            ...mapState([
-                'enteredData'
             ])
         },
         watch: {

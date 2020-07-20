@@ -51,10 +51,10 @@ class ProfileManager:
         :param bool? acceptance_absolute: If True, the acceptance will be considered to be in absolute unit instead
         of percentage, defaults to False
         :param str? quantity_units: The units (%, mg/l, ppm, ...) of the introduced dataset. This is only to
-        ease the reading of the output, defaults to None
+        ease the reading of the output, default to None
         :param bool? rolling_data: If this is set to True, the system will do multiple iteration with the dataset
         and generate multiple profile with each subset of dataset, defaults to False.
-        :param int/list? rolling_limit: In combination with rolling_data, this is the minimum length of the subset
+        :param list? rolling_limit: In combination with rolling_data, this is the minimum length of the subset
         that rolling_data will go to. This can also be a list if the number of minimum is different for the validation
         and the calibration data, in which case the order is [Validation, Calibration], defaults to 3.
         :param list? model_to_test: A list of model to test, if not set the system will test them all, defaults to
@@ -65,10 +65,10 @@ class ProfileManager:
         :param list? correction_threshold: If allow_correction is set to True, these will overwrite the default
         correction threshold (0.9 - 1.1). Setting this to [1,1] will force a correction to be calculated. The
         correction_threshold is calculated by calculating the average recovery ratio. If the ratio is outside the
-        indicated range, a correction will be applied, defaults to [0.9, 1]
+        indicated range, a correction will be applied, defaults to [0.9, 1.1]
         :param float? correction_forced_value: If allow_correction is set to True, this will set the correction
         value to the indicated value instead of calculating it. Note: the value of the average recovery ratio must still
-        be outside the threshold for this to take effect, defaults to None
+        be outside the threshold for this to take effect, defaults to 1
         :param int? correction_round_to: If allow_correction is set to True, the generated correction will be
         rounded to this number of significant figures, defaults to 2.
         :param dict? optimizer_parameter: These are the value used to sort the profile from best to worst when
@@ -364,6 +364,8 @@ class ProfileManager:
 
         return data_to_keep
 
+    def get_number_of_dataset( self ) -> int:
+        return len(self.data_objects)
 
 class ProfileLevel:
     def __init__(

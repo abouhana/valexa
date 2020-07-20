@@ -1,32 +1,56 @@
 <template>
-    <v-col>
+    <v-col dense>
         <v-card shaped light elevation="2">
-            <v-expansion-panels light flat accordion>
-                    <v-expansion-panel>
-                        <v-expansion-panel-header>Advanced Setting</v-expansion-panel-header>
-                        <v-expansion-panel-content>
-                            <v-row dense>
-                                <CorrectionSetting :language-text="languageText.correction" :settings-name="settingsName"/>
-                                <ModelizationSetting :language-text="languageText.modelization" :settings-name="settingsName"/>
-                            </v-row>
-                        </v-expansion-panel-content>
-                    </v-expansion-panel>
-                </v-expansion-panels>
+            <v-card-title>Correction</v-card-title>
+            <v-card-text>
+                <v-select
+                        :items="itemsTrueFalse"
+                        outlined
+                        rounded
+                        dense
+                        label="correction_allow"
+                        persistent-hint
+                        hint="Allow the application of a correction factor to the data."
+                        menu-props="light"
+                        v-model="correctionAllow"
+                />
+                <v-text-field
+                        outlined
+                        rounded
+                        dense
+                        label="correction_forced_value"
+                        persistent-hint
+                        hint="Force a specific correction factor to be applied."
+                        v-model="correctionForcedValue"
+                />
+                <v-text-field
+                        outlined
+                        rounded
+                        dense
+                        label="correction_round_to"
+                        persistent-hint
+                        hint="The correction factor will be rounded to this number of significant value."
+                        v-model="correctionRoundTo"
+                />
+                <v-text-field
+                        outlined
+                        rounded
+                        dense
+                        label="correction_threshold"
+                        persistent-hint
+                        hint="The average deviation or recovery threshold at which a correction factor will be generated, example: 0.8, 1.2."
+                        v-model="correctionThreshold"
+                />
+            </v-card-text>
         </v-card>
     </v-col>
 </template>
 
 <script>
     import {mapGetters, mapMutations} from "vuex";
-    import CorrectionSetting from "./CorrectionSetting";
-    import ModelizationSetting from "./ModelizationSetting";
 
     export default {
         name: "AdvancedSetting",
-        components: {
-            CorrectionSetting,
-            ModelizationSetting
-        },
         props: {
             languageText: Object,
             settingsName: String
@@ -34,7 +58,6 @@
         computed: {
             ...mapGetters([
                 'getSettingsValue',
-                'getAvailableModelsName',
                 'getListOfCompound'
             ]),
             itemsTrueFalse: function () {
@@ -102,67 +125,7 @@
                         value: value
                     })
                 }
-            },
-            rollingData: {
-                get () {
-                    return this.getSettingsValue({
-                        name:this.settingsName,
-                        setting: 'rolling_data'
-                    })
-                },
-                set (value) {
-                    this.setSettingsValue({
-                        name:this.settingsName,
-                        setting: 'rolling_data',
-                        value: value
-                    })
-                }
-            },
-            rollingLimit: {
-              get () {
-                    return this.getSettingsValue({
-                        name:this.settingsName,
-                        setting: 'rollingLimit'
-                    })
-                },
-                set (value) {
-                    this.setSettingsValue({
-                        name:this.settingsName,
-                        setting: 'rollingLimit',
-                        value: value
-                    })
-                }
-            },
-            significantFigure: {
-                get () {
-                    return this.getSettingsValue({
-                        name:this.settingsName,
-                        setting: 'significant_figure'
-                    })
-                },
-                set (value) {
-                    this.setSettingsValue({
-                        name:this.settingsName,
-                        setting: 'significant_figure',
-                        value: value
-                    })
-                }
-            },
-            modelToTest: {
-                get () {
-                    return this.getSettingsValue({
-                        name:this.settingsName,
-                        setting: 'model_to_test'
-                    })
-                },
-                set (value) {
-                    this.setSettingsValue({
-                        name:this.settingsName,
-                        setting: 'model_to_test',
-                        value: value
-                    })
-                }
-            },
+            }
         },
         methods: {
             ...mapMutations([
@@ -186,6 +149,4 @@
 </script>
 
 <style scoped lang="sass">
-    .v-expansion-panel-header
-        font-size: 20px
 </style>

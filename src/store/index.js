@@ -17,7 +17,7 @@ export default new Vuex.Store({
     loadBalancerProc: 0,
 
     listOfProfile: {},
-    listOfProfileCompleted: false,
+    listOfProfileCompleted: true,
 
     stateLoading: {
       validation: false,
@@ -30,8 +30,9 @@ export default new Vuex.Store({
     },
 
     compounds: {},
-    tableConfig: {},
-    enteredData: {},
+    settings: {
+      default: { appliesTo: [] }
+    },
 
     profileParams: {},
     profileGenerationParams: {},
@@ -105,12 +106,10 @@ export default new Vuex.Store({
     },
 
     addProfileParam (state, parameter) {
-      state.profileParams[parameter.parameter] = {
-        description: parameter.description,
-        type: parameter.type,
-        group: parameter.group,
-        default: parameter.default,
-        optional: parameter.optional
+      if (parameter.type.includes('bool')) {
+        Vue.set(state.settings.default, parameter.parameter, JSON.parse(parameter.default.toLowerCase()))
+      } else {
+        Vue.set(state.settings.default, parameter.parameter, JSON.parse(parameter.default))
       }
     },
 
@@ -119,18 +118,18 @@ export default new Vuex.Store({
     },
 
     addModelParam (state, parameter) {
-      state.modelParams[parameter.name] = {
+      Vue.set(state.modelParams, parameter.name, {
         formula: parameter.formula,
         weight: parameter.weight,
         minPoints: parameter.minPoints
-      }
+      })
     },
 
     setTableConfig (state, parameter) {
       Vue.set(state.compounds[parameter.compound].tableConfig, parameter.dataType, parameter.data)
     },
 
-    renameData (state, parameter) {
+    renameCompoundData (state, parameter) {
       if (parameter.newName !== parameter.oldName) {
         Vue.set(state.compounds, parameter.newName, state.compounds[parameter.oldName])
         Vue.delete(state.compounds, parameter.oldName)
@@ -153,14 +152,66 @@ export default new Vuex.Store({
             numberOfRep: 3,
             numberOfSupp: 0
           }
-        }
+        },
+        setting: 'default',
+        hasCalibration: true
       })
+      state.settings.default.appliesTo.push(parameter.compound)
     },
 
     deleteCompoundData (state, parameter) {
       Vue.delete(state.compounds, parameter.name)
-    }
+    },
 
+    removeCalibrationFromCompound (state, parameter) {
+      Vue.delete(state.compounds[parameter.compound].data, 'calibration')
+      Vue.delete(state.compounds[parameter.compound].tableConfig, 'calibration')
+      state.compounds[parameter.compound].hasCalibration = false
+    },
+
+    addCalibrationFromCompound (state, parameter) {
+      Vue.set(state.compounds[parameter.compound].data, 'calibration', [])
+      Vue.set(state.compounds[parameter.compound].tableConfig, 'calibration', {
+            numberOfLevel: 3,
+            numberOfSeries: 3,
+            numberOfRep: 3,
+            numberOfSupp: 0
+          })
+      state.compounds[parameter.compound].hasCalibration = true
+    },
+
+    initSettings (state, parameter) {
+      Vue.set(state.settings, parameter.name, JSON.parse(JSON.stringify(state.settings.default)))
+      state.settings[parameter.name].appliesTo = []
+    },
+
+    deleteSettings (state, parameter) {
+      Vue.delete(state.settings, parameter.name)
+    },
+
+    renameSettings (state, parameter) {
+      if (parameter.newName !== parameter.oldName && parameter.newName !== 'default' && parameter.oldName !== 'default') {
+        Vue.set(state.settings, parameter.newName, state.settings[parameter.oldName])
+        Vue.delete(state.settings, parameter.oldName)
+      }
+    },
+
+    setSettingsValue (state, parameter) {
+      Vue.set(state.settings[parameter.name], parameter.setting, parameter.value)
+    },
+
+    addModelNameToDefaultSetting (state) {
+      Vue.set(state.settings.default, 'model_to_test', Object.keys(state.modelParams))
+    },
+
+    moveCompoundToSetting (state, parameter) {
+      let currentSetting = state.compounds[parameter.compound].setting
+      let compoundIndex = state.settings[currentSetting].appliesTo.indexOf(parameter.compound)
+
+      state.compounds[parameter.compound].setting = parameter.setting
+      state.settings[parameter.setting].appliesTo.push(parameter.compound)
+      state.settings[currentSetting].appliesTo.splice(compoundIndex, 1)
+    }
   },
 
   getters: {
@@ -194,6 +245,34 @@ export default new Vuex.Store({
 
     getListOfCompound: (state) => {
       return Object.keys(state.compounds)
+    },
+
+    getNumberOfSettings: (state) => {
+      return Object.keys(state.settings).length
+    },
+
+    getListOfSettings: (state) => {
+      return Object.keys(state.settings)
+    },
+
+    getSettingsValue: (state) => (parameter) => {
+      return state.settings[parameter.name][parameter.setting]
+    },
+
+    getAvailableModelsName: (state) => {
+      return Object.keys(state.modelParams)
+    },
+
+    getSettingForCompound: (state) => (parameter) => {
+      console.log(JSON.stringify(parameter))
+      console.log(JSON.stringify(state.compounds[parameter.compound].setting))
+      console.log(JSON.stringify(state.settings[state.compounds[parameter.compound].setting]))
+      console.log(JSON.stringify(state.settings[state.compounds[parameter.compound].setting][parameter.setting]))
+      return state.settings[state.compounds[parameter.compound].setting][parameter.setting]
+    },
+
+    checkIfCompoundHasCalibration: (state) => (parameter) => {
+      return state.compounds[parameter.compound].hasCalibration
     }
   }
 })

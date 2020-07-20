@@ -17,7 +17,7 @@
 
 <script>
     export default {
-        name: "DataHeader",
+        name: "SettingHeader",
         props: {
             languageText: Object
         }
