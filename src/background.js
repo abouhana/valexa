@@ -99,18 +99,6 @@ loadBalancer.register(
     { debug: true }
 )
 
-ipcMain.on('VALID_NAME', (events, args) => {
-  win.webContents.send('VALID_NAME', args)
-})
-
-ipcMain.on('VALID_PASS', (events, args) => {
-  win.webContents.send('VALID_PASS', args)
-})
-
-ipcMain.on('VALID_FAIL', (events, args) => {
-  win.webContents.send('VALID_FAIL', args)
-})
-
 ipcMain.on('VALID_INFO', (events, args) => {
   win.webContents.send('VALID_INFO', args)
 })

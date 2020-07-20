@@ -12,8 +12,8 @@
                     <h2 v-else>{{ validationText.loading }}</h2>
             </v-row>
             <v-row justify="center">
-                <h3 v-if="loadingStatus.validation === 'done' && valexaIsValid === true">{{ validationText.pass }}</h3>
-                <h3 v-else-if="loadingStatus.validation === 'done' && valexaIsValid === false">{{ validationText.fail }}</h3>
+                <h3 v-if="loadingStatus.validation === 'done' && validation.valexaIsValid === true">{{ validationText.pass }}</h3>
+                <h3 v-else-if="loadingStatus.validation === 'done' && validation.valexaIsValid === false">{{ validationText.fail }}</h3>
                 <h3 v-else-if="loadingStatus.validation === 'start'">{{ validationText.article }}</h3>
             </v-row>
             <v-divider dark></v-divider>
@@ -40,7 +40,7 @@
     const loadBalancer = require('electron-load-balancer')
 
     export default {
-        name: "loading-page",
+        name: "ValidationLoader",
         components: {
             LoadingProgress,
             ValidationProgress,
@@ -52,7 +52,7 @@
                 'incrementValidationPass',
                 'incrementValidationCurrentNumber',
                 'setValidationTotalNumber',
-                'setValidationCurrentName',
+                'setValidationCurrent',
                 'setValexaIsValidTrue',
                 'setLoadingStatus',
                 'addValidationDescription',
@@ -62,13 +62,7 @@
         },
         computed: {
             ...mapState([
-                'valexaIsValid',
-                'validationTotalNumber',
-                'validationCurrentNumber',
-                'validationPass',
-                'validationFail',
-                'validationCurrentName',
-                'validationDescription',
+                'validation',
                 'loadingStatus',
                 'stateLoading'
             ]),
@@ -87,48 +81,37 @@
                 this.setStateLoading({name: 'validation', status: true})
 
                 ipcRenderer.on("VALID_INFO", (event, args) => {
-                    this.setValidationTotalNumber(args.numberOfValidation)
-                    if (args.status === "start") {
-                        this.setLoadingStatus({name: 'validation', status: "start"})
-                    } else if (args.status === "done") {
-                        this.setStateLoading({name: 'validation', status: false})
-                        this.setLoadingStatus({name: 'validation', status: "done"})
-                        if (this.validationPass === this.validationTotalNumber) {
-                            this.setValexaIsValidTrue()
-                            console.log('Single')
-                            console.log(profileEndTimeSingle-profileStartTimeSingle)
-                            console.log('Multiple')
-                            console.log(profileEndTimeMultiple-profileStartTimeMultiple)
-                        }
-                    }
-                })
+                    switch(args.type) {
 
-                ipcRenderer.on("VALID_NAME", (event, args) => {
-                    this.setValidationCurrentName(args.validationName)
-                    if (args.validationName === "Hubert et al., Harmonization of strategies for the validation of quantitative analytical procedures. A SFSTP proposal - Part III (2004)") {
-                        profileStartTimeMultiple = new Date()
-                        console.log(profileStartTimeMultiple)
-                    } else if (args.validationName === "Huyez-Levrat, M et al., Cahier technique de l'INRA - Validation des m\u00e9thodes (2010)") {
-                        profileStartTimeSingle = new Date()
-                        console.log(profileStartTimeSingle)
-                    }
-                })
+                        case 'VALID_INFO':
+                            this.setValidationTotalNumber(args.data.number_of_validation)
+                                if (args.data.status === "start") {
+                                    this.setLoadingStatus({name: 'validation', status: "start"})
+                                } else if (args.data.status === "done") {
+                                    this.setStateLoading({name: 'validation', status: false})
+                                    this.setLoadingStatus({name: 'validation', status: "done"})
+                                    if (this.validation.validationPass === this.validation.validationTotalNumber) {
+                                        this.setValexaIsValidTrue()
+                                    }
+                                }
+                            break
 
-                ipcRenderer.on("VALID_PASS", (event, args) => {
-                    this.incrementValidationCurrentNumber()
-                    this.incrementValidationPass()
-                    this.addValidationDescription("pass")
-                    if (profileStartTimeMultiple) {
-                        profileEndTimeMultiple = new Date()
-                    } else if (profileStartTimeSingle) {
-                        profileEndTimeSingle = new Date()
-                    }
-                })
+                        case 'VALID_NAME':
+                            this.setValidationCurrent({name: args.data.validation_name, testedProfile: args.data.tested_profile})
+                            break
 
-                ipcRenderer.on("VALID_FAIL", (event, args) => {
-                    this.incrementValidationCurrentNumber()
-                    this.incrementValidationFail()
-                    this.addValidationDescription("fail")
+                        case 'VALID_PASS':
+                            this.incrementValidationCurrentNumber()
+                            this.incrementValidationPass()
+                            this.addValidationDescription("pass")
+                            break
+
+                        case 'VALID_FAIL':
+                            this.incrementValidationCurrentNumber()
+                            this.incrementValidationFail()
+                            this.addValidationDescription("fail")
+                            break
+                    }
                 })
 
                 loadBalancer.start(ipcRenderer, 'validate')

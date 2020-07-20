@@ -13,7 +13,10 @@
                 "accept": "Accept the verification to continue",
                 "tableText": {
                     "article": "Article",
-                    "status": "Status"
+                    "status": "Status",
+                    "runningTime": "Running Time",
+                    "averageTime": "Per Profile Time",
+                    "average": "Average"
                 }
             },
             "backend" : {
@@ -35,7 +38,10 @@
                 "accept": "Accepter la vérification pour continuer",
                 "tableText": {
                     "article": "Article",
-                    "status": "Statut"
+                    "status": "Statut",
+                    "runningTime": "Temps d'exécution",
+                    "averageTime": "Temps par profile",
+                    "average": "Moyenne"
                 }
             },
             "backend" : {
@@ -69,7 +75,7 @@
     import BackendLoader from "../components/loading/BackendLoader";
 
     export default {
-        name: "loading-view",
+        name: "LoadingView",
         components: {BackendLoader, ValidationLoader },
     }
 </script>

@@ -4,7 +4,8 @@
             "header": {
                 "title": "Settings",
                 "description": "Description",
-                "numberOfProfile": "Estimated number of profile to be generated"
+                "numberOfProfile": "Estimated number of profile to be generated",
+                "estimatedTime": "Estimated time to run in seconds: "
             },
             "card": {
                 "settings" : "Settings",
@@ -40,7 +41,8 @@
             "header": {
                 "title": "Settings",
                 "description": "Description",
-                "numberOfProfile": "Estimated number of profile to be generated"
+                "numberOfProfile": "Estimated number of profile to be generated",
+                "estimatedTime": "Estimated time to run in seconds: "
             },
             "card": {
                 "settings" : "Compound",
@@ -78,6 +80,19 @@
 <template>
     <div>
         <SettingHeader :language-text="$t('header')"/>
+        <v-card class="secondary" shaped elevation="2">
+            <v-card-text>
+                <v-row>
+                    <v-col>
+                        <v-card shaped flat>
+                            <v-expansion-panels light multiple accordion>
+
+                            </v-expansion-panels>
+                        </v-card>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+        </v-card>
         <ProfileTable/>
     </div>
 </template>

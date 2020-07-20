@@ -1,7 +1,7 @@
 <template>
   <v-app id="inspire">
     <v-navigation-drawer
-            v-if="validationAccepted === true"
+            v-if="validation.validationAccepted === true"
             v-model="drawer"
             app
             :clipped="$vuetify.breakpoint.lgAndUp"
@@ -17,7 +17,7 @@
             color="primary darken-3"
     >
       <v-app-bar-nav-icon
-              v-show="validationAccepted === true"
+              v-show="validation.validationAccepted === true"
               @click.stop="drawer = !drawer"
       ></v-app-bar-nav-icon>
       <v-toolbar-title>Valexa</v-toolbar-title>
@@ -60,12 +60,12 @@
     },
     computed: {
       ...mapState([
-        'validationAccepted'
+        'validation'
       ])
     },
     mounted: function () {
       ipcRenderer.on("GEN_MESSAGE", (event, args) => {
-        console.log(args)
+        //console.log(args)
       })
     },
     data: () => ({

@@ -16,6 +16,8 @@
                 "errNameEmpty": "The name must not be empty",
                 "errNameExist": "This compound already exist",
                 "btnDelete": "Delete this compound",
+                "btnAddCalib": "Add calibration data",
+                "btnDeleteCalib": "Delete calibration data",
                 "table": {
                     "lblSeries": "Series",
                     "lblLevel": "Level",
@@ -53,6 +55,8 @@
                 "errNameEmpty": "Le nom ne doit pas être vide",
                 "errNameExist": "Le composé existe déjà",
                 "btnDelete": "Effacer ce composé",
+                "btnAddCalib": "Ajouter des données de calibration",
+                "btnDeleteCalib": "Effacer les données de calibration",
                 "table": {
                     "lblSeries": "Série",
                     "lblLevel": "Niveau",

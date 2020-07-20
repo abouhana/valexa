@@ -1,6 +1,6 @@
 <template>
     <v-row justify="center">
-        {{ validationCurrentName }}
+        {{ validation.validationCurrent.name }}
     </v-row>
 </template>
 
@@ -11,7 +11,7 @@
         name: "LoadingProgress",
         computed: {
             ...mapState([
-                'validationCurrentName'
+                'validation'
             ]),
         }
     }

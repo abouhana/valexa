@@ -28,7 +28,8 @@
     "vue-progress-path": "0.0.2",
     "vue-router": "^3.3.4",
     "vuetify": "^2.3.4",
-    "vuex": "^3.5.1"
+    "vuex": "^3.5.1",
+    "xlsx": "^0.16.4"
   },
   "devDependencies": {
     "@intlify/vue-i18n-loader": "^1.0.0",

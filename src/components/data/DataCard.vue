@@ -40,6 +40,14 @@
                             >
                                 {{ languageText.btnDelete }}
                             </v-btn>
+                            <v-btn
+                                    v-if="nameEntered"
+                                    text
+                                    @click="toggleCalibration()"
+                            >
+                                <span v-if="hasCalibration">{{ languageText.btnDeleteCalib }}</span>
+                                <span v-else>{{ languageText.btnAddCalib }}</span>
+                            </v-btn>
                         </v-col>
                     </v-row>
                     <v-row v-if="nameEntered">
@@ -51,7 +59,7 @@
                                     :enabled="!editingMode"
                             />
                         </v-col>
-                        <v-col>
+                        <v-col v-if="hasCalibration">
                             <TableConfig
                                     data-type="calibration"
                                     :compound="savedCompoundName"
@@ -82,8 +90,12 @@
         },
         computed: {
             ...mapGetters([
-                'getListOfCompound'
+                'getListOfCompound',
+                'compoundHasCalibration'
             ]),
+            hasCalibration: function () {
+              return this.compoundHasCalibration({compound: this.savedCompoundName})
+            },
             continueBtnText: function () {
                 if (this.compoundNameState === 'init') {
                   return this.languageText.btnContinue
@@ -98,8 +110,17 @@
             ...mapMutations([
                 'initCompoundData',
                 'renameCompoundData',
-                'deleteCompoundData'
+                'deleteCompoundData',
+                'removeCalibrationFromCompound',
+                'addCalibrationFromCompound'
             ]),
+            toggleCalibration: function () {
+                if (this.hasCalibration) {
+                    this.removeCalibrationFromCompound({compound: this.savedCompoundName})
+                } else {
+                    this.addCalibrationFromCompound({compound: this.savedCompoundName})
+                }
+            },
             updateName: function () {
                 if (this.compoundNameState === 'init') {
                     if (!this.errorMessages) {

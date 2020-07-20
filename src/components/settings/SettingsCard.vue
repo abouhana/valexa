@@ -45,7 +45,6 @@
                         </v-col>
                     </v-row>
                         <v-row v-if="nameEntered">
-                            <v-row>
                             <GeneralSetting :settings-name="savedSettingsName" :language-text="languageText.general"/>
                             <ProfileSetting :settings-name="savedSettingsName" :language-text="languageText.profile"/>
                         </v-row>

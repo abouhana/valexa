@@ -47,7 +47,7 @@
         },
         methods: {
             ...mapMutations([
-                'setEnteredData'
+                'setEnteredData',
             ]),
             createTable: function () {
                 for (var series = 1; series <= this.numberOfSeries; series++) {
@@ -93,6 +93,7 @@
                 this.setEnteredData({ compound: this.compound, dataType: this.dataType, tableData: this.tableData})
             },
             updateData: function () {
+                console.log(this.tableData)
                 this.setEnteredData({ compound: this.compound, dataType: this.dataType, tableData: this.tableData})
             }
         },

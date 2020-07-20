@@ -9,6 +9,7 @@
                         {{ languageText.description }}
                     </v-col>
                 </v-row>
+                <DataOpen/>
             </v-card-text>
         </v-card>
         </v-col>
@@ -16,8 +17,10 @@
 </template>
 
 <script>
+    import DataOpen from "./DataOpen";
     export default {
         name: "DataHeader",
+        components: {DataOpen},
         props: {
             languageText: Object
         }

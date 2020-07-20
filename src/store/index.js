@@ -5,15 +5,22 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    valexaIsValid: false,
-    validationTotalNumber: 0,
-    validationCurrentNumber: 0,
-    validationPass: 0,
-    validationFail: 0,
-    validationCurrentName: "",
-    validationDescription: [],
-    validationAccepted: true,
+    validation: {
+      valexaIsValid: false,
+      validationTotalNumber: 0,
+      validationCurrentNumber: 0,
+      validationPass: 0,
+      validationFail: 0,
+      validationCurrent: {
+        name: "",
+        startTime: 0,
+        testedProfile: 0
+      },
+      validationDescription: [],
+      validationAccepted: true
+    },
 
+    averageTimePerProfile: 0,
     loadBalancerProc: 0,
 
     listOfProfile: {},
@@ -42,34 +49,40 @@ export default new Vuex.Store({
 
   mutations: {
     incrementValidationFail (state) {
-      state.validationFail++
+      state.validation.validationFail++
     },
     incrementValidationPass (state) {
-      state.validationPass++
+      state.validation.validationPass++
     },
     incrementValidationCurrentNumber (state) {
-      state.validationCurrentNumber++
+      state.validation.validationCurrentNumber++
     },
     setValidationTotalNumber (state, number) {
-      state.validationTotalNumber = number
+      state.validation.validationTotalNumber = number
     },
-    setValidationCurrentName (state, name) {
-      state.validationCurrentName = name
+    setValidationCurrent (state, parameter) {
+      state.validation.validationCurrent.name = parameter.name
+      state.validation.validationCurrent.startTime = new Date()
+      state.validation.validationCurrent.testedProfile = parameter.testedProfile
     },
     setValexaIsValidTrue (state) {
-      state.valexaIsValid = true
+      state.validation.valexaIsValid = true
     },
     setLoadingStatus (state, part) {
       state.loadingStatus[part.name] = part.status
     },
     addValidationDescription (state, validationStatus) {
-      state.validationDescription.push({
-        name: state.validationCurrentName,
-        status: validationStatus
+      let miliseconds = new Date() - state.validation.validationCurrent.startTime
+      state.validation.validationDescription.push({
+        name: state.validation.validationCurrent.name,
+        status: validationStatus,
+        runningTime: miliseconds,
+        averageTime: miliseconds/state.validation.validationCurrent.testedProfile,
+        testedProfile: state.validation.validationCurrent.testedProfile
       })
     },
     setValidationAccepted (state) {
-      state.validationAccepted = true
+      state.validation.validationAccepted = true
     },
 
     incrementLoadBalancerProc (state) {
@@ -216,7 +229,7 @@ export default new Vuex.Store({
 
   getters: {
     getValidationProgress: state => {
-      return state.validationCurrentNumber / state.validationTotalNumber
+      return state.validation.validationCurrentNumber / state.validation.validationTotalNumber
     },
 
     getProfilesTable: state => {
@@ -264,15 +277,38 @@ export default new Vuex.Store({
     },
 
     getSettingForCompound: (state) => (parameter) => {
-      console.log(JSON.stringify(parameter))
-      console.log(JSON.stringify(state.compounds[parameter.compound].setting))
-      console.log(JSON.stringify(state.settings[state.compounds[parameter.compound].setting]))
-      console.log(JSON.stringify(state.settings[state.compounds[parameter.compound].setting][parameter.setting]))
       return state.settings[state.compounds[parameter.compound].setting][parameter.setting]
     },
 
-    checkIfCompoundHasCalibration: (state) => (parameter) => {
+    compoundHasCalibration: (state) => (parameter) => {
       return state.compounds[parameter.compound].hasCalibration
+    },
+
+    getAverageTimePerProfile: (state) => {
+      var totalTime = 0
+      var totalProfile = 0
+      state.validation.validationDescription.forEach((value) => {
+        totalTime += value.runningTime
+        totalProfile += value.testedProfile
+      })
+      return totalTime/totalProfile
+    },
+
+    getProfileToTest: (state) => {
+      var profileToTest = []
+      for (var [name, compound] of Object.entries(state.compounds) ) {
+        const modelToTest = state.settings[compound.setting].model_to_test
+        modelToTest.forEach((model) => {
+          var compoundSetting = JSON.parse(JSON.stringify(state.settings[compound.setting]))
+          compoundSetting.compound_name = name
+          compoundSetting.data = compound.data
+          compoundSetting.model_to_test = model
+          delete compoundSetting.appliesTo
+          profileToTest.push(compoundSetting)
+        })
+      }
+      console.log(profileToTest)
+      return profileToTest
     }
   }
 })

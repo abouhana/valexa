@@ -1,7 +1,7 @@
 <template>
     <v-data-table
             class="no-scroll"
-            :items="validationDescription"
+            :items="validation.validationDescription"
             :headers="headers"
             dense
             hide-default-footer
@@ -10,22 +10,41 @@
             <v-icon v-if="item.status === 'pass'" color="green">mdi-check</v-icon>
             <v-icon v-else color="red">mdi-alert</v-icon>
         </template>
+        <template v-slot:body.append="{body}">
+            <tr>
+                <td v-for="(header,i) in headers" :key="i">
+                    <div v-if="header.value === 'runningTime'">
+                        <strong>{{ tableText.average }}</strong>
+                    </div>
+                    <div v-if="header.value === 'averageTime'">
+                        {{ Math.round(getAverageTimePerProfile) }} ms
+                    </div>
+                    <div v-else>
+                    </div>
+                </td>
+            </tr>
+        </template>
     </v-data-table>
 </template>
 
 <script>
-    import { mapState } from 'vuex'
+    import { mapState, mapGetters } from 'vuex'
 
     export default {
         name: "ArticleStatusTable",
         computed: {
             ...mapState([
-                'validationDescription'
+                'validation'
+            ]),
+            ...mapGetters([
+               'getAverageTimePerProfile'
             ]),
             headers: function () {
                 return [
                     { text: this.tableText.article, value: 'name' },
                     { text: this.tableText.status, value: 'status' },
+                    { text: this.tableText.runningTime, value: 'runningTime' },
+                    { text: this.tableText.averageTime, value: 'averageTime' },
                 ]
             }
         },

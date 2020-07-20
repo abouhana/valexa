@@ -13,17 +13,23 @@
                     <v-icon v-text="item.icon"></v-icon>
                 </v-list-item-action>
                 <v-list-item-content>
-                    <v-list-item-title v-text="item.text"></v-list-item-title>
+                    <v-list-item-title v-text="item.text"/>
                 </v-list-item-content>
+                <v-list-item-icon v-if="item.to==='data'">
+                    <CompoundsBadge :text-item="item.text"/>
+                </v-list-item-icon>
             </v-list-item>
         </v-list-item-group>
     </v-list>
 </template>
 
 <script>
+    import { mapGetters } from 'vuex'
+    import CompoundsBadge from "./CompoundsBadge";
+
     export default {
         name: "LeftBar",
-
+        components: {CompoundsBadge},
         data () {
             return {
                 items: {
