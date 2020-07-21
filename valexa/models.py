@@ -142,12 +142,12 @@ class Model:
             self.rsquared = self.fit.rsquared
 
     def __get_model_fit(
-        self, serie: Optional[int] = None
+        self, series: Optional[int] = None
     ) -> sm.RegressionResultsWrapper:
-        if serie is None:
+        if series is None:
             calibration_data: pd.DataFrame = self.data.calibration_data
         else:
-            calibration_data: pd.DataFrame = self.data.get_serie(serie, "calibration")
+            calibration_data: pd.DataFrame = self.data.get_series(series, "calibration")
         return smf.wls(
             formula=self.formula,
             weights=dmatrix(self.weight, calibration_data),

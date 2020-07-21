@@ -5,6 +5,7 @@ import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const loadBalancer = require('electron-load-balancer')
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const cpus = require('os').cpus().length
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -89,13 +90,27 @@ if (isDevelopment) {
   }
 }
 
+var loadBalancerPath = {
+  'validate': {
+    url: 'valexa/interface/validate.html'
+  },
+  'get_params': {
+    url: 'valexa/interface/get_params.html'
+  }
+}
+
+for (var i=0; i<cpus; i++) {
+  loadBalancerPath['profiler' + i] = {
+    url: 'valexa/interface/profile.html',
+    extra: {
+      processNumber: i
+    }
+  }
+}
+
 loadBalancer.register(
     ipcMain,
-    {
-      'validate': 'valexa/interface/validate.html',
-      'test': 'valexa/interface/dev_profile.html',
-      'get_params': 'valexa/interface/get_params.html'
-    },
+    loadBalancerPath,
     { debug: true }
 )
 

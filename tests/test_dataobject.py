@@ -59,7 +59,7 @@ class TestDataObject:
                 [4, 4, 20, 2.62481794644455],
                 [4, 4, 20, 2.58657308272152],
             ],
-            columns=["Serie", "Level", "x", "y"],
+            columns=["Series", "Level", "x", "y"],
         )
 
     @pytest.fixture()
@@ -127,7 +127,7 @@ class TestDataObject:
                 [4, 5, 12.245, 1.63993745480924],
                 [4, 5, 12.245, 1.60365500992791],
             ],
-            columns=["Serie", "Level", "x", "y"],
+            columns=["Series", "Level", "x", "y"],
         )
 
     @pytest.fixture()
@@ -224,12 +224,12 @@ class TestDataObject:
         )
         assert test_object_with_calib.get_level(1, "") is None
 
-    def test_get_serie(self, test_object_with_calib):
-        assert isinstance(test_object_with_calib.get_serie(1), pd.DataFrame)
+    def test_get_series(self, test_object_with_calib):
+        assert isinstance(test_object_with_calib.get_series(1), pd.DataFrame)
         assert isinstance(
-            test_object_with_calib.get_serie(1, "calibration"), pd.DataFrame
+            test_object_with_calib.get_series(1, "calibration"), pd.DataFrame
         )
-        assert test_object_with_calib.get_serie(1, "") is None
+        assert test_object_with_calib.get_series(1, "") is None
 
     def test_data_x(self, test_object_with_calib, validation_data, calibration_data):
         assert test_object_with_calib.data_x().equals(validation_data["x"])

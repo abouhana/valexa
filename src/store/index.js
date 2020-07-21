@@ -20,6 +20,11 @@ export default new Vuex.Store({
       validationAccepted: true
     },
 
+    profiler: {
+      running: false,
+      worker: {}
+    },
+
     averageTimePerProfile: 0,
     loadBalancerProc: 0,
 
@@ -224,6 +229,14 @@ export default new Vuex.Store({
       state.compounds[parameter.compound].setting = parameter.setting
       state.settings[parameter.setting].appliesTo.push(parameter.compound)
       state.settings[currentSetting].appliesTo.splice(compoundIndex, 1)
+    },
+
+    setProfilerState (state, parameter) {
+      state.profiler.running = parameter.status
+    },
+
+    addProfilerWoker (state, parameter) {
+      Vue.set(state.profiler.worker, parameter.name, {status: 'sleep'})
     }
   },
 
@@ -307,8 +320,11 @@ export default new Vuex.Store({
           profileToTest.push(compoundSetting)
         })
       }
-      console.log(profileToTest)
       return profileToTest
+    },
+
+    getNumberOfProfiler: (state) => {
+      return Object.keys(state.profiler).length
     }
   }
 })

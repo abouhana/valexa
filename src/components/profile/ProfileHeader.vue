@@ -21,7 +21,7 @@
                 </v-row>
                 <v-row>
                     <v-col>
-                        {{ getProfileToTest }}
+                        <ProfileGenerator/>
                     </v-col>
                 </v-row>
             </v-card-text>
@@ -32,10 +32,12 @@
 
 <script>
     import { mapState,mapGetters,mapMutations } from 'vuex'
+    import ProfileGenerator from "./ProfileGenerator";
 
 
     export default {
         name: "SettingHeader",
+        components: {ProfileGenerator},
         props: {
             languageText: Object
         },

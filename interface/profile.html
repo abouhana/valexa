@@ -3,27 +3,35 @@
     const loadBalancer = require('electron-load-balancer');
     const { PythonShell } = require('python-shell')
     const path = require('path');
+    const querystring = require('querystring');
+    let query = querystring.parse(global.location.search);
+    let processNumber = JSON.parse(query['?processNumber'])
 
     let pyshell = new PythonShell('interface.py', {
         pythonPath: path.join(process.env["npm_config_prefix"], '\\python'),
         pythonOptions: ['-u'],
-        args: ['profile', JSON.stringify(json_dataset)]
+        args: ['test']
     } )
 
     loadBalancer.job(
         ipcRenderer,
-        'test',
+        'profiler' + processNumber,
         () => {
+            loadBalancer.onReceiveData(ipcRenderer, 'profiler' + processNumber, args => {
+                pyshell.send(JSON.stringify(args));
+            });
+
             pyshell.on('message', function(message) {
                 ipcRenderer.send("GEN_MESSAGE", message)
                 if (message === "EXIT") {
-                    loadBalancer.stop(ipcRenderer, 'test')
+                    loadBalancer.stop(ipcRenderer, 'profiler' + processNumber)
                 } else {
                     try {
                         const parsedJSON = JSON.parse(message)
                         switch (parsedJSON['type']) {
                             case 'PROFILE':
                                 ipcRenderer.send("PROFILE", {
+                                    profiler: 'profiler' + processNumber,
                                     data: parsedJSON['data']
                                 })
                                 break

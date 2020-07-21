@@ -14,6 +14,18 @@ def main(arguments):
         if arguments[1] == "profile":
             ouptut(**json.loads(arguments[2]))
 
+        if arguments[1] == "test":
+            while(True):
+                in_stream_data = input()
+                if in_stream_data == "EXIT":
+                    print('EXIT')
+                    exit(0)
+                parsed_stream_data = json.loads(in_stream_data)
+                print(JSON.dumps(**parsed_stream_data))
+                #ouptut(**parsed_stream_data)
+
+
+
         if arguments[1] == "get_params":
             get_params()
 

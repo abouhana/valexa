@@ -55,7 +55,7 @@ def dataset(
                     [3, 4, 28.5, 557258],
                     [3, 4, 28.5, 541355],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
             "Calibration": pd.DataFrame(
                 [
@@ -75,7 +75,7 @@ def dataset(
                     [2, 5, 27.6, 611523],
                     [3, 5, 27.6, 633748],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
         },
         "feinberg_nicotinamide": {
@@ -109,7 +109,7 @@ def dataset(
                     [3, 3, 4, 273.3],
                     [3, 3, 4, 269.1],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
             "Calibration": pd.DataFrame(
                 [
@@ -126,7 +126,7 @@ def dataset(
                     [3, 2, 4, 270.8],
                     [3, 2, 4, 271.0],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
         },
         "intern_test": {
@@ -154,7 +154,7 @@ def dataset(
                     [1, 6, 500, 1660],
                     [1, 7, 1000, 3298],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
             "Validation": pd.DataFrame(
                 [
@@ -219,7 +219,7 @@ def dataset(
                     [3, 4, 25, 101],
                     [3, 5, 100, 364],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
         },
         "feinberg_coli": {
@@ -292,7 +292,7 @@ def dataset(
                     [11, 3, 90, 118],
                     [11, 3, 74, 165],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             )
         },
         "sfstp": {
@@ -347,7 +347,7 @@ def dataset(
                     [3, 4, 838.6479, 2.2699],
                     [3, 4, 838.6479, 2.2546],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
             "Calibration": pd.DataFrame(
                 [
@@ -388,7 +388,7 @@ def dataset(
                     [3, 6, 964.8233, 2.4528],
                     [3, 6, 964.8233, 2.3147],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
         },
         "feinberg_uncertainty": {
@@ -422,7 +422,7 @@ def dataset(
                     [3, 3, 838.65, 2.2130],
                     [3, 3, 838.65, 2.2700],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
             "Calibration": pd.DataFrame(
                 [
@@ -457,7 +457,7 @@ def dataset(
                     [3, 5, 964.83, 2.4528],
                     [3, 5, 964.83, 2.3147],
                 ],
-                columns=["Serie", "Level", "x", "y"],
+                columns=["Series", "Level", "x", "y"],
             ),
         },
     }

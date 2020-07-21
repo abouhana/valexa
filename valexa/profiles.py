@@ -594,20 +594,20 @@ class ProfileLevel:
     @property
     def mean_square_model(self) -> float:
         mean_x_level = self.data["x_calc"].mean()
-        mean_x_level_serie = [
-            self.data[self.data["Series"] == serie]["x_calc"].mean()
-            for serie in self.data["Series"].unique()
+        mean_x_level_series = [
+            self.data[self.data["Series"] == series]["x_calc"].mean()
+            for series in self.data["Series"].unique()
         ]
-        number_item_in_serie = [
-            len(self.data[self.data["Series"] == serie])
-            for serie in self.data["Series"].unique()
+        number_item_in_series = [
+            len(self.data[self.data["Series"] == series])
+            for series in self.data["Series"].unique()
         ]
-        number_of_serie = self.data["Series"].nunique()
+        number_of_series = self.data["Series"].nunique()
 
-        return (1 / (number_of_serie - 1)) * np.sum(
+        return (1 / (number_of_series - 1)) * np.sum(
             np.multiply(
-                number_item_in_serie,
-                np.power(np.subtract(mean_x_level_serie, mean_x_level), 2),
+                number_item_in_series,
+                np.power(np.subtract(mean_x_level_series, mean_x_level), 2),
             )
         )
 
@@ -1205,9 +1205,9 @@ class Profile:
                 "uncertainty_pc"
             ]
 
-        for serie in self.model.validation_data["Series"].unique():
-            sub_df = calculated_scatter[calculated_scatter["Series"] == serie]
-            scatter[serie] = pd.DataFrame(
+        for series in self.model.validation_data["Series"].unique():
+            sub_df = calculated_scatter[calculated_scatter["Series"] == series]
+            scatter[series] = pd.DataFrame(
                 [sub_df["x"], sub_df["x_scatter"]], index=["x", "y"]
             ).transpose()
 
@@ -1293,7 +1293,7 @@ class Profile:
                 "forced_correction_value": roundsf(
                     self.forced_correction_value, sigfig
                 ),
-                "number_of_serie_validation": len(self.model.list_of_series()),
+                "number_of_series_validation": len(self.model.list_of_series()),
                 "number_of_levels_validation": len(self.model.list_of_levels()),
                 "list_of_series_validation": self.model.list_of_series().tolist(),
                 "list_of_levels_validation": self.model.list_of_levels().tolist(),
@@ -1436,7 +1436,7 @@ class Profile:
                 scatter["y"],
                 s=5,
                 c=np.random.rand(3,),
-                label="Serie " + str(key),
+                label="Series " + str(key),
             )
 
         ax.set_xlabel("Concentration")

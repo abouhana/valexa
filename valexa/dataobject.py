@@ -52,13 +52,13 @@ class DataObject:
         else:
             return None
 
-    def get_serie(
-        self, serie: int, serie_type: str = "validation"
+    def get_series(
+        self, series: int, series_type: str = "validation"
     ) -> Optional[pd.DataFrame]:
-        if serie_type == "validation":
-            return self.validation_data[self.validation_data["Series"] == serie]
-        elif serie_type == "calibration":
-            return self.calibration_data[self.calibration_data["Series"] == serie]
+        if series_type == "validation":
+            return self.validation_data[self.validation_data["Series"] == series]
+        elif series_type == "calibration":
+            return self.calibration_data[self.calibration_data["Series"] == series]
         else:
             return None
 
@@ -85,18 +85,18 @@ class DataObject:
         else:
             return None
 
-    def list_of_series(self, serie_type: str = "validation") -> Optional[np.ndarray]:
-        if serie_type == "validation":
+    def list_of_series(self, series_type: str = "validation") -> Optional[np.ndarray]:
+        if series_type == "validation":
             return self.validation_data["Series"].unique()
-        elif serie_type == "calibration":
+        elif series_type == "calibration":
             return self.calibration_data["Series"].unique()
         else:
             return None
 
-    def list_of_levels(self, serie_type: str = "validation") -> Optional[np.ndarray]:
-        if serie_type == "validation":
+    def list_of_levels(self, series_type: str = "validation") -> Optional[np.ndarray]:
+        if series_type == "validation":
             return self.validation_data["Level"].unique()
-        elif serie_type == "calibration":
+        elif series_type == "calibration":
             return self.calibration_data["Level"].unique()
         else:
             return None
