@@ -7,7 +7,7 @@
     let pyshell = new PythonShell('interface.py', {
         pythonPath: path.join(process.env["npm_config_prefix"], '\\python'),
         pythonOptions: ['-u'],
-        args: ['test', JSON.stringify(json_dataset)]
+        args: ['profile', JSON.stringify(json_dataset)]
     } )
 
     loadBalancer.job(

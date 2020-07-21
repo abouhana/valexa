@@ -56,9 +56,9 @@ class DataObject:
         self, serie: int, serie_type: str = "validation"
     ) -> Optional[pd.DataFrame]:
         if serie_type == "validation":
-            return self.validation_data[self.validation_data["Serie"] == serie]
+            return self.validation_data[self.validation_data["Series"] == serie]
         elif serie_type == "calibration":
-            return self.calibration_data[self.calibration_data["Serie"] == serie]
+            return self.calibration_data[self.calibration_data["Series"] == serie]
         else:
             return None
 
@@ -87,9 +87,9 @@ class DataObject:
 
     def list_of_series(self, serie_type: str = "validation") -> Optional[np.ndarray]:
         if serie_type == "validation":
-            return self.validation_data["Serie"].unique()
+            return self.validation_data["Series"].unique()
         elif serie_type == "calibration":
-            return self.calibration_data["Serie"].unique()
+            return self.calibration_data["Series"].unique()
         else:
             return None
 

@@ -168,7 +168,7 @@ class Model:
             if self.multiple_calibration:
                 root_value = self.__sanitize_roots(
                     solveset(
-                        self.root_function[validation_value[1]["Serie"]](x)
+                        self.root_function[validation_value[1]["Series"]](x)
                         - validation_value[1]["y"],
                         x,
                         S.Reals,

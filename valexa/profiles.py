@@ -196,6 +196,8 @@ class ProfileManager:
                     profile["Index"]
                 ].output_profile()
                 temp_profile_data["id"] = profile_number
+                temp_profile_data["compound_name"] = self.compound_name
+                temp_profile_data["quantity_units"] = self.quantity_units
                 output_dict[profile_number] = temp_profile_data
                 profile_number += 1
 
@@ -204,6 +206,8 @@ class ProfileManager:
                 for profile in profile_list:
                     temp_profile_data = profile.output_profile()
                     temp_profile_data["id"] = profile_number
+                    temp_profile_data["compound_name"] = self.compound_name
+                    temp_profile_data["quantity_units"] = self.quantity_units
                     output_dict[profile_number] = temp_profile_data
                     profile_number += 1
 
@@ -413,7 +417,7 @@ class ProfileLevel:
         self.intra_series_cv: Optional[float] = None
 
     def calculate(self, tolerance_limit: float, acceptance_limit: float) -> None:
-        self.nb_series = self.data["Serie"].nunique()
+        self.nb_series = self.data["Series"].nunique()
         self.nb_measures = len(self.data.index)
         self.nb_rep = self.nb_measures / self.nb_series
 
@@ -591,14 +595,14 @@ class ProfileLevel:
     def mean_square_model(self) -> float:
         mean_x_level = self.data["x_calc"].mean()
         mean_x_level_serie = [
-            self.data[self.data["Serie"] == serie]["x_calc"].mean()
-            for serie in self.data["Serie"].unique()
+            self.data[self.data["Series"] == serie]["x_calc"].mean()
+            for serie in self.data["Series"].unique()
         ]
         number_item_in_serie = [
-            len(self.data[self.data["Serie"] == serie])
-            for serie in self.data["Serie"].unique()
+            len(self.data[self.data["Series"] == serie])
+            for serie in self.data["Series"].unique()
         ]
-        number_of_serie = self.data["Serie"].nunique()
+        number_of_serie = self.data["Series"].nunique()
 
         return (1 / (number_of_serie - 1)) * np.sum(
             np.multiply(
@@ -609,58 +613,58 @@ class ProfileLevel:
 
     @property
     def mean_square_error(self) -> float:
-        mean_x_level_serie = [
-            self.data[self.data["Serie"] == serie]["x_calc"].mean()
-            for serie in self.data["Serie"].unique()
+        mean_x_level_series = [
+            self.data[self.data["Series"] == series]["x_calc"].mean()
+            for series in self.data["Series"].unique()
         ]
-        number_item_in_serie = [
-            len(self.data[self.data["Serie"] == serie])
-            for serie in self.data["Serie"].unique()
+        number_item_in_series = [
+            len(self.data[self.data["Series"] == series])
+            for series in self.data["Series"].unique()
         ]
-        number_of_serie = self.data["Serie"].nunique()
+        number_of_series = self.data["Series"].nunique()
         x_calc = [
-            self.data[self.data["Serie"] == serie]["x_calc"]
-            for serie in self.data["Serie"].unique()
+            self.data[self.data["Series"] == series]["x_calc"]
+            for series in self.data["Series"].unique()
         ]
 
-        return (1 / (np.sum(number_item_in_serie) - number_of_serie)) * np.sum(
+        return (1 / (np.sum(number_item_in_series) - number_of_series)) * np.sum(
             [
                 np.sum(
                     np.power(
                         np.subtract(
-                            x_calc[mean_x_level_serie.index(mean_serie)], mean_serie
+                            x_calc[mean_x_level_series.index(mean_series)], mean_series
                         ),
                         2,
                     )
                 )
-                for mean_serie in mean_x_level_serie
+                for mean_series in mean_x_level_series
             ]
         )
 
     @property
     def get_inter_series_var(self) -> float:
-        number_item_in_serie = [
-            len(self.data[self.data["Serie"] == serie])
-            for serie in self.data["Serie"].unique()
+        number_item_in_series = [
+            len(self.data[self.data["Series"] == series])
+            for series in self.data["Series"].unique()
         ]
         if self.mean_square_error < self.mean_square_model:
-            inter_serie_var = (
+            inter_series_var = (
                 self.mean_square_model - self.mean_square_error
-            ) / number_item_in_serie[0]
+            ) / number_item_in_series[0]
         else:
-            inter_serie_var = 0
+            inter_series_var = 0
 
-        return inter_serie_var
+        return inter_series_var
 
     @property
     def sum_of_square_residual(self) -> np.ndarray:
-        mean_x_level_serie = [
-            self.data[self.data["Serie"] == serie]["x_calc"].mean()
-            for serie in self.data["Serie"].unique()
+        mean_x_level_series = [
+            self.data[self.data["Series"] == series]["x_calc"].mean()
+            for series in self.data["Series"].unique()
         ]
         x_calc = [
-            self.data[self.data["Serie"] == serie]["x_calc"]
-            for serie in self.data["Serie"].unique()
+            self.data[self.data["Series"] == series]["x_calc"]
+            for series in self.data["Series"].unique()
         ]
 
         return np.sum(
@@ -668,31 +672,31 @@ class ProfileLevel:
                 np.sum(
                     np.power(
                         np.subtract(
-                            x_calc[mean_x_level_serie.index(mean_serie)], mean_serie
+                            x_calc[mean_x_level_series.index(mean_series)], mean_series
                         ),
                         2,
                     )
                 )
-                for mean_serie in mean_x_level_serie
+                for mean_series in mean_x_level_series
             ]
         )
 
     @property
     def sum_of_square_total(self) -> np.ndarray:
         mean_x_level = self.data["x_calc"].mean()
-        mean_x_level_serie = [
-            self.data[self.data["Serie"] == serie]["x_calc"].mean()
-            for serie in self.data["Serie"].unique()
+        mean_x_level_series = [
+            self.data[self.data["Series"] == series]["x_calc"].mean()
+            for series in self.data["Series"].unique()
         ]
-        number_item_in_serie = [
-            len(self.data[self.data["Serie"] == serie])
-            for serie in self.data["Serie"].unique()
+        number_item_in_series = [
+            len(self.data[self.data["Series"] == series])
+            for series in self.data["Series"].unique()
         ]
 
         return np.sum(
             np.multiply(
-                number_item_in_serie,
-                np.power(np.subtract(mean_x_level_serie, mean_x_level), 2),
+                number_item_in_series,
+                np.power(np.subtract(mean_x_level_series, mean_x_level), 2),
             )
         )
 
@@ -702,15 +706,15 @@ class ProfileLevel:
             repeatability_var = self.mean_square_error
         else:
             mean_x_level = self.data["x_calc"].mean()
-            number_item_in_serie = [
-                len(self.data[self.data["Serie"] == serie])
-                for serie in self.data["Serie"].unique()
+            number_item_in_series = [
+                len(self.data[self.data["Series"] == series])
+                for series in self.data["Series"].unique()
             ]
-            number_of_serie = self.data["Serie"].nunique()
+            number_of_series = self.data["Series"].nunique()
             x_calc = self.data["x_calc"]
 
             repeatability_var = (
-                1 / (number_item_in_serie[0] * number_of_serie - 1)
+                1 / (number_item_in_series[0] * number_of_series - 1)
             ) * np.sum(np.power(np.subtract(x_calc, mean_x_level), 2))
 
         return repeatability_var
@@ -1201,8 +1205,8 @@ class Profile:
                 "uncertainty_pc"
             ]
 
-        for serie in self.model.validation_data["Serie"].unique():
-            sub_df = calculated_scatter[calculated_scatter["Serie"] == serie]
+        for serie in self.model.validation_data["Series"].unique():
+            sub_df = calculated_scatter[calculated_scatter["Series"] == serie]
             scatter[serie] = pd.DataFrame(
                 [sub_df["x"], sub_df["x_scatter"]], index=["x", "y"]
             ).transpose()

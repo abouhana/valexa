@@ -13,9 +13,26 @@ def get_value_between(
 
 
 def format_json_to_data(data):
+    validation = pd.DataFrame(data['validation'])
+    ys = [col for col in validation.columns if col[0] == "y"]
+    validation_dataframe = pd.DataFrame()
+    for y in ys:
+        columns_name = {"series": "Series", "level": "Level", "x": "x", y: "y"}
+        temp_dataframe = validation[["series","level","x",y]].rename(columns=columns_name)
+        validation_dataframe = pd.concat([validation_dataframe, temp_dataframe], ignore_index=True)
+
+    if 'calibration' in data:
+        calibration = pd.DataFrame(data['calibration'])
+        ys = [col for col in calibration.columns if col[0] == "y"]
+        calibration_dataframe = pd.DataFrame()
+        for y in ys:
+            columns_name = {"series": "Series", "level": "Level", "x": "x", y: "y"}
+            temp_dataframe = validation[["series", "level", "x", y]].rename(columns=columns_name)
+            calibration_dataframe = pd.concat([calibration_dataframe, temp_dataframe], ignore_index=True)
+
     return {
-        "Validation": pd.DataFrame(data["Validation"]),
-        "Calibration": pd.DataFrame(data["Calibration"]),
+        "Validation": validation_dataframe,
+        "Calibration": calibration_dataframe,
     }
 
 
