@@ -21,8 +21,8 @@ def main(arguments):
                     print('EXIT')
                     exit(0)
                 parsed_stream_data = json.loads(in_stream_data)
-                print(JSON.dumps(**parsed_stream_data))
-                #ouptut(**parsed_stream_data)
+                #print(json.dumps(parsed_stream_data))
+                ouptut(**parsed_stream_data)
 
 
 

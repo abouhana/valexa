@@ -18,11 +18,11 @@
         'profiler' + processNumber,
         () => {
             loadBalancer.onReceiveData(ipcRenderer, 'profiler' + processNumber, args => {
-                pyshell.send(JSON.stringify(args));
+                pyshell.send(JSON.stringify(args.data));
             });
 
             pyshell.on('message', function(message) {
-                ipcRenderer.send("GEN_MESSAGE", message)
+                //ipcRenderer.send("GEN_MESSAGE", message)
                 if (message === "EXIT") {
                     loadBalancer.stop(ipcRenderer, 'profiler' + processNumber)
                 } else {

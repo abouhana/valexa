@@ -22,13 +22,14 @@ export default new Vuex.Store({
 
     profiler: {
       running: false,
-      worker: {}
+      worker: {},
+      listLocation: 0
     },
 
     averageTimePerProfile: 0,
     loadBalancerProc: 0,
 
-    listOfProfile: {},
+    listOfProfile: [],
     listOfProfileCompleted: true,
 
     stateLoading: {
@@ -49,7 +50,7 @@ export default new Vuex.Store({
     profileParams: {},
     profileGenerationParams: {},
 
-    modelParams: {}
+    modelParams: {},
   },
 
   mutations: {
@@ -99,7 +100,7 @@ export default new Vuex.Store({
     },
 
     makeProfileList (state, profilesData) {
-      Vue.set(state.listOfProfile, profilesData.id, profilesData)
+      state.listOfProfile.push(profilesData)
     },
 
     setStateLoading (state, part) {
@@ -232,11 +233,15 @@ export default new Vuex.Store({
     },
 
     setProfilerState (state, parameter) {
-      state.profiler.running = parameter.status
+      state.profiler[parameter.parameter] = parameter.status
     },
 
-    addProfilerWoker (state, parameter) {
-      Vue.set(state.profiler.worker, parameter.name, {status: 'sleep'})
+    addProfilerWorker (state, parameter) {
+      Vue.set(state.profiler.worker, parameter.name, {status: 'idle'})
+    },
+
+    setProfilerWorkerState (state, parameter) {
+      state.profiler.worker[parameter.worker].status = parameter.status
     }
   },
 
@@ -325,6 +330,11 @@ export default new Vuex.Store({
 
     getNumberOfProfiler: (state) => {
       return Object.keys(state.profiler).length
-    }
+    },
+
+    getFreeWorker: (state) => {
+      return Object.keys(state.profiler.worker).filter(key => state.profiler.worker[key]==="idle")
+    },
+
   }
 })

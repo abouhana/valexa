@@ -19,7 +19,7 @@
     "chartjs-chart-error-bars": "^1.2.1",
     "chartjs-plugin-error-bars": "^1.2.2",
     "core-js": "^3.6.5",
-    "electron-load-balancer": "^3.0.0",
+    "electron-load-balancer": "HtheChemist/electron-load-balancer",
     "python-shell": "^2.0.1",
     "vue": "^2.6.11",
     "vue-chartjs": "^3.5.0",
