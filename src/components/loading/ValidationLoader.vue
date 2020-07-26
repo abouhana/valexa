@@ -77,7 +77,6 @@
 
         mounted() {
             if (this.loadingStatus.validation !== 'done') {
-                var profileStartTimeMultiple, profileEndTimeMultiple, profileStartTimeSingle, profileEndTimeSingle
                 this.setStateLoading({name: 'validation', status: true})
 
                 ipcRenderer.on("VALID_INFO", (event, args) => {

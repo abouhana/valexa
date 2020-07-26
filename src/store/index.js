@@ -46,6 +46,7 @@ export default new Vuex.Store({
     settings: {
       default: { appliesTo: [] }
     },
+    profileToTest: [],
 
     profileParams: {},
     profileGenerationParams: {},
@@ -100,6 +101,7 @@ export default new Vuex.Store({
     },
 
     makeProfileList (state, profilesData) {
+      profilesData.id = state.listOfProfile.length
       state.listOfProfile.push(profilesData)
     },
 
@@ -236,13 +238,35 @@ export default new Vuex.Store({
       state.profiler[parameter.parameter] = parameter.status
     },
 
+    increaseProfilerListLocation (state) {
+      console.log(state.profiler.listLocation)
+      state.profiler.listLocation++
+    },
+
     addProfilerWorker (state, parameter) {
       Vue.set(state.profiler.worker, parameter.name, {status: 'idle'})
     },
 
     setProfilerWorkerState (state, parameter) {
       state.profiler.worker[parameter.worker].status = parameter.status
-    }
+    },
+
+    setProfileToTest (state) {
+      var profileToTest = []
+      for (var [name, compound] of Object.entries(state.compounds) ) {
+        const modelToTest = state.settings[compound.setting].model_to_test
+        modelToTest.forEach((model) => {
+          var compoundSetting = JSON.parse(JSON.stringify(state.settings[compound.setting]))
+          compoundSetting.compound_name = name
+          compoundSetting.data = compound.data
+          compoundSetting.model_to_test = model
+          compoundSetting.status = ""
+          delete compoundSetting.appliesTo
+          profileToTest.push(compoundSetting)
+        })
+      }
+      state.profileToTest = profileToTest
+    },
   },
 
   getters: {
@@ -313,28 +337,21 @@ export default new Vuex.Store({
     },
 
     getProfileToTest: (state) => {
-      var profileToTest = []
-      for (var [name, compound] of Object.entries(state.compounds) ) {
-        const modelToTest = state.settings[compound.setting].model_to_test
-        modelToTest.forEach((model) => {
-          var compoundSetting = JSON.parse(JSON.stringify(state.settings[compound.setting]))
-          compoundSetting.compound_name = name
-          compoundSetting.data = compound.data
-          compoundSetting.model_to_test = model
-          delete compoundSetting.appliesTo
-          profileToTest.push(compoundSetting)
-        })
-      }
-      return profileToTest
+      return state.profileToTest.filter(profile => profile.status!=="done")
     },
 
     getNumberOfProfiler: (state) => {
-      return Object.keys(state.profiler).length
+       console.log(state.profiler)
+      return Object.keys(state.profiler.worker).length
     },
 
     getFreeWorker: (state) => {
       return Object.keys(state.profiler.worker).filter(key => state.profiler.worker[key]==="idle")
     },
+
+    getListLocation: (state) => {
+      return state.profiler.listLocation
+    }
 
   }
 })

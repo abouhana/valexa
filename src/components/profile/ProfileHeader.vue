@@ -11,7 +11,7 @@
                 </v-row>
                 <v-row>
                     <v-col>
-                        {{ languageText.numberOfProfile }} {{ estimatedNumberOfProfile }}
+                        {{ languageText.numberOfProfile }} {{getListLocation}}/{{ estimatedNumberOfProfile }}
                     </v-col>
                 </v-row>
                 <v-row>
@@ -21,7 +21,6 @@
                 </v-row>
                 <v-row>
                     <v-col>
-                        <ProfileGenerator/>
                     </v-col>
                 </v-row>
             </v-card-text>
@@ -48,7 +47,8 @@
                 'compoundHasCalibration',
                 'getTableConfig',
                 'getAverageTimePerProfile',
-                'getProfileToTest'
+                'getProfileToTest',
+                'getListLocation'
             ]),
             estimatedNumberOfProfile: function () {
                 var numberOfProfile = 0

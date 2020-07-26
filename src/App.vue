@@ -29,6 +29,7 @@
       >
         <v-row align="start" justify="center">
           <v-col>
+            <ProfileGenerator/>
             <router-view/>
           </v-col>
         </v-row>
@@ -51,8 +52,10 @@
   const ipcRenderer = electron.ipcRenderer
   const loadBalancer = require('electron-load-balancer')
   import { mapMutations, mapGetters, mapState } from 'vuex'
+  import ProfileGenerator from "./components/profile/ProfileGenerator";
   export default {
     components: {
+      ProfileGenerator,
       LeftBar
     },
     props: {

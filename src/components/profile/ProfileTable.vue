@@ -67,22 +67,7 @@
             ]),
         },
         mounted() {
-            if (!this.listOfProfileCompleted) {
 
-                ipcRenderer.on('PROFILE', (events, args) => {
-                    if (args.data === "START") {
-                        this.setStateLoading({name: 'profiles', status: true})
-                    } else if (args.data === "STOP") {
-                        this.setStateLoading({name: 'profiles', status: true})
-                        this.finishListOfProfile()
-                    } else {
-                        this.makeProfileList(args.data)
-                    }
-
-                })
-
-                loadBalancer.start(ipcRenderer, 'test')
-            }
         },
         data () {
             return {
