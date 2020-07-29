@@ -18,18 +18,21 @@
         <v-card-text>
             <v-data-table
                 :headers="headers"
-                :items="getProfilesTable"
+                :items="getProfilesTable({compoundName: compoundName})"
                 :expanded.sync="expanded"
                 dense
                 show-expand
                 :loading="stateLoading.profile"
             >
                 <template v-slot:expanded-item="{ headers, item }">
-                    <td :colspan="headers.length"><AccuracyProfile
-                            :profile-id="item.id"
-                            x-axe-string="test"
-                            y-axe-string="test2"
-                    ></AccuracyProfile></td>
+                    <td :colspan="headers.length">
+                        <AccuracyProfile
+                              :profile-id="item.id"
+                              :compound-name="compoundName"
+                              x-axe-string="test"
+                              y-axe-string="test2"
+                        ></AccuracyProfile>
+                    </td>
                 </template>
             </v-data-table>
         </v-card-text>
@@ -52,7 +55,6 @@
         },
         methods: {
             ...mapMutations([
-                'makeProfileList',
                 'setStateLoading',
                 'finishListOfProfile'
             ])
@@ -65,6 +67,9 @@
             ...mapGetters([
                 'getProfilesTable'
             ]),
+        },
+        props: {
+            compoundName: String
         },
         mounted() {
 

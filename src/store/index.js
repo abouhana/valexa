@@ -24,13 +24,14 @@ export default new Vuex.Store({
       maxWorkers: 1,
       running: false,
       worker: {},
-      listLocation: 0
+      listLocation: 0,
+      status: null
     },
 
     averageTimePerProfile: 0,
     loadBalancerProc: 0,
 
-    listOfProfile: [],
+    listOfProfile: {},
     listOfProfileCompleted: true,
 
     stateLoading: {
@@ -102,8 +103,12 @@ export default new Vuex.Store({
     },
 
     makeProfileList (state, profilesData) {
-      profilesData.id = state.listOfProfile.length
-      state.listOfProfile.push(profilesData)
+      var compounName = profilesData.compound_name
+      if (typeof state.listOfProfile[compounName] === 'undefined') {
+        Vue.set(state.listOfProfile, compounName, [])
+      }
+      profilesData.id = state.listOfProfile[compounName].length
+      state.listOfProfile[compounName].push(profilesData)
     },
 
     setStateLoading (state, part) {
@@ -261,7 +266,7 @@ export default new Vuex.Store({
           compoundSetting.compound_name = name
           compoundSetting.data = compound.data
           compoundSetting.model_to_test = model
-          compoundSetting.stats = ""
+          compoundSetting.status = ""
           delete compoundSetting.appliesTo
           profileToTest.push(compoundSetting)
         })
@@ -287,12 +292,12 @@ export default new Vuex.Store({
       return state.validation.validationCurrentNumber / state.validation.validationTotalNumber
     },
 
-    getProfilesTable: state => {
-      return Object.values(state.listOfProfile)
+    getProfilesTable: state => parameter => {
+      return Object.values(state.listOfProfile[parameter.compoundName])
     },
 
-    getProfile: (state) => (id) => {
-      return state.listOfProfile[id]
+    getProfile: (state) => (parameter) => {
+      return state.listOfProfile[parameter.compoundName][parameter.id]
     },
 
     getEnteredData: (state) => (parameter) => {
@@ -353,17 +358,20 @@ export default new Vuex.Store({
       return state.profileToTest.filter(profile => profile.status!=="done")
     },
 
-    getNumberOfProfiler: (state) => {
-       console.log(state.profiler)
+    getNumberOfWorker: (state) => {
       return Object.keys(state.profiler.worker).length
     },
 
-    getFreeWorker: (state) => {
-      return Object.keys(state.profiler.worker).filter(key => state.profiler.worker[key]==="idle")
+    getWorkersByStatus: (state) => (parameter) => {
+      return Object.keys(state.profiler.worker).filter(key => state.profiler.worker[key].status===parameter.status)
     },
 
     getListLocation: (state) => {
       return state.profiler.listLocation
+    },
+
+    getListOfCompoundInProfileList: state => {
+      return Object.keys(state.listOfProfile)
     }
 
   }

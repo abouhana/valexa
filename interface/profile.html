@@ -39,7 +39,9 @@
                                 break
                         }
                     } catch (e) {
+                        ipcRenderer.send("PROFILER_WORKER_ERROR", profilerName)
                         console.log(e)
+                        console.log(message)
                     }
                 }
             })
@@ -48,6 +50,6 @@
             pyshell.terminate()
         });
 
-        ipcRenderer.send('INIT_STATUS', profilerName)
+        ipcRenderer.send('PROFILER_WORKER_INIT', profilerName)
 
 </script>

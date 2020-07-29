@@ -29,7 +29,7 @@
       >
         <v-row align="start" justify="center">
           <v-col>
-            <ProfileGenerator/>
+            <IPCListener/>
             <router-view/>
           </v-col>
         </v-row>
@@ -52,10 +52,11 @@
   const ipcRenderer = electron.ipcRenderer
   const loadBalancer = require('electron-load-balancer')
   import { mapMutations, mapGetters, mapState } from 'vuex'
-  import ProfileGenerator from "./components/profile/ProfileGenerator";
+  import IPCListener from "./components/IPCListener"
+
   export default {
     components: {
-      ProfileGenerator,
+      IPCListener,
       LeftBar
     },
     props: {

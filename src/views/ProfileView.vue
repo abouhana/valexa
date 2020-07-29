@@ -93,13 +93,13 @@
                     <v-col>
                         <v-card shaped flat>
                             <v-expansion-panels light multiple accordion>
+                              <ProfileCard v-for="(key) in getListOfCompoundInProfileList" :compound-name="key" :key="key"/>
                             </v-expansion-panels>
                         </v-card>
                     </v-col>
                 </v-row>
             </v-card-text>
         </v-card>
-        <ProfileTable/>
 
     </div>
 </template>
@@ -108,15 +108,23 @@
     import ProfileTable from "../components/profile/ProfileTable";
     import SettingHeader from "../components/profile/ProfileHeader";
     import ThreadManager from "../components/profile/ThreadManager";
+    import ProfileCard from "../components/profile/ProfileCard";
+    import { mapGetters } from 'vuex'
 
     export default {
 
         name: "profile-view",
         components: {
+          ProfileCard,
             ThreadManager,
             SettingHeader,
             ProfileTable,
         },
+        computed: {
+          ...mapGetters([
+              'getListOfCompoundInProfileList'
+          ])
+        }
     }
 </script>
 

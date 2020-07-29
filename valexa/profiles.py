@@ -1043,10 +1043,10 @@ class Profile:
             switch: int = intersects_data.at[index, "upper_intersect"]
 
             point_left: pd.Series = level_tolerance[
-                level_tolerance["x_coord"] < intersects_data.at[index, "x_value"]
+                level_tolerance["x_coord"] <= intersects_data.at[index, "x_value"]
             ].iloc[-1]
             point_right: pd.Series = level_tolerance[
-                level_tolerance["x_coord"] > intersects_data.at[index, "x_value"]
+                level_tolerance["x_coord"] >= intersects_data.at[index, "x_value"]
             ].iloc[0]
 
             cur_x_coord: float = intersects_data.at[index, "x_value"]

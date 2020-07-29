@@ -4,7 +4,6 @@
             <v-card class="secondary" shaped elevation="2">
                 <v-card-title>{{ languageText.title }}</v-card-title>
                 <v-subheader>Number of thread</v-subheader>
-
                 <v-card-text>
                     <v-slider
                         :value="profiler.maxWorkers"
@@ -13,16 +12,16 @@
                         ticks
                         thumb-label="always"
                         @change="updateMaxWorkers"
+                        dense
                     ></v-slider>
-                    <v-btn
-                        @click="startThread"
-                    >
-                        Initialize
-                    </v-btn>
-                    <v-data-table
-                            :items="items"
-                            :headers="headers"
-                    />
+                    <v-card class="background" shaped>
+                        <v-card-text>
+                            <v-data-table
+                                    :items="items"
+                                    :headers="headers"
+                            />
+                        </v-card-text>
+                    </v-card>
                 </v-card-text>
             </v-card>
         </v-col>
@@ -57,7 +56,6 @@
                         workingOn: value.workingOn
                     })
                 }
-                console.log(itemArray)
                 return itemArray
             },
             maxCpu: () => (cpus)
@@ -68,14 +66,6 @@
                 'addProfilerWorker',
                 'setMaxWorkers'
             ]),
-            startThread: function() {
-                if (this.getNumberOfProfiler === 0 && !this.profiler.running) {
-                    for (var j=0; j<this.profiler.maxWorkers; j++ ) {
-                        loadBalancer.start(ipcRenderer, 'profiler' + j)
-                        this.addProfilerWorker({name: 'profiler' + j})
-                    }
-                }
-            },
             updateMaxWorkers: function(ref) {
                 this.setMaxWorkers({max: ref})
             }

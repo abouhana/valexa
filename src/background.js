@@ -130,6 +130,10 @@ ipcMain.on('PARAMS_LIST', (events, args) => {
   win.webContents.send('PARAMS_LIST', args)
 })
 
-ipcMain.on('INIT_STATUS', (events, args) => {
-  win.webContents.send('INIT_STATUS', args)
+ipcMain.on('PROFILER_WORKER_INIT', (events, args) => {
+  win.webContents.send('PROFILER_WORKER_INIT', args)
+})
+
+ipcMain.on('PROFILER_WORKER_ERROR', (events, args) => {
+  win.webContents.send('PROFILER_WORKER_ERROR', args)
 })

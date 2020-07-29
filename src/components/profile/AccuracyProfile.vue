@@ -38,7 +38,8 @@
             xAxeString: String,
             yAxeString: String,
             profileId: Number,
-            absoluteAcceptance: Boolean
+            absoluteAcceptance: Boolean,
+            compoundName: String
         },
 
         computed: {
@@ -48,7 +49,7 @@
             ]),
 
             profileData: function () {
-                return this.getProfile(this.profileId)
+                return this.getProfile({id: this.profileId, compoundName: this.compoundName})
             },
 
             accuracyProfileData: function () {
@@ -172,11 +173,11 @@
 
                 this.profileData["model_info"]["list_of_series_validation"].forEach(value => {
                     scatterPoints[value] = []
-                    labels.push("Serie " + value)
+                    labels.push("Series " + value)
                 })
 
                 this.profileData["validation_data"].forEach( (dataPoint) => {
-                    scatterPoints[dataPoint["Serie"]].push({
+                    scatterPoints[dataPoint["Series"]].push({
                         x: dataPoint["x"],
                         y: dataPoint["x_calc"]
                     })
@@ -184,7 +185,7 @@
 
                 if (hasCorrection) {
                     for (const dataPoint in Object.values(this.profileData["validation_data"])){
-                        scatterPoints[dataPoint["Serie"]].push({
+                        scatterPoints[dataPoint["Series"]].push({
                             x: dataPoint["x"],
                             y: dataPoint["x_raw"]
                         })
@@ -197,7 +198,7 @@
                 scatterPoints.forEach(function (dataPoint, label){
                     dataObject["datasets"].push(
                         {
-                            label: "Serie " + label,
+                            label: "Series " + label,
                             fill: false,
                             borderColor: colorArray[label],
                             showLine: false,

@@ -1,14 +1,14 @@
 <template>
     <v-expansion-panel light flat>
         <v-expansion-panel-header>
-            {{compoundName}}
+            {{compoundName}} - {{getProfilesTable({compoundName: compoundName}).length}} profiles
         </v-expansion-panel-header>
         <v-expansion-panel-content justify="center">
             <v-card shaped elevation="2">
                 <v-card-text>
                     <v-row>
                         <v-col>
-                            <ProfileTable/>
+                            <ProfileTable :compound-name="compoundName"/>
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -18,8 +18,22 @@
 </template>
 
 <script>
+    import ProfileTable from "./ProfileTable";
+    import {mapGetters} from 'vuex'
+
     export default {
-        name: "ProfileCard"
+        name: "ProfileCard",
+        components:{
+          ProfileTable
+        },
+        props: {
+          compoundName: String
+        },
+        computed: {
+          ...mapGetters([
+              'getProfilesTable'
+          ])
+        }
     }
 </script>
 
