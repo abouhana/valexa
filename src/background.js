@@ -129,3 +129,7 @@ ipcMain.on('PROFILE', (events, args) => {
 ipcMain.on('PARAMS_LIST', (events, args) => {
   win.webContents.send('PARAMS_LIST', args)
 })
+
+ipcMain.on('INIT_STATUS', (events, args) => {
+  win.webContents.send('INIT_STATUS', args)
+})

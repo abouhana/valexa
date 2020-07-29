@@ -17,7 +17,6 @@
             pyshell.on('message', function(message) {
                 ipcRenderer.send("GEN_MESSAGE", message)
                 if (message === "EXIT") {
-                    console.log("stop")
                     loadBalancer.stop(ipcRenderer, 'validate')
                 } else {
                     try {

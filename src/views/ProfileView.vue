@@ -7,6 +7,9 @@
                 "numberOfProfile": "Estimated number of profile to be generated",
                 "estimatedTime": "Estimated time to run in seconds: "
             },
+            "thread": {
+                "title": "Thread Status"
+            },
             "card": {
                 "settings" : "Settings",
                 "enterSettings": "Add settings",
@@ -44,6 +47,9 @@
                 "numberOfProfile": "Estimated number of profile to be generated",
                 "estimatedTime": "Estimated time to run in seconds: "
             },
+            "thread": {
+                "title": "Thread Status"
+            },
             "card": {
                 "settings" : "Compound",
                 "entersettings": "Add a compound to continue",
@@ -80,13 +86,13 @@
 <template>
     <div>
         <SettingHeader :language-text="$t('header')"/>
+        <ThreadManager :language-text="$t('thread')"/>
         <v-card class="secondary" shaped elevation="2">
             <v-card-text>
                 <v-row>
                     <v-col>
                         <v-card shaped flat>
                             <v-expansion-panels light multiple accordion>
-
                             </v-expansion-panels>
                         </v-card>
                     </v-col>
@@ -94,17 +100,20 @@
             </v-card-text>
         </v-card>
         <ProfileTable/>
+
     </div>
 </template>
 
 <script>
     import ProfileTable from "../components/profile/ProfileTable";
     import SettingHeader from "../components/profile/ProfileHeader";
+    import ThreadManager from "../components/profile/ThreadManager";
 
     export default {
 
         name: "profile-view",
         components: {
+            ThreadManager,
             SettingHeader,
             ProfileTable,
         },

@@ -1,7 +1,7 @@
 <template>
     <div>
         <v-btn
-            @click="generateProfile"
+            @click="profilerManager"
         >
             Gen
         </v-btn>
@@ -23,7 +23,6 @@
     const electron = require('electron')
     const ipcRenderer = electron.ipcRenderer
     const loadBalancer = require('electron-load-balancer')
-    const cpus = require('os').cpus().length;
 
     export default {
         name: "ProfileGenerator",
@@ -44,65 +43,60 @@
                 'makeProfileList',
                 'addProfilerWorker',
                 'increaseProfilerListLocation',
-                'setProfileToTest'
+                'setProfileToTest',
+                'setProfileStatusDone',
+                'destroyWorker'
             ]),
             logProfileToTest: function () {
                 this.setProfileToTest()
                 console.log(this.getProfileToTest)
             },
             profilerManager: function () {
-                console.log(this.getNumberOfProfiler)
+
+                console.log('Number of profiler: ' + this.getNumberOfProfiler)
+                console.log('Number of profile to test: ' + this.getProfileToTest.length)
+
                 for (var i=0; i<this.getNumberOfProfiler;i++) {
                     if (i<this.getProfileToTest.length) {
-                        console.log(this.profiler.listLocation)
-                        loadBalancer.sendData(ipcRenderer, 'profiler' + i, {
-                            data: this.getProfileToTest[i]
-                        });
-                        this.setProfilerWorkerState({worker: 'profiler' + i, status: 'running'})
-                        console.log('Starting worker profiler' + i)
-                        this.increaseProfilerListLocation()
+                        this.generateProfile('profiler' + i, i)
                     }
                 }
                 this.setProfilerState({parameter: 'running', status: true})
             },
             closeAll: function () {
-                for (var i=0; i<cpus; i++){
-                    loadBalancer.sendData(ipcRenderer, 'profiler' + i, {
-                        data: 'EXIT'
-                    });
+                for (var i=0; i<this.getNumberOfProfiler; i++){
+                    loadBalancer.stop(ipcRenderer, 'profiler' + i);
+                    this.destroyWorker({name: 'profiler' + i})
                 }
             },
             generateProfile: function (worker, profileNumber) {
                 loadBalancer.sendData(ipcRenderer, worker, {
                     data: this.getProfileToTest[profileNumber]
                 });
-                this.setProfilerWorkerState({worker: worker, status: 'running'})
+                this.setProfilerWorkerState({worker: worker, status: 'running', workingOn: profileNumber})
                 this.increaseProfilerListLocation()
-            }
+            },
+
         },
         mounted() {
-            //if (this.getNumberOfProfiler === 0 && !this.profiler.running) {
-            //    for (var i=0; i<4; i++ ) {
-            //        loadBalancer.start(ipcRenderer, 'profiler' + i)
-            //        console.log('profiler' + i + " loaded")
-            //        this.addProfilerWorker({name: 'profiler' + i})
-            //    }
-            //}
+            ipcRenderer.on('INIT_STATUS', (events, args) => {
+                this.setProfilerWorkerState({worker: args, status: 'idle', workinOn: null})
+            })
 
             ipcRenderer.on('PROFILE', (events, args) => {
                 if (args.data === "STOP") {
-                    this.setProfilerWorkerState({worker: args.profiler, status: 'idle'})
-                    console.log('Stopping worker ' + args.profiler)
+                    this.setProfileStatusDone({id: this.profiler.worker[args.profiler].workingOn})
+                    this.setProfilerWorkerState({worker: args.profiler, status: 'idle', workingOn: ''})
                     if (this.profiler.listLocation<this.getProfileToTest.length) {
-                        this.increaseProfilerListLocation()
-                        console.log(this.profiler.listLocation)
-                        loadBalancer.sendData(ipcRenderer, args.profiler, {
-                            data: this.getProfileToTest[this.profiler.listLocation]
-                        });
-                        this.setProfilerWorkerState({worker: args.profiler, status: 'running'})
-                        console.log('Starting worker ' + args.profiler)
+                        this.generateProfile(args.profiler, this.profiler.listLocation)
                     } else {
-                        console.log('Done')
+                        if (this.getFreeWorker.length === 0) {
+                            this.setProfilerState({parameter: 'running', status: false})
+                            loadBalancer.sendData(ipcRenderer, args.profiler, {
+                                data: 'EXIT'
+                            });
+                            this.destroyWorker({name: args.profiler})
+                        }
                     }
                 } else if (args.data !== 'START') {
                     this.makeProfileList(args.data)

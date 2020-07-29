@@ -17,11 +17,9 @@ def main(arguments):
         if arguments[1] == "test":
             while(True):
                 in_stream_data = input()
-                if in_stream_data == "EXIT":
-                    print('EXIT')
-                    exit(0)
                 parsed_stream_data = json.loads(in_stream_data)
-                #print(json.dumps(parsed_stream_data))
+                if parsed_stream_data == "EXIT":
+                    break
                 ouptut(**parsed_stream_data)
 
 

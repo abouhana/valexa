@@ -21,6 +21,7 @@ export default new Vuex.Store({
     },
 
     profiler: {
+      maxWorkers: 1,
       running: false,
       worker: {},
       listLocation: 0
@@ -239,16 +240,16 @@ export default new Vuex.Store({
     },
 
     increaseProfilerListLocation (state) {
-      console.log(state.profiler.listLocation)
       state.profiler.listLocation++
     },
 
     addProfilerWorker (state, parameter) {
-      Vue.set(state.profiler.worker, parameter.name, {status: 'idle'})
+      Vue.set(state.profiler.worker, parameter.name, {status: null, workingOn: null})
     },
 
     setProfilerWorkerState (state, parameter) {
       state.profiler.worker[parameter.worker].status = parameter.status
+      state.profiler.worker[parameter.worker].workingOn = parameter.workingOn
     },
 
     setProfileToTest (state) {
@@ -260,13 +261,25 @@ export default new Vuex.Store({
           compoundSetting.compound_name = name
           compoundSetting.data = compound.data
           compoundSetting.model_to_test = model
-          compoundSetting.status = ""
+          compoundSetting.stats = ""
           delete compoundSetting.appliesTo
           profileToTest.push(compoundSetting)
         })
       }
       state.profileToTest = profileToTest
     },
+
+    setProfileStatusDone (state, parameter) {
+      state.profileToTest[parameter.id].status = "done"
+    },
+
+    destroyWorker (state, parameter) {
+      Vue.delete(state.profiler.worker, parameter.name)
+    },
+
+    setMaxWorkers (state, parameter) {
+      state.profiler.maxWorkers = parameter.max
+    }
   },
 
   getters: {

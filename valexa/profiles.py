@@ -40,6 +40,7 @@ class ProfileManager:
         correction_round_to: int = 2,
         optimizer_parameter: Optional[OptimizerParams] = None,
         significant_figure: int = 4,
+        **_
     ):
         """
         Init ProfileManager with the necessary dataset

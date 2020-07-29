@@ -1,30 +1,26 @@
 <template>
     <v-row>
         <v-col>
-        <v-card class="secondary" shaped elevation="2">
-            <v-card-title>{{ languageText.title }}</v-card-title>
-            <v-card-text>
-                <v-row>
-                    <v-col>
-                        {{ languageText.description }}
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <v-col>
-                        {{ languageText.numberOfProfile }} {{getListLocation}}/{{ estimatedNumberOfProfile }}
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <v-col>
-                        {{ languageText.estimatedTime }} {{ estimatedTime }}
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <v-col>
-                    </v-col>
-                </v-row>
-            </v-card-text>
-        </v-card>
+            <v-card class="secondary" shaped elevation="2">
+                <v-card-title>{{ languageText.title }}</v-card-title>
+                <v-card-text>
+                    <v-row>
+                        <v-col>
+                            {{ languageText.description }}
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-col>
+                            {{ languageText.numberOfProfile }} {{getListLocation}}/{{ estimatedNumberOfProfile }}
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-col>
+                            {{ languageText.estimatedTime }} {{ estimatedTime }}
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+            </v-card>
         </v-col>
     </v-row>
 </template>
@@ -32,11 +28,12 @@
 <script>
     import { mapState,mapGetters,mapMutations } from 'vuex'
     import ProfileGenerator from "./ProfileGenerator";
+    import ThreadManager from "./ThreadManager";
 
 
     export default {
         name: "SettingHeader",
-        components: {ProfileGenerator},
+        components: {ThreadManager, ProfileGenerator},
         props: {
             languageText: Object
         },

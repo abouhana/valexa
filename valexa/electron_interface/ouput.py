@@ -14,5 +14,5 @@ def ouptut(**config):
 
     profiles = profiles.output_profiles()
     for profile in profiles.values():
-        print(json.dumps({"type": "PROFILE", "data": profile}))
+        print(json.dumps({"type": "PROFILE", "data": profile}).replace(": NaN,", ': "null",'))
     print(json.dumps({"type": "PROFILE", "data": "STOP"}))

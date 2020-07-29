@@ -6,6 +6,7 @@
     const querystring = require('querystring');
     let query = querystring.parse(global.location.search);
     let processNumber = JSON.parse(query['?processNumber'])
+    let profilerName = 'profiler' + processNumber
 
     let pyshell = new PythonShell('interface.py', {
         pythonPath: path.join(process.env["npm_config_prefix"], '\\python'),
@@ -13,25 +14,26 @@
         args: ['test']
     } )
 
+
     loadBalancer.job(
         ipcRenderer,
-        'profiler' + processNumber,
+        profilerName,
         () => {
-            loadBalancer.onReceiveData(ipcRenderer, 'profiler' + processNumber, args => {
+            loadBalancer.onReceiveData(ipcRenderer, profilerName, args => {
                 pyshell.send(JSON.stringify(args.data));
             });
 
             pyshell.on('message', function(message) {
-                //ipcRenderer.send("GEN_MESSAGE", message)
+                ipcRenderer.send("GEN_MESSAGE", message)
                 if (message === "EXIT") {
-                    loadBalancer.stop(ipcRenderer, 'profiler' + processNumber)
+                    loadBalancer.stop(ipcRenderer, profilerName)
                 } else {
                     try {
                         const parsedJSON = JSON.parse(message)
                         switch (parsedJSON['type']) {
                             case 'PROFILE':
                                 ipcRenderer.send("PROFILE", {
-                                    profiler: 'profiler' + processNumber,
+                                    profiler: profilerName,
                                     data: parsedJSON['data']
                                 })
                                 break
@@ -45,5 +47,7 @@
         () => {
             pyshell.terminate()
         });
+
+        ipcRenderer.send('INIT_STATUS', profilerName)
 
 </script>
