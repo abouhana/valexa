@@ -27,7 +27,7 @@ def format_json_to_data(data):
         calibration_dataframe = pd.DataFrame()
         for y in ys:
             columns_name = {"series": "Series", "level": "Level", "x": "x", y: "y"}
-            temp_dataframe = validation[["series", "level", "x", y]].rename(columns=columns_name)
+            temp_dataframe = calibration[["series", "level", "x", y]].rename(columns=columns_name)
             calibration_dataframe = pd.concat([calibration_dataframe, temp_dataframe], ignore_index=True)
 
     return {

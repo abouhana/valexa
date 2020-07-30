@@ -183,14 +183,14 @@
                     })
                 })
 
-                if (hasCorrection) {
-                    for (const dataPoint in Object.values(this.profileData["validation_data"])){
-                        scatterPoints[dataPoint["Series"]].push({
-                            x: dataPoint["x"],
-                            y: dataPoint["x_raw"]
-                        })
-                    }
-                }
+                //if (hasCorrection) {
+                //    for (const dataPoint in Object.values(this.profileData["validation_data"])){
+                //        scatterPoints[dataPoint["Series"]].push({
+                //            x: dataPoint["x"],
+                //            y: dataPoint["x_raw"]
+                //        })
+                //    }
+                //}
 
                 dataObject["labels"] = labels
                 dataObject["datasets"] = []

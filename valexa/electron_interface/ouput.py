@@ -4,7 +4,7 @@ import json
 import valexa.helper as vx
 
 
-def ouptut(**config):
+def output(**config):
     print(json.dumps({"type": "PROFILE", "data": "START"}))
     config['data'] = vx.format_json_to_data(config['data'])
 

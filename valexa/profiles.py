@@ -69,7 +69,7 @@ class ProfileManager:
         indicated range, a correction will be applied, defaults to [0.9, 1.1]
         :param float? correction_forced_value: If allow_correction is set to True, this will set the correction
         value to the indicated value instead of calculating it. Note: the value of the average recovery ratio must still
-        be outside the threshold for this to take effect, defaults to 1
+        be outside the threshold for this to take effect, defaults to None
         :param int? correction_round_to: If allow_correction is set to True, the generated correction will be
         rounded to this number of significant figures, defaults to 2.
         :param dict? optimizer_parameter: These are the value used to sort the profile from best to worst when
@@ -99,14 +99,15 @@ class ProfileManager:
         self.generate_figure: bool = generate_figure
         self.allow_correction: bool = correction_allow
         self.correction_round_to: int = correction_round_to
+        self.forced_correction_value = None
         if correction_allow:
             if correction_threshold is None:
                 correction_threshold = [0.9, 1.1]
             self.correction_threshold: Optional[List[float]] = correction_threshold
-            self.forced_correction_value = correction_forced_value
+            if correction_forced_value is not None:
+                self.forced_correction_value = float(correction_forced_value)
         else:
             self.correction_threshold: Optional[List[float]] = None
-            self.forced_correction_value = None
 
         self.optimizer_parameters: Optional[OptimizerParams] = optimizer_parameter
 

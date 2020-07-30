@@ -29,8 +29,8 @@
                         <AccuracyProfile
                               :profile-id="item.id"
                               :compound-name="compoundName"
-                              x-axe-string="test"
-                              y-axe-string="test2"
+                              x-axe-string="Level"
+                              y-axe-string="Recovery"
                         ></AccuracyProfile>
                     </td>
                 </template>

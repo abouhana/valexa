@@ -15,6 +15,6 @@ def get_params():
         'type': param.type_name
     } for param in parameters.params]
 
-    print(dumps({'type': 'PARAMS_LIST', 'data': parameters_list}))
+    print(dumps({'type': 'PARAMS_LIST', 'data': parameters_list}).replace(': "None"', ': "null"'))
     print(dumps({'type': 'MODEL_LIST', 'data': ModelsManager.get_available_models()}))
     print(dumps({'type': 'DONE'}))

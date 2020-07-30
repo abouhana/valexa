@@ -1,7 +1,7 @@
 import sys
 import json
 from valexa.electron_interface.boot_validation import valexa_validate
-from valexa.electron_interface.ouput import ouptut
+from valexa.electron_interface.ouput import output
 from valexa.electron_interface.params_export import get_params
 from warnings import filterwarnings
 
@@ -20,7 +20,7 @@ def main(arguments):
                 parsed_stream_data = json.loads(in_stream_data)
                 if parsed_stream_data == "EXIT":
                     break
-                ouptut(**parsed_stream_data)
+                output(**parsed_stream_data)
 
 
 
