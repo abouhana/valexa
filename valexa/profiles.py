@@ -3,6 +3,8 @@ from typing import List, Dict, Optional, Union, Callable
 import matplotlib.pyplot as plt
 from warnings import warn, resetwarnings, filterwarnings
 from valexa.helper import roundsf
+import statsmodels.formula.api as smf
+import statsmodels.regression.linear_model as sm
 
 from scipy.stats import t
 import shapely.geometry
@@ -757,6 +759,7 @@ class Profile:
         self.forced_correction_value: Optional[float] = forced_correction_value
         self.correction_round_to: int = correction_round_to
         self.has_correction: bool = False
+        self.correction_parameter: Optional[dict] = None
         self.correction_factor: Optional[float] = None
         if self.correction_allowed:
             self.generate_correction()
@@ -776,6 +779,10 @@ class Profile:
         if self.profile_data("regression_info").size > 0:
             print("\nRegression Info\n")
             print(self.profile_data("regression_info").transpose())
+
+        if self.has_correction:
+            print("\nCorrection Info\n")
+            print(self.profile_data("correction_info").transpose())
 
         print("\nLevels Info\n")
         print(self.profile_data("levels_info").transpose())
@@ -1164,7 +1171,7 @@ class Profile:
         # debug check
         if min_loq is not None and max_loq is not None:
             if min_loq > max_loq:  # ensure that the min_loq is smaller than the max_loq
-                print("Error here \/")
+                print("Error here")
 
         return [min_loq, max_loq]
 
@@ -1303,6 +1310,8 @@ class Profile:
             }
         )
 
+        correction_info = pd.DataFrame(self.correction_parameter).applymap(lambda x: roundsf(x, sigfig))
+
         levels_info = self.get_profile_parameter(
             [
                 "introduced_concentration",
@@ -1365,6 +1374,7 @@ class Profile:
             "misc_stats": misc_stats,
             "tolerance_info": tolerance_info,
             "uncertainty_info": uncertainty_info,
+            "correction_info": correction_info
         }
 
         if data_type == "":
@@ -1450,14 +1460,32 @@ class Profile:
         self.image_data = io.BytesIO()
 
     def generate_correction(self):
-        ratio: float = roundsf(
-            np.mean(self.model.data_x_calc / self.model.data_x()), self.sigfig
-        )
-        if ratio < self.correction_threshold[0] or ratio > self.correction_threshold[1]:
+        x_plot: sm.RegressionResults = smf.ols(
+            formula='x_calc~x',
+            data=self.model.validation_data
+        ).fit()
+
+        intercept: float = x_plot.params['Intercept']
+        slope: float = x_plot.params['x']
+
+        if slope < self.correction_threshold[0] or slope > self.correction_threshold[1]:
             if self.forced_correction_value is not None:
-                ratio = 1 / self.forced_correction_value
+                self.correction_factor = roundsf(self.forced_correction_value, self.correction_round_to)
+            else:
+                self.correction_factor = roundsf(1/slope, self.correction_round_to)
             self.has_correction = True
-            self.correction_factor = roundsf(1 / ratio, self.correction_round_to)
+
+            self.correction_parameter = {
+                'slope': {
+                    'value': slope,
+                    'p_value': x_plot.pvalues['x']
+                },
+                'intercept': {
+                    'value': intercept,
+                    'p_value': x_plot.pvalues['Intercept']
+                }
+            }
+
 
             corrected_value: pd.Series = pd.Series(
                 self.model.data_x_calc * self.correction_factor
@@ -1470,6 +1498,9 @@ class Profile:
 
         return_dict = {
             "model_info": self.profile_data("model_info", sigfig),
+            "correction_info": self.profile_data("correction_info", sigfig).to_dict(
+                orient="row"
+            ),
             "regression_info": self.profile_data("regression_info", sigfig).to_dict(
                 orient="row"
             ),

@@ -81,7 +81,9 @@
 
           window.addEventListener('beforeunload', function () {
             for (var i=0; i<this.getNumberOfProfiler; i++){
-              loadBalancer.stop(ipcRenderer, 'profiler' + i);
+              loadBalancer.sendData(ipcRenderer, 'profiler' + i, {
+                data: 'EXIT'
+              });
               this.destroyWorker({name: 'profiler' + i})
             }
           })
