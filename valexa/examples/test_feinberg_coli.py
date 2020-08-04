@@ -107,16 +107,15 @@ def test_feinberg_coli():
     # Check if the detected max limit of quantification with correction is the right one (max 1% deviation)
     assert np.abs((2.05 - profiles_with_correction.best().max_loq) / 2.05 * 100) <= 1
 
-    # Check if the calculated correction is the right one (max 1% deviation).
-    # Note the correction factor calculation is slightly different in Valexa. Instead of using the inverse of the slope
-    # of a straight line through a plot of the expected results against the measured results, we simply use the average
-    # products between the two. The difference in the obtained results is negligible, but the other method may be
-    # implemented in the future to compare.
+    # Check if the calculated correction is the right one (max 5% deviation).
+    # Valexa now calculate the correction factor using the slope of the Reference X vs Caclulated X, however in the
+    # article it is unclear which data was taken for their plot. In the case of Valexa, the Reference X is the median of
+    # the logarithm of the reference method value. The difference seems to be small (slope of 1.06 vs 1.02).
     assert (
         np.abs(
             round(((1 / 1.02) - profiles_with_correction.best().correction_factor), 2)
         )
-        <= 0.01
+        <= 0.05
     )
 
     return True

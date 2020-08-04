@@ -17,6 +17,7 @@ matplotlib = "^3.2.1"
 nodeenv = "^1.4.0"
 sigfig = "^1.1.8"
 docstring-parser = "^0.7.1"
+plotly = "^4.9.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.2"

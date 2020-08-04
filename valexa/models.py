@@ -180,7 +180,6 @@ class Model:
                         self.root_function(x) - validation_value[1]["y"], x, S.Reals
                     )
                 )
-
             if len(root_value) > 0:
                 list_of_roots.append(float(root_value[0][0]))
             else:
@@ -203,34 +202,33 @@ class Model:
                 function_string += "+" + str(value) + "*" + param[2:-1]
             else:
                 function_string += "+" + str(value) + "*" + param
-
         return lambdify(x, function_string)
 
     def get_level(
-        self, level: int, serie_type: str = "validation"
+        self, level: int, series_type: str = "validation"
     ) -> Optional[pd.DataFrame]:
-        return self.data.get_level(level, serie_type)
+        return self.data.get_level(level, series_type)
 
-    def get_serie(
-        self, serie: int, serie_type: str = "validation"
+    def get_series(
+        self, series: int, series_type: str = "validation"
     ) -> Optional[pd.DataFrame]:
-        return self.data.get_serie(serie, serie_type)
+        return self.data.get_series(series, series_type)
 
     @property
     def data_x_calc(self) -> Optional[pd.Series]:
         return self.data.data_x_calc
 
-    def data_x(self, serie_type: str = "validation") -> Optional[pd.Series]:
-        return self.data.data_x(serie_type)
+    def data_x(self, series_type: str = "validation") -> Optional[pd.Series]:
+        return self.data.data_x(series_type)
 
-    def data_y(self, serie_type: str = "validation") -> Optional[pd.Series]:
-        return self.data.data_y(serie_type)
+    def data_y(self, series_type: str = "validation") -> Optional[pd.Series]:
+        return self.data.data_y(series_type)
 
-    def list_of_series(self, serie_type: str = "validation") -> Optional[np.ndarray]:
-        return self.data.list_of_series(serie_type)
+    def list_of_series(self, series_type: str = "validation") -> Optional[np.ndarray]:
+        return self.data.list_of_series(series_type)
 
-    def list_of_levels(self, serie_type: str = "validation") -> Optional[np.ndarray]:
-        return self.data.list_of_levels(serie_type)
+    def list_of_levels(self, series_type: str = "validation") -> Optional[np.ndarray]:
+        return self.data.list_of_levels(series_type)
 
     def add_corrected_value(self, corrected_value: pd.Series) -> None:
         return self.data.add_corrected_value(corrected_value)

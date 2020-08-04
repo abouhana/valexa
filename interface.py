@@ -1,5 +1,5 @@
 from sys import argv, exit
-import json
+from json import loads
 from valexa.electron_interface.boot_validation import valexa_validate
 from valexa.electron_interface.ouput import output
 from valexa.electron_interface.params_export import get_params
@@ -12,7 +12,7 @@ def main(arguments):
             valexa_validate()
 
         if arguments[1] == "profile":
-            output(**json.loads(arguments[2]))
+            output(**loads(arguments[2]))
 
         if arguments[1] == "test":
             print('READY')
@@ -21,7 +21,7 @@ def main(arguments):
                 if in_stream_data == "EXIT":
                     print("EXIT")
                     exit(0)
-                parsed_stream_data = json.loads(in_stream_data)
+                parsed_stream_data = loads(in_stream_data)
                 output(**parsed_stream_data)
 
 

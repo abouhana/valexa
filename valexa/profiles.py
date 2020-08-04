@@ -1,24 +1,26 @@
 from __future__ import annotations
-from typing import List, Dict, Optional, Union, Callable
-import matplotlib.pyplot as plt
-from warnings import warn, resetwarnings, filterwarnings
-from valexa.helper import roundsf
-import statsmodels.formula.api as smf
-import statsmodels.regression.linear_model as sm
 
-from scipy.stats import t
-import shapely.geometry
-
-import math
-import numpy as np
-import pandas as pd
-import mpl_toolkits.axisartist as aa
 import io
 import json
+import math
+from typing import List, Dict, Optional, Union, Callable
+from warnings import warn, resetwarnings, filterwarnings
 
+import matplotlib.pyplot as plt
+import mpl_toolkits.axisartist as aa
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import numpy as np
+import pandas as pd
+import shapely.geometry
+import statsmodels.formula.api as smf
+import statsmodels.regression.linear_model as sm
+from scipy.stats import t
+
+import valexa.helper as vx
 from valexa import models
 from valexa.dataobject import DataObject
-import valexa.helper as vx
+from valexa.helper import roundsf
 
 OptimizerParams = Dict[str, Union[str, bool]]
 
@@ -768,6 +770,8 @@ class Profile:
             self.profile_levels[level] = ProfileLevel(
                 self.model.get_level(level), self.absolute_acceptance, self.sigfig
             )
+        self.graphs: dict = {}
+        self.linearity: dict = {}
 
     def summary(self) -> None:
 
@@ -779,6 +783,9 @@ class Profile:
         if self.profile_data("regression_info").size > 0:
             print("\nRegression Info\n")
             print(self.profile_data("regression_info").transpose())
+
+        print("\nLinearity Info\n")
+        print(self.profile_data("linearity_info").transpose())
 
         if self.has_correction:
             print("\nCorrection Info\n")
@@ -929,6 +936,29 @@ class Profile:
             self.has_limits = True
         else:
             self.lod = None
+        self.linearity = self.get_linearity
+        self.generate_graphs()
+
+    @property
+    def get_linearity(self) -> (dict):
+        x_plot: sm.RegressionResults = smf.ols(
+            formula='x_calc~x',
+            data=self.model.validation_data
+        ).fit()
+
+        intercept: float = x_plot.params['Intercept']
+        slope: float = x_plot.params['x']
+
+        return {
+            'slope': {
+                'value': slope,
+                'p_value': x_plot.pvalues['x']
+            },
+            'intercept': {
+                'value': intercept,
+                'p_value': x_plot.pvalues['Intercept']
+            }
+        }
 
     def get_limits_of_quantification(self) -> (float, float):
 
@@ -1310,6 +1340,8 @@ class Profile:
             }
         )
 
+        linearity_info = pd.DataFrame(self.linearity).applymap(lambda x: roundsf(x, sigfig))
+
         correction_info = pd.DataFrame(self.correction_parameter).applymap(lambda x: roundsf(x, sigfig))
 
         levels_info = self.get_profile_parameter(
@@ -1374,7 +1406,8 @@ class Profile:
             "misc_stats": misc_stats,
             "tolerance_info": tolerance_info,
             "uncertainty_info": uncertainty_info,
-            "correction_info": correction_info
+            "correction_info": correction_info,
+            "linearity_info": linearity_info
         }
 
         if data_type == "":
@@ -1498,6 +1531,9 @@ class Profile:
 
         return_dict = {
             "model_info": self.profile_data("model_info", sigfig),
+            "linearity_info": self.profile_data("linearity_info", sigfig).to_dict(
+                orient="row"
+            ),
             "correction_info": self.profile_data("correction_info", sigfig).to_dict(
                 orient="row"
             ),
@@ -1572,6 +1608,64 @@ class Profile:
             warn("Available format are: dict, json")
             return None
 
+    def generate_graphs(self):
+        # Linearity graph
+        linearity_fig = go.Figure()
+        x_data = self.model.validation_data['x'].unique()
+        linearity_y = x_data * self.linearity['slope']['value'] + self.linearity['intercept']['value']
+        linearity_fig.add_trace(go.Scatter(
+            x=x_data,
+            y=linearity_y,
+            mode="lines",
+            name="Linearity",
+        ))
+        for series in self.model.list_of_series():
+            linearity_fig.add_trace(go.Scatter(
+                x=self.model.get_series(series)['x'],
+                y=self.model.get_series(series)['x_calc'],
+                name="Series " + str(series),
+                mode="markers",
+            ))
+
+        # Correction Graph
+        if self.has_correction:
+            correction_fig = go.Figure()
+            correction_y = x_data * self.correction_parameter['slope']['value'] + self.correction_parameter['intercept']['value']
+            correction_fig.add_trace(go.Scatter(
+                x=x_data,
+                y=correction_y,
+                mode="lines",
+                name="Linearity (No Correction)",
+            ))
+            for series in self.model.list_of_series():
+                correction_fig.add_trace(go.Scatter(
+                    x=self.model.get_series(series)['x'],
+                    y=self.model.get_series(series)['x_raw'],
+                    name="Series " + str(series) + " (No Correction)",
+                    mode="markers",
+                ))
+            self.graphs['Correction'] = correction_fig
+
+        # Regression Graph
+        if self.profile_data("regression_info").size > 0:
+            regression_fig = go.Figure()
+            for index, regression in self.model.root_function.items():
+                regression_fig.add_trace(go.Scatter(
+                    x=x_data,
+                    y=list(map(regression, x_data)),
+                    mode="lines",
+                    name="Series " + str(index)
+                ))
+                regression_fig.add_trace(go.Scatter(
+                    x=self.model.get_series(index)['x'],
+                    y=self.model.get_series(index)['y'],
+                    mode="markers",
+                    name="Series " + str(index)
+                ))
+
+
+        self.graphs['Linearity'] = linearity_fig
+        self.graphs['Regression'] = regression_fig
 
 class Optimizer:
     def __init__(
