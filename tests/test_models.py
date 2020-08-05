@@ -41,7 +41,7 @@ class TestModelsManager:
 
     def test_modelize(self, test_modelsmanager_hardcoded, test_data):
         test_modelsmanager_hardcoded.initialize_models("Linear")
-        test_modelsmanager_hardcoded.modelize("Linear", test_data)
+        test_modelsmanager_hardcoded.modelize("Linear", test_data, 4)
         assert test_modelsmanager_hardcoded.models["Linear"] is not None
 
     def test_get_available_models(self, test_modelsmanager_hardcoded):
