@@ -31,7 +31,7 @@ def main():
         "optimizer_parameter": optimizer_parameter,
         "correction_allow": True,
         "data": data,
-        "model_to_test": "Linear",
+        "model_to_test": "Quadratic",
         "rolling_limit": 3,
         "significant_figure": 4,
 

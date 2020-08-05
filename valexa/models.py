@@ -15,6 +15,7 @@ from typing import List, Dict, Union, Callable, Optional
 
 from valexa.models_list import model_list
 from valexa.dataobject import DataObject
+from valexa.helper import roundsf
 
 ModelInfo = Dict[str, Optional[str]]
 FitInfo = Union[sm.RegressionResultsWrapper, Dict[int, sm.RegressionResultsWrapper]]
@@ -47,8 +48,8 @@ class ModelsManager:
 
         return self
 
-    def modelize(self, model_name: str, model_data: DataObject) -> Model:
-        return self.models[model_name].calculate_model(model_data)
+    def modelize(self, model_name: str, model_data: DataObject, sigfig: int) -> Model:
+        return self.models[model_name].calculate_model(model_data, sigfig)
 
     @staticmethod
     def get_available_models(
@@ -109,32 +110,31 @@ class ModelsManager:
 
 class Model:
     def __init__(
-        self, data: DataObject, model_formula: str, model_weight: str, model_name: str
+        self, data: DataObject, model_formula: str, model_weight: str, model_name: str, sigfig: int
     ):
 
         self.data: DataObject = copy.deepcopy(data)
         self.name = model_name
         self.formula: str = model_formula
         self.weight: str = model_weight
+        self.root_function: Optional[Union[Callable, Dict[int, Callable]]] = None
+        self.fit: Optional[FitInfo] = None
+        self.sigfig: int = sigfig
         if len(self.list_of_series("validation")) == len(
             self.list_of_series("calibration")
         ):
             self.multiple_calibration: bool = True
-            temp_fit: Dict[int, sm.RegressionResultsWrapper] = {}
-            temp_root_function: Dict[int, Callable] = {}
-            for serie in self.list_of_series("calibration"):
-                temp_fit[serie] = self.__get_model_fit(serie)
-                temp_root_function[serie]: Dict[
-                    int, Callable
-                ] = self.__build_function_from_params(temp_fit, serie)
+            self.fit = {}
+            self.root_function = {}
+            for series in self.list_of_series("calibration"):
+                self.fit[series] = self.__get_model_fit(series)
+                self.root_function[series] = self.__build_function_from_params(self.fit[series])
         else:
             self.multiple_calibration: bool = False
-            temp_fit: sm.RegressionResultsWrapper = self.__get_model_fit()
-            temp_root_function: Callable = self.__build_function_from_params(temp_fit)
+            self.fit = self.__get_model_fit()
+            self.root_function = self.__build_function_from_params(self.fit)
 
-        self.fit: FitInfo = temp_fit
-        self.root_function: Union[Callable, Dict[int, Callable]] = temp_root_function
-        self.data.add_calculated_value(self.__get_model_roots)
+        self.data.add_value(self.__get_model_roots, 'x_calc')
         self.rsquared: Optional[float] = None
         if self.multiple_calibration:
             self.rsquared = np.mean([s.rsquared for s in self.fit.values()])
@@ -181,7 +181,7 @@ class Model:
                     )
                 )
             if len(root_value) > 0:
-                list_of_roots.append(float(root_value[0][0]))
+                list_of_roots.append(roundsf(float(root_value[0][0]), self.sigfig))
             else:
                 list_of_roots.append(None)
         return pd.Series(list_of_roots)
@@ -191,10 +191,7 @@ class Model:
         fitted_function: FitInfo, serie: Optional[int] = None
     ) -> Callable:
         function_string: str = ""
-        if serie is None:
-            params_items = fitted_function.params.items()
-        else:
-            params_items = fitted_function[serie].params.items()
+        params_items = fitted_function.params.items()
         for param, value in params_items:
             if param == "Intercept":
                 function_string += "+" + str(value)
@@ -230,6 +227,9 @@ class Model:
     def list_of_levels(self, series_type: str = "validation") -> Optional[np.ndarray]:
         return self.data.list_of_levels(series_type)
 
+    def add_value(self, value: pd.Series, name: str) -> None:
+        return self.data.add_value(value, name)
+
     def add_corrected_value(self, corrected_value: pd.Series) -> None:
         return self.data.add_corrected_value(corrected_value)
 
@@ -253,5 +253,5 @@ class ModelGenerator:
             self.weight: str = "I(" + model_info["weight"] + ") - 1"
         self.min_points: int = model_info["min_points"]
 
-    def calculate_model(self, data: DataObject) -> Model:
-        return Model(data, self.formula, self.weight, self.name)
+    def calculate_model(self, data: DataObject, sigfig: int) -> Model:
+        return Model(data, self.formula, self.weight, self.name, sigfig)

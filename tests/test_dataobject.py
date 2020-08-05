@@ -213,8 +213,8 @@ class TestDataObject:
         assert isinstance(test_object_without_calib, DataObject)
         assert test_object_without_calib.calibration_data is None
 
-    def test_add_calculated_value(self, calculated_data, test_object_with_calib):
-        test_object_with_calib.add_calculated_value(calculated_data)
+    def test_add_value(self, calculated_data, test_object_with_calib):
+        test_object_with_calib.add_value(calculated_data, 'x_calc')
         assert test_object_with_calib.validation_data["x_calc"] is not None
 
     def test_get_level(self, test_object_with_calib):
@@ -241,7 +241,7 @@ class TestDataObject:
     def test_data_x_calc(
         self, test_object_with_calib, test_object_without_calib, calculated_data
     ):
-        test_object_with_calib.add_calculated_value(calculated_data)
+        test_object_with_calib.add_value(calculated_data, 'x_calc')
         assert (
             test_object_without_calib.data_x_calc is test_object_without_calib.data_y()
         )
@@ -269,7 +269,7 @@ class TestDataObject:
         assert test_object_with_calib.list_of_levels("") is None
 
     def test_add_corrected_value(self, test_object_with_calib, calculated_data):
-        test_object_with_calib.add_calculated_value(calculated_data)
+        test_object_with_calib.add_value(calculated_data, 'x_calc')
         test_object_with_calib.add_corrected_value(calculated_data + 1)
         assert (
             test_object_with_calib.data_x_calc.tolist()

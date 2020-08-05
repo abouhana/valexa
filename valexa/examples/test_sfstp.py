@@ -1665,12 +1665,12 @@ def test_sfstp():
     p_t_te_me_assertion.drop(p_t_te_me_assertion.index[0:4], inplace=True)
     tol_interval_assertion.drop(tol_interval_assertion.index[0:4], inplace=True)
 
-    # We accept a maximum of 0.05% deviation from the literature value
+    # We accept a maximum of 0.1% deviation from the literature value
 
-    assert len(reg_params_assertion[reg_params_assertion.ge(0.05).any(axis=1)]) == 0
-    assert len(x_calc_assertion[x_calc_assertion.ge(0.05).any(axis=1)]) == 0
-    assert len(true_prec_assertion[true_prec_assertion.ge(0.05).any(axis=1)]) == 0
-    assert len(rel_acc_assertion[rel_acc_assertion.ge(0.05).any(axis=1)]) == 0
-    assert len(tol_interval_assertion[tol_interval_assertion.ge(0.05).any(axis=1)]) == 0
+    assert len(reg_params_assertion[reg_params_assertion.ge(0.1).any(axis=1)]) == 0
+    assert len(x_calc_assertion[x_calc_assertion.ge(0.1).any(axis=1)]) == 0
+    assert len(true_prec_assertion[true_prec_assertion.ge(0.1).any(axis=1)]) == 0
+    assert len(rel_acc_assertion[rel_acc_assertion.ge(0.1).any(axis=1)]) == 0
+    assert len(tol_interval_assertion[tol_interval_assertion.ge(0.1).any(axis=1)]) == 0
 
     return True

@@ -37,3 +37,7 @@ def test_intern_dataset():
 
     assert profiles.profiles["Linear"][1].fig is not None
     return True
+
+
+if __name__ == "__main__":
+    test_intern_dataset()

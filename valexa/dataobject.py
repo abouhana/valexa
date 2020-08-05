@@ -35,12 +35,14 @@ class DataObject:
             [self.validation_data, calculated_value], axis=1
         )
 
-    def add_corrected_value(self, corrected_value: pd.Series) -> None:
-        corrected_value = corrected_value.to_frame("x_calc")
-        self.validation_data.rename(columns={"x_calc": "x_raw"}, inplace=True)
+    def add_value(self, value: pd.Series, name: str) -> None:
         self.validation_data = pd.concat(
-            [self.validation_data, corrected_value], axis=1
+            [self.validation_data, value.to_frame(name)], axis=1
         )
+
+    def add_corrected_value(self, corrected_value: pd.Series) -> None:
+        self.validation_data.rename(columns={'x_calc': 'x_raw'}, inplace=True)
+        self.add_value(corrected_value, 'x_calc')
 
     def get_level(
         self, level: int, data_type: str = "validation"
