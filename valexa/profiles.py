@@ -1696,7 +1696,7 @@ class Profile:
                         name="Series " + str(index)
                     ))
                     residual_fig.add_trace(go.Scatter(
-                        x=self.model.calibration_data['x'],
+                        x=self.model.fit[index].fittedvalues,
                         y=self.model.fit[index].resid,
                         mode="markers",
                         name="Series " + str(index),
@@ -1717,7 +1717,7 @@ class Profile:
                     name="All Series"
                 ))
                 residual_fig.add_trace(go.Scatter(
-                    x=self.model.calibration_data['x'],
+                    x=self.model.fit.fittedvalues,
                     y=self.model.fit.resid,
                     mode="markers",
                     name="All Series",
