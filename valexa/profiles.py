@@ -1670,9 +1670,22 @@ class Profile:
                 ))
             self.graphs['Correction'] = correction_fig
 
-        # Regression Graph
+        # Regression and Residual Graph
         if self.profile_data("regression_info").size > 0:
             regression_fig = go.Figure()
+            residual_fig = go.Figure()
+            residual_fig.add_shape(
+                type="line",
+                xref="paper",
+                yref="y",
+                x0=0,
+                y0=0,
+                x1=1,
+                y1=0,
+                line={
+                    'color': 'Green',
+                },
+            )
             x_data_spread = np.linspace(x_data.min(), x_data.max(), 100)
             if type(self.model.root_function) == dict:
                 for index, regression in self.model.root_function.items():
@@ -1682,12 +1695,39 @@ class Profile:
                         mode="lines",
                         name="Series " + str(index)
                     ))
+                    residual_fig.add_trace(go.Scatter(
+                        x=self.model.calibration_data['x'],
+                        y=self.model.fit[index].resid,
+                        mode="markers",
+                        name="Series " + str(index),
+                        marker={
+                            'size': 10,
+                            'line': {
+                                'color': 'DarkSlateGrey',
+                                'width': 2
+                            }
+                        }
+                    ))
+
             else:
                 regression_fig.add_trace(go.Scatter(
                     x=x_data_spread,
                     y=list(map(self.model.root_function, x_data_spread)),
                     mode="lines",
                     name="All Series"
+                ))
+                residual_fig.add_trace(go.Scatter(
+                    x=self.model.calibration_data['x'],
+                    y=self.model.fit.resid,
+                    mode="markers",
+                    name="All Series",
+                    marker={
+                        'size': 10,
+                        'line': {
+                            'color': 'DarkSlateGrey',
+                            'width': 2
+                        }
+                    }
                 ))
             for index in self.model.list_of_series():
                 regression_fig.add_trace(go.Scatter(
@@ -1705,6 +1745,7 @@ class Profile:
                 ))
 
             self.graphs['Regression'] = regression_fig
+            self.graphs['Residual'] = residual_fig
 
         # Profile Graph
         profile_fig = go.Figure()
