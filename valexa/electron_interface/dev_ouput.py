@@ -7,15 +7,9 @@ import valexa.helper as vx
 def dev_ouptut(data, config=""):
     data = vx.format_json_to_data(data)
 
-    config = {
-        "compound_name": "test",
-        "model_to_test": "Linear",
-        "rolling_data": False
-    }
+    config = {"compound_name": "test", "model_to_test": "Linear", "rolling_data": False}
 
-    aa = ProfileManager(
-        "Test", data, model_to_test=["Linear"], rolling_data=False
-    )
+    aa = ProfileManager("Test", data, model_to_test=["Linear"], rolling_data=False)
 
     aa.make_profiles()
 

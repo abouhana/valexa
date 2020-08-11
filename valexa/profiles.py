@@ -1,24 +1,17 @@
 from __future__ import annotations
 
-import io
 import json
 import math
 from typing import List, Dict, Optional, Union, Callable
 from warnings import warn, resetwarnings, filterwarnings
 
-import matplotlib.pyplot as plt
-import mpl_toolkits.axisartist as aa
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import numpy as np
 import pandas as pd
 import shapely.geometry
 import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
-from patsy.highlevel import dmatrix
 from scipy.stats import t
-from sympy import solveset, S
-from sympy.abc import x
 
 import valexa.helper as vx
 from valexa import models
@@ -32,6 +25,7 @@ class ProfileManager:
     def __init__(
         self,
         compound_name: str,
+        compound_unit: str = None,
         data: Dict[str, pd.DataFrame],
         tolerance_limit: float = 80,
         acceptance_limit: float = 20,
@@ -47,6 +41,8 @@ class ProfileManager:
         correction_round_to: int = 2,
         optimizer_parameter: Optional[OptimizerParams] = None,
         significant_figure: int = 4,
+        lod_allowed: Optional[list] = None,
+        lod_force_miller: bool = False,
         **_
     ):
         """
@@ -83,6 +79,10 @@ class ProfileManager:
         using the optimizer, default to None
         :param int? significant_figure: Set the number of significant figure to take into account during the
         analysis. Setting this to 0 will remove any rounding, defaults to 4
+        :param list? lod_allowed: List the allowed type of LOD calculation, Base use LOQ/3.3, Miller use the regression
+        standard deviation (Miller & Miller, 2010), if set to None, it will try both, defaults to None
+        :param bool? lod_force_miller: Force the use of Miller & Miller calculation method for the LOD determination,
+        defaults to False
         """
         self.compound_name: str = compound_name
         self.quantity_units: str = quantity_units
@@ -95,6 +95,11 @@ class ProfileManager:
         self.absolute_acceptance: bool = acceptance_absolute
         self.data: Dict[str, pd.DataFrame] = data
         self.sigfig: int = significant_figure
+        if lod_allowed is None:
+            self.lod_allowed: list = ['Base', 'Miller']
+        else:
+            self.lod_allowed: list = lod_allowed
+        self.lod_force_miller: bool = lod_force_miller
 
         if type(model_to_test) == str:
             model_to_test = [model_to_test]
@@ -234,7 +239,9 @@ class ProfileManager:
         elif "Calibration" not in self.data:
             warn("Optimizer cannot be run on validation using direct dataset.")
         elif len(self.profiles) == 0:
-            warn("No profiles found. Have you calculated them by using .make_profile()?")
+            warn(
+                "No profiles found. Have you calculated them by using .make_profile()?"
+            )
         else:
             self.sorted_profiles = Optimizer(
                 self.profiles, self.optimizer_parameters
@@ -268,7 +275,9 @@ class ProfileManager:
                     data_object.calibration_levels
                     >= self.model_manager.get_model_min_point(model_name)
                 ):
-                    data_to_model = self.model_manager.modelize(model_name, data_object, self.sigfig)
+                    data_to_model = self.model_manager.modelize(
+                        model_name, data_object, self.sigfig
+                    )
                 else:
                     warn(
                         model_name
@@ -291,6 +300,10 @@ class ProfileManager:
                     self.absolute_acceptance,
                     self.correction_round_to,
                     self.sigfig,
+                    self.lod_allowed,
+                    self.lod_force_miller,
+                    self.quantity_units,
+                    self.compound_name
                 )
                 current_profile.calculate(self.stats_limits)
 
@@ -336,7 +349,7 @@ class ProfileManager:
 
             for validation_key in validation_dict.keys():
                 data_to_model.append(DataObject(validation_dict[validation_key]))
-                data_to_model[-1].add_value(data_to_model[-1].data_y(), 'x_calc')
+                data_to_model[-1].add_value(data_to_model[-1].data_y(), "x_calc")
 
         # data_to_model = self.__sanitize_data_to_model(data_to_model)
 
@@ -377,8 +390,9 @@ class ProfileManager:
 
         return data_to_keep
 
-    def get_number_of_dataset( self ) -> int:
+    def get_number_of_dataset(self) -> int:
         return len(self.data_objects)
+
 
 class ProfileLevel:
     def __init__(
@@ -750,10 +764,18 @@ class Profile:
         absolute_acceptance: bool = False,
         correction_round_to: int = 2,
         sigfig: int = 4,
+        lod_allowed: list = ["Base", "Miller"],
+        lod_force_miller: bool = False,
+        compound: str= None,
+        units: str = None
     ):
         self.model = model
+        self.compound = compound
+        self.units = units
         self.acceptance_interval: List[float] = []
         self.absolute_acceptance: bool = absolute_acceptance
+        self.acceptance_limit: float = None
+        self.tolerance_limit: float = None
         self.min_loq: Optional[float] = None
         self.max_loq: Optional[float] = None
         self.lod: Optional[float] = None
@@ -768,6 +790,8 @@ class Profile:
         self.has_correction: bool = False
         self.correction_parameter: Optional[dict] = None
         self.correction_factor: Optional[float] = None
+        self.lod_allowed = lod_allowed
+        self.lod_force_miller = lod_force_miller
         self.lod_type: Optional[str] = None
         if self.correction_allowed:
             self.generate_correction()
@@ -832,10 +856,16 @@ class Profile:
         resetwarnings()
 
     def calculate_bias(self) -> None:
-        bias_abs: pd.Series = self.model.validation_data['x_calc'] - self.model.validation_data['x']
-        bias_rel = bias_abs/self.model.validation_data['x']*100
-        self.model.add_value(bias_abs.map(lambda x: roundsf(x, self.sigfig)), 'bias_abs')
-        self.model.add_value(bias_rel.map(lambda x: roundsf(x, self.sigfig)), 'bias_rel')
+        bias_abs: pd.Series = self.model.validation_data[
+            "x_calc"
+        ] - self.model.validation_data["x"]
+        bias_rel = bias_abs / self.model.validation_data["x"] * 100
+        self.model.add_value(
+            bias_abs.map(lambda val: roundsf(val, self.sigfig)), "bias_abs"
+        )
+        self.model.add_value(
+            bias_rel.map(lambda val: roundsf(val, self.sigfig)), "bias_rel"
+        )
 
     def average_profile_parameter(
         self, profile_parameter: str
@@ -849,7 +879,10 @@ class Profile:
                 for level in self.profile_levels.values():
                     value_list.append(getattr(level, parameter))
                 params_list = pd.concat(
-                    [params_list, pd.DataFrame([np.mean(value_list)], index=[parameter])]
+                    [
+                        params_list,
+                        pd.DataFrame([np.mean(value_list)], index=[parameter]),
+                    ]
                 )
             else:
                 warn("The profile levels do not have attribute named " + parameter)
@@ -937,11 +970,11 @@ class Profile:
     def calculate(self, stats_limits: Optional[Union[Dict[str, float]]] = None) -> None:
         if stats_limits is None:
             stats_limits = {"Tolerance": 80, "Acceptance": 20}
-        acceptance_limit = stats_limits["Acceptance"]
-        tolerance_limit = stats_limits["Tolerance"]
+        self.acceptance_limit = stats_limits["Acceptance"]
+        self.tolerance_limit = stats_limits["Tolerance"]
 
         for level in self.profile_levels.values():
-            level.calculate(tolerance_limit, acceptance_limit)
+            level.calculate(self.tolerance_limit, self.acceptance_limit)
 
         self.min_loq, self.max_loq = self.get_limits_of_quantification()
         if self.min_loq:
@@ -953,47 +986,39 @@ class Profile:
         self.generate_graphs()
 
     def get_lod(self) -> float:
-        base_lod = self.min_loq/3
-        full_regression = smf.wls(
-            formula=self.model.formula,
-            weights=dmatrix(self.model.weight, self.model.calibration_data),
-            data=self.model.calibration_data[['x','y']]
-        ).fit()
-        regression_intercept = 0 if full_regression.params['Intercept'] else full_regression.params['Intercept']
-        miller_lod_y = regression_intercept + 3 * math.sqrt(full_regression.mse_resid)
-        #TODO: Use Model Build Function
-        miller_lod = 0
-        if miller_lod > 0:
-            if miller_lod > base_lod:
-                self.lod_type = 'Miller'
-                return miller_lod
+        base_lod = self.min_loq / 3.3
+        if "Miller" in self.lod_allowed:
+            if self.model.calibration_data is not None:
+                miller_lod = pd.Series(self.model.miller_lod).mean()
             else:
-                self.lod_type = 'Base'
-                return base_lod
+                miller_lod = None
+        if self.lod_force_miller:
+            self.lod_type = "Miller"
+            return miller_lod
         else:
-            self.lod_type = 'Base'
-            return base_lod
-
+            if miller_lod is not None:
+                if miller_lod < base_lod:
+                    self.lod_type = "Miller"
+                    return miller_lod
+                else:
+                    self.lod_type = "Base"
+                    return base_lod
+            else:
+                self.lod_type = "Base"
+                return base_lod
 
     @property
     def get_linearity(self) -> (dict):
         x_plot: sm.RegressionResults = smf.ols(
-            formula='x_calc~x',
-            data=self.model.validation_data
+            formula="x_calc~x", data=self.model.validation_data
         ).fit()
 
-        intercept: float = x_plot.params['Intercept']
-        slope: float = x_plot.params['x']
+        intercept: float = x_plot.params["Intercept"]
+        slope: float = x_plot.params["x"]
 
         return {
-            'slope': {
-                'value': slope,
-                'p_value': x_plot.pvalues['x']
-            },
-            'intercept': {
-                'value': intercept,
-                'p_value': x_plot.pvalues['Intercept']
-            }
+            "slope": {"value": slope, "p_value": x_plot.pvalues["x"]},
+            "intercept": {"value": intercept, "p_value": x_plot.pvalues["Intercept"]},
         }
 
     def get_limits_of_quantification(self) -> (float, float):
@@ -1241,90 +1266,6 @@ class Profile:
 
         return [min_loq, max_loq]
 
-    def accuracy_plot_data(
-        self, data_type: str = ""
-    ) -> Optional[Union[dict, pd.DataFrame]]:
-
-        scatter = {}
-        graph = self.get_profile_parameter(
-            [
-                "introduced_concentration",
-                "recovery",
-                "tolerance_rel",
-                "acceptance_limits_rel",
-            ]
-        )
-        graph.rename(
-            columns={
-                "tolerance_rel_high": "tolerance_high",
-                "tolerance_rel_low": "tolerance_low",
-                "acceptance_limits_rel_high": "acceptance_limits_high",
-                "acceptance_limits_rel_low": "acceptance_limits_low",
-            },
-            inplace=True,
-        )
-
-        calculated_scatter = self.model.validation_data
-        if self.absolute_acceptance:
-            calculated_scatter["x_scatter"] = (
-                calculated_scatter["x_calc"] - calculated_scatter["x"]
-            )
-            graph["error"] = self.get_profile_parameter("uncertainty_abs")[
-                "uncertainty_abs"
-            ]
-        else:
-            calculated_scatter["x_scatter"] = (
-                calculated_scatter["x_calc"] - calculated_scatter["x"]
-            ) / calculated_scatter["x"] * 100 + 100
-            graph["error"] = self.get_profile_parameter("uncertainty_pc")[
-                "uncertainty_pc"
-            ]
-
-        for series in self.model.validation_data["Series"].unique():
-            sub_df = calculated_scatter[calculated_scatter["Series"] == series]
-            scatter[series] = pd.DataFrame(
-                [sub_df["x"], sub_df["x_scatter"]], index=["x", "y"]
-            ).transpose()
-
-        return_dict = {
-            "recovery": pd.DataFrame(
-                [graph["introduced_concentration"], graph["recovery"]], index=["x", "y"]
-            ).transpose(),
-            "tolerance_high": pd.DataFrame(
-                [graph["introduced_concentration"], graph["tolerance_high"]],
-                index=["x", "y"],
-            ).transpose(),
-            "tolerance_low": pd.DataFrame(
-                [graph["introduced_concentration"], graph["tolerance_low"]],
-                index=["x", "y"],
-            ).transpose(),
-            "acceptance_limits_low": pd.DataFrame(
-                [graph["introduced_concentration"], graph["acceptance_limits_low"]],
-                index=["x", "y"],
-            ).transpose(),
-            "acceptance_limits_high": pd.DataFrame(
-                [graph["introduced_concentration"], graph["acceptance_limits_high"]],
-                index=["x", "y"],
-            ).transpose(),
-            "error": pd.DataFrame(
-                [graph["introduced_concentration"], graph["error"]], index=["x", "y"]
-            ).transpose(),
-            "scatter": scatter,
-        }
-
-        if data_type == "":
-            return return_dict
-        elif data_type in return_dict:
-            return return_dict[data_type]
-        else:
-            warn(
-                "No data of type: "
-                + data_type
-                + ". The available data types are: "
-                + ", ".join(return_dict.keys())
-            )
-            return None
-
     def profile_data(
         self, data_type: str = "", sigfig: int = 4
     ) -> Optional[Union[dict, pd.DataFrame]]:
@@ -1362,6 +1303,7 @@ class Profile:
         model_info.update(
             {
                 "lod": roundsf(self.lod, sigfig),
+                "lod_type": self.lod_type,
                 "min_loq": roundsf(self.min_loq, sigfig),
                 "max_loq": roundsf(self.max_loq, sigfig),
                 "correction_factor": roundsf(self.correction_factor, sigfig),
@@ -1373,12 +1315,23 @@ class Profile:
                 "list_of_series_validation": self.model.list_of_series().tolist(),
                 "list_of_levels_validation": self.model.list_of_levels().tolist(),
                 "absolute_acceptance": self.absolute_acceptance,
+                "average_recovery": roundsf(
+                    self.average_profile_parameter('recovery'), sigfig
+                ),
+                "units": self.units,
+                "compound": self.compound,
+                "tolerance": self.tolerance_limit,
+                "acceptance": self.acceptance_limit
             }
         )
 
-        linearity_info = pd.DataFrame(self.linearity).applymap(lambda x: roundsf(x, sigfig))
+        linearity_info = pd.DataFrame(self.linearity).applymap(
+            lambda x: roundsf(x, sigfig)
+        )
 
-        correction_info = pd.DataFrame(self.correction_parameter).applymap(lambda x: roundsf(x, sigfig))
+        correction_info = pd.DataFrame(self.correction_parameter).applymap(
+            lambda x: roundsf(x, sigfig)
+        )
 
         levels_info = self.get_profile_parameter(
             [
@@ -1431,6 +1384,11 @@ class Profile:
             ["uncertainty_abs", "uncertainty_rel", "uncertainty_pc"]
         ).applymap(lambda x: roundsf(x, sigfig))
 
+        profile_graphs = {}
+
+        for key, value in self.graphs.items():
+            profile_graphs[key] = value.to_dict()
+
         return_dict = {
             "model_info": model_info,
             "regression_info": regression_info,
@@ -1443,7 +1401,8 @@ class Profile:
             "tolerance_info": tolerance_info,
             "uncertainty_info": uncertainty_info,
             "correction_info": correction_info,
-            "linearity_info": linearity_info
+            "linearity_info": linearity_info,
+            "profile_graphs": profile_graphs
         }
 
         if data_type == "":
@@ -1459,107 +1418,37 @@ class Profile:
             )
             return None
 
-    def make_plot(self):
-
-        fig = plt.figure()
-        ax = aa.Subplot(fig, 111)
-        fig.add_subplot(ax)
-
-        plot_data = self.accuracy_plot_data()
-
-        ax.axis["bottom", "top", "right"].set_visible(False)
-        if self.absolute_acceptance:
-            ax.axis["y=0"] = ax.new_floating_axis(nth_coord=0, value=0)
-            ax.set_ylabel("Accuracy (deviation from the target value)")
-        else:
-            ax.axis["y=100"] = ax.new_floating_axis(nth_coord=0, value=100)
-            ax.set_ylabel("Recovery (%)")
-
-        ax.errorbar(
-            plot_data["recovery"]["x"],
-            plot_data["recovery"]["y"],
-            yerr=plot_data["error"]["y"],
-            color="m",
-            linewidth=2.0,
-            marker=".",
-            label="Accuracy",
-        )
-
-        ax.plot(
-            plot_data["tolerance_low"]["x"],
-            plot_data["tolerance_low"]["y"],
-            linewidth=1.0,
-            color="b",
-            label="Min tolerance limit",
-        )
-        ax.plot(
-            plot_data["tolerance_high"]["x"],
-            plot_data["tolerance_high"]["y"],
-            linewidth=1.0,
-            color="g",
-            label="Max tolerance limit",
-        )
-        ax.plot(
-            plot_data["acceptance_limits_low"]["x"],
-            plot_data["acceptance_limits_low"]["y"],
-            "k--",
-            label="Acceptance limit",
-        )
-        ax.plot(
-            plot_data["acceptance_limits_high"]["x"],
-            plot_data["acceptance_limits_high"]["y"],
-            "k--",
-        )
-
-        for key, scatter in plot_data["scatter"].items():
-            ax.scatter(
-                scatter["x"],
-                scatter["y"],
-                s=5,
-                c=np.random.rand(3,),
-                label="Series " + str(key),
-            )
-
-        ax.set_xlabel("Concentration")
-
-        ax.legend(loc=1)
-
-        self.fig = fig
-
-        self.image_data = io.BytesIO()
-
     def generate_correction(self):
         x_plot: sm.RegressionResults = smf.ols(
-            formula='x_calc~x',
-            data=self.model.validation_data
+            formula="x_calc~x", data=self.model.validation_data
         ).fit()
 
-        intercept: float = x_plot.params['Intercept']
-        slope: float = x_plot.params['x']
+        intercept: float = x_plot.params["Intercept"]
+        slope: float = x_plot.params["x"]
 
         if slope < self.correction_threshold[0] or slope > self.correction_threshold[1]:
             if self.forced_correction_value is not None:
-                self.correction_factor = roundsf(self.forced_correction_value, self.correction_round_to)
+                self.correction_factor = roundsf(
+                    self.forced_correction_value, self.correction_round_to
+                )
             else:
-                self.correction_factor = roundsf(1/slope, self.correction_round_to)
+                self.correction_factor = roundsf(1 / slope, self.correction_round_to)
             self.has_correction = True
 
             self.correction_parameter = {
-                'slope': {
-                    'value': slope,
-                    'p_value': x_plot.pvalues['x']
+                "slope": {"value": slope, "p_value": x_plot.pvalues["x"]},
+                "intercept": {
+                    "value": intercept,
+                    "p_value": x_plot.pvalues["Intercept"],
                 },
-                'intercept': {
-                    'value': intercept,
-                    'p_value': x_plot.pvalues['Intercept']
-                }
             }
-
 
             corrected_value: pd.Series = pd.Series(
                 self.model.data_x_calc * self.correction_factor
             )
-            self.model.add_corrected_value(corrected_value.map(lambda x: roundsf(x, self.sigfig)))
+            self.model.add_corrected_value(
+                corrected_value.map(lambda x: roundsf(x, self.sigfig))
+            )
 
     def output_profile(
         self, data_type: str = "", format: str = "dict", sigfig: int = 4
@@ -1567,12 +1456,8 @@ class Profile:
 
         return_dict = {
             "model_info": self.profile_data("model_info", sigfig),
-            "linearity_info": self.profile_data("linearity_info", sigfig).to_dict(
-                orient="row"
-            ),
-            "correction_info": self.profile_data("correction_info", sigfig).to_dict(
-                orient="row"
-            ),
+            "linearity_info": self.profile_data("linearity_info", sigfig).to_dict(),
+            "correction_info": self.profile_data("correction_info", sigfig).to_dict(),
             "regression_info": self.profile_data("regression_info", sigfig).to_dict(
                 orient="row"
             ),
@@ -1597,6 +1482,7 @@ class Profile:
                 orient="row"
             ),
             "validation_data": self.model.validation_data.to_dict(orient="row"),
+            "graphs": self.profile_data('profile_graphs')
         }
 
         if self.model.calibration_data is not None:
@@ -1604,15 +1490,7 @@ class Profile:
                 orient="row"
             )
 
-        plot_data = self.accuracy_plot_data()
-        return_dict["graph"] = {}
-        for key, value in plot_data.items():
-            if type(value) == dict:
-                return_dict["scatter"] = {}
-                for index, scatter in value.items():
-                    return_dict["scatter"][index.item()] = scatter.to_dict(orient="row")
-            else:
-                return_dict["graph"][key] = value.to_dict(orient="row")
+
 
         if format == "dict":
             if data_type == "":
@@ -1647,55 +1525,55 @@ class Profile:
     def generate_graphs(self):
         # Linearity graph
         linearity_fig = go.Figure()
-        x_data = self.model.validation_data['x'].unique()
-        linearity_y = x_data * self.linearity['slope']['value'] + self.linearity['intercept']['value']
-        linearity_fig.add_trace(go.Scatter(
-            x=x_data,
-            y=linearity_y,
-            mode="lines",
-            name="Linearity",
-        ))
+        x_data = self.model.validation_data["x"].unique()
+        linearity_y = (
+            x_data * self.linearity["slope"]["value"]
+            + self.linearity["intercept"]["value"]
+        )
+        linearity_fig.add_trace(
+            go.Scatter(x=x_data, y=linearity_y, mode="lines", name="Linearity",)
+        )
         for series in self.model.list_of_series():
-            linearity_fig.add_trace(go.Scatter(
-                x=self.model.get_series(series)['x'],
-                y=self.model.get_series(series)['x_calc'],
-                name="Series " + str(series),
-                mode="markers",
-                marker={
-                    'size': 10,
-                    'line': {
-                        'color': 'DarkSlateGrey',
-                        'width': 2
-                    }
-                }
-            ))
-        self.graphs['Linearity'] = linearity_fig
+            linearity_fig.add_trace(
+                go.Scatter(
+                    x=self.model.get_series(series)["x"],
+                    y=self.model.get_series(series)["x_calc"],
+                    name="Series " + str(series),
+                    mode="markers",
+                    marker={"size": 10, "line": {"color": "DarkSlateGrey", "width": 2}},
+                )
+            )
+        self.graphs["linearity"] = linearity_fig
 
         # Correction Graph
         if self.has_correction:
             correction_fig = go.Figure()
-            correction_y = x_data * self.correction_parameter['slope']['value'] + self.correction_parameter['intercept']['value']
-            correction_fig.add_trace(go.Scatter(
-                x=x_data,
-                y=correction_y,
-                mode="lines",
-                name="Linearity (No Correction)",
-            ))
+            correction_y = (
+                x_data * self.correction_parameter["slope"]["value"]
+                + self.correction_parameter["intercept"]["value"]
+            )
+            correction_fig.add_trace(
+                go.Scatter(
+                    x=x_data,
+                    y=correction_y,
+                    mode="lines",
+                    name="Linearity (No Correction)",
+                )
+            )
             for series in self.model.list_of_series():
-                correction_fig.add_trace(go.Scatter(
-                    x=self.model.get_series(series)['x'],
-                    y=self.model.get_series(series)['x_raw'],
-                    name="Series " + str(series) + " (No Correction)",
-                    mode="markers",
-                    marker={
-                        'size': 10,
-                        'line': {
-                            'color': 'DarkSlateGrey',
-                            'width': 2
-                        }
-                    }
-                ))
-            self.graphs['Correction'] = correction_fig
+                correction_fig.add_trace(
+                    go.Scatter(
+                        x=self.model.get_series(series)["x"],
+                        y=self.model.get_series(series)["x_raw"],
+                        name="Series " + str(series) + " (No Correction)",
+                        mode="markers",
+                        marker={
+                            "size": 10,
+                            "line": {"color": "DarkSlateGrey", "width": 2},
+                        },
+                    )
+                )
+            self.graphs["correction"] = correction_fig
 
         # Regression and Residual Graph
         if self.profile_data("regression_info").size > 0:
@@ -1709,70 +1587,69 @@ class Profile:
                 y0=0,
                 x1=1,
                 y1=0,
-                line={
-                    'color': 'Green',
-                },
+                line={"color": "Green",},
             )
             x_data_spread = np.linspace(x_data.min(), x_data.max(), 100)
             if type(self.model.root_function) == dict:
                 for index, regression in self.model.root_function.items():
-                    regression_fig.add_trace(go.Scatter(
+                    regression_fig.add_trace(
+                        go.Scatter(
+                            x=x_data_spread,
+                            y=list(map(regression, x_data_spread)),
+                            mode="lines",
+                            name="Series " + str(index),
+                        )
+                    )
+                    residual_fig.add_trace(
+                        go.Scatter(
+                            x=self.model.fit[index].fittedvalues,
+                            y=self.model.fit[index].resid,
+                            mode="markers",
+                            name="Series " + str(index),
+                            marker={
+                                "size": 10,
+                                "line": {"color": "DarkSlateGrey", "width": 2},
+                            },
+                        )
+                    )
+
+            else:
+                regression_fig.add_trace(
+                    go.Scatter(
                         x=x_data_spread,
-                        y=list(map(regression, x_data_spread)),
+                        y=list(map(self.model.root_function, x_data_spread)),
                         mode="lines",
-                        name="Series " + str(index)
-                    ))
-                    residual_fig.add_trace(go.Scatter(
-                        x=self.model.fit[index].fittedvalues,
-                        y=self.model.fit[index].resid,
+                        name="All Series",
+                    )
+                )
+                residual_fig.add_trace(
+                    go.Scatter(
+                        x=self.model.fit.fittedvalues,
+                        y=self.model.fit.resid,
+                        mode="markers",
+                        name="All Series",
+                        marker={
+                            "size": 10,
+                            "line": {"color": "DarkSlateGrey", "width": 2},
+                        },
+                    )
+                )
+            for index in self.model.list_of_series():
+                regression_fig.add_trace(
+                    go.Scatter(
+                        x=self.model.get_series(index)["x"],
+                        y=self.model.get_series(index)["y"],
                         mode="markers",
                         name="Series " + str(index),
                         marker={
-                            'size': 10,
-                            'line': {
-                                'color': 'DarkSlateGrey',
-                                'width': 2
-                            }
-                        }
-                    ))
+                            "size": 10,
+                            "line": {"color": "DarkSlateGrey", "width": 2},
+                        },
+                    )
+                )
 
-            else:
-                regression_fig.add_trace(go.Scatter(
-                    x=x_data_spread,
-                    y=list(map(self.model.root_function, x_data_spread)),
-                    mode="lines",
-                    name="All Series"
-                ))
-                residual_fig.add_trace(go.Scatter(
-                    x=self.model.fit.fittedvalues,
-                    y=self.model.fit.resid,
-                    mode="markers",
-                    name="All Series",
-                    marker={
-                        'size': 10,
-                        'line': {
-                            'color': 'DarkSlateGrey',
-                            'width': 2
-                        }
-                    }
-                ))
-            for index in self.model.list_of_series():
-                regression_fig.add_trace(go.Scatter(
-                    x=self.model.get_series(index)['x'],
-                    y=self.model.get_series(index)['y'],
-                    mode="markers",
-                    name="Series " + str(index),
-                    marker={
-                        'size': 10,
-                        'line': {
-                            'color': 'DarkSlateGrey',
-                            'width': 2
-                        }
-                    }
-                ))
-
-            self.graphs['Regression'] = regression_fig
-            self.graphs['Residual'] = residual_fig
+            self.graphs["regression"] = regression_fig
+            self.graphs["residual"] = residual_fig
 
         # Profile Graph
         profile_fig = go.Figure()
@@ -1781,92 +1658,82 @@ class Profile:
                 "introduced_concentration",
                 "recovery",
                 "tolerance_rel",
-                "acceptance_limits_rel"
-            ])
+                "acceptance_limits_rel",
+            ]
+        )
         if self.absolute_acceptance:
             uncertainty = self.get_profile_parameter(["uncertainty_abs"])
         else:
             uncertainty = self.get_profile_parameter(["uncertainty_pc"])
 
-        profile_fig.add_trace(go.Scatter(
-            x=profile_data['introduced_concentration'],
-            y=profile_data['recovery'],
-            name='Recovery',
-            mode='lines',
-            error_y={
-                'type': 'data',
-                'array': uncertainty,
-                'visible': True
-            },
-            line={
-                'color': 'green',
-            }
-        ))
-        profile_fig.add_trace(go.Scatter(
-            x=profile_data['introduced_concentration'],
-            y=profile_data['tolerance_rel_high'],
-            legendgroup='Tolerance',
-            name='Tolerance',
-            mode='lines',
-            line={
-                'color': 'blue',
-            }
-        ))
-        profile_fig.add_trace(go.Scatter(
-            x=profile_data['introduced_concentration'],
-            y=profile_data['tolerance_rel_low'],
-            legendgroup='Tolerance',
-            name='Tolerance',
-            mode='lines',
-            showlegend=False,
-            line={
-                'color': 'blue',
-            }
-        ))
-        profile_fig.add_trace(go.Scatter(
-            x=profile_data['introduced_concentration'],
-            y=profile_data['acceptance_limits_rel_high'],
-            legendgroup='Acceptance',
-            name='Acceptance limits',
-            mode='lines',
-            line={
-                'color': 'red',
-                'dash': 'dash'
-            }
-        ))
-        profile_fig.add_trace(go.Scatter(
-            x=profile_data['introduced_concentration'],
-            y=profile_data['acceptance_limits_rel_low'],
-            legendgroup='Acceptance',
-            name='Acceptance',
-            mode='lines',
-            showlegend=False,
-            line={
-                'color': 'red',
-                'dash': 'dash'
-            }
-        ))
+        profile_fig.add_trace(
+            go.Scatter(
+                x=profile_data["introduced_concentration"],
+                y=profile_data["recovery"],
+                name="Recovery",
+                mode="lines",
+                error_y={"type": "data", "array": uncertainty, "visible": True},
+                line={"color": "green",},
+            )
+        )
+        profile_fig.add_trace(
+            go.Scatter(
+                x=profile_data["introduced_concentration"],
+                y=profile_data["tolerance_rel_high"],
+                legendgroup="Tolerance",
+                name="Tolerance",
+                mode="lines",
+                line={"color": "blue",},
+            )
+        )
+        profile_fig.add_trace(
+            go.Scatter(
+                x=profile_data["introduced_concentration"],
+                y=profile_data["tolerance_rel_low"],
+                legendgroup="Tolerance",
+                name="Tolerance",
+                mode="lines",
+                showlegend=False,
+                line={"color": "blue",},
+            )
+        )
+        profile_fig.add_trace(
+            go.Scatter(
+                x=profile_data["introduced_concentration"],
+                y=profile_data["acceptance_limits_rel_high"],
+                legendgroup="Acceptance",
+                name="Acceptance limits",
+                mode="lines",
+                line={"color": "red", "dash": "dash"},
+            )
+        )
+        profile_fig.add_trace(
+            go.Scatter(
+                x=profile_data["introduced_concentration"],
+                y=profile_data["acceptance_limits_rel_low"],
+                legendgroup="Acceptance",
+                name="Acceptance",
+                mode="lines",
+                showlegend=False,
+                line={"color": "red", "dash": "dash"},
+            )
+        )
 
         for series in self.model.list_of_series():
             if self.absolute_acceptance:
-                y_data = self.model.get_series(series)['bias_abs']
+                y_data = self.model.get_series(series)["bias_abs"]
             else:
-                y_data = 100+self.model.get_series(series)['bias_rel']
-            profile_fig.add_trace(go.Scatter(
-                x=self.model.get_series(series)['x'],
-                y=y_data,
-                name="Series " + str(series),
-                mode="markers",
-                marker={
-                    'size': 10,
-                    'line': {
-                        'color': 'DarkSlateGrey',
-                        'width': 2
-                    }
-                }
-            ))
-        self.graphs['Profile'] = profile_fig
-
+                y_data = 100 + self.model.get_series(series)["bias_rel"]
+            profile_fig.add_trace(
+                go.Scatter(
+                    x=self.model.get_series(series)["x"],
+                    y=y_data,
+                    name="Series " + str(series),
+                    mode="markers",
+                    marker={"size": 10, "line": {"color": "DarkSlateGrey", "width": 2}},
+                )
+            )
+        self.graphs["profile"] = profile_fig
 
 
 class Optimizer:
@@ -1998,7 +1865,13 @@ class Optimizer:
         for profile_type in self.profiles.keys():
             for key, profile in enumerate(self.profiles[profile_type]):
                 temp_dataframe = pd.DataFrame(
-                    [[profile_type, key, profile.average_profile_parameter(parameter)[parameter][0]]],
+                    [
+                        [
+                            profile_type,
+                            key,
+                            profile.average_profile_parameter(parameter)[parameter][0],
+                        ]
+                    ],
                     columns=["Model", "Index", "average." + parameter],
                 )
                 return_value = return_value.append(temp_dataframe, ignore_index=True)

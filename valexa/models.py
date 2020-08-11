@@ -5,6 +5,7 @@ import numpy as np
 import copy
 import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
+from math import sqrt
 from sympy import lambdify, solveset, S
 from sympy.abc import x
 from sympy.sets.sets import EmptySet
@@ -110,7 +111,12 @@ class ModelsManager:
 
 class Model:
     def __init__(
-        self, data: DataObject, model_formula: str, model_weight: str, model_name: str, sigfig: int
+        self,
+        data: DataObject,
+        model_formula: str,
+        model_weight: str,
+        model_name: str,
+        sigfig: int,
     ):
 
         self.data: DataObject = copy.deepcopy(data)
@@ -120,26 +126,45 @@ class Model:
         self.root_function: Optional[Union[Callable, Dict[int, Callable]]] = None
         self.fit: Optional[FitInfo] = None
         self.sigfig: int = sigfig
+        self.miller_lod = None
         if len(self.list_of_series("validation")) == len(
             self.list_of_series("calibration")
         ):
             self.multiple_calibration: bool = True
             self.fit = {}
             self.root_function = {}
+            self.miller_lod = {}
             for series in self.list_of_series("calibration"):
                 self.fit[series] = self.__get_model_fit(series)
-                self.root_function[series] = self.__build_function_from_params(self.fit[series])
+                self.root_function[series] = self.__build_function_from_params(
+                    self.fit[series]
+                )
+                self.miller_lod[series] = self.__get_miller_lod(
+                    self.fit[series], self.root_function[series]
+                )
         else:
             self.multiple_calibration: bool = False
             self.fit = self.__get_model_fit()
             self.root_function = self.__build_function_from_params(self.fit)
+            self.miller_lod = self.__get_miller_lod(self.fit, self.root_function)
 
-        self.data.add_value(self.__get_model_roots, 'x_calc')
+        self.data.add_value(self.__get_model_roots, "x_calc")
         self.rsquared: Optional[float] = None
         if self.multiple_calibration:
             self.rsquared = np.mean([s.rsquared for s in self.fit.values()])
         else:
             self.rsquared = self.fit.rsquared
+
+    def __get_miller_lod(self, fit: FitInfo, function: callable) -> Optional[float]:
+        if "Intercept" in fit.params:
+            regression_intercept = (
+                0 if fit.params["Intercept"] < 0 else fit.params["Intercept"]
+            )
+        else:
+            regression_intercept = 0
+        miller_lod_y = regression_intercept + 3 * sqrt(fit.mse_resid)
+        miller_lod = solveset(function(x) - miller_lod_y, x, S.Reals)
+        return list(miller_lod)[0]
 
     def __get_model_fit(
         self, series: Optional[int] = None
@@ -186,9 +211,7 @@ class Model:
                 list_of_roots.append(None)
         return pd.Series(list_of_roots)
 
-    def __build_function_from_params(self,
-        fitted_function: FitInfo
-    ) -> Callable:
+    def __build_function_from_params(self, fitted_function: FitInfo) -> Callable:
         function_string: str = ""
         params_items = fitted_function.params.items()
         for param, value in params_items:
