@@ -186,9 +186,8 @@ class Model:
                 list_of_roots.append(None)
         return pd.Series(list_of_roots)
 
-    @staticmethod
-    def __build_function_from_params(
-        fitted_function: FitInfo, serie: Optional[int] = None
+    def __build_function_from_params(self,
+        fitted_function: FitInfo
     ) -> Callable:
         function_string: str = ""
         params_items = fitted_function.params.items()

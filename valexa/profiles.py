@@ -15,7 +15,10 @@ import pandas as pd
 import shapely.geometry
 import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
+from patsy.highlevel import dmatrix
 from scipy.stats import t
+from sympy import solveset, S
+from sympy.abc import x
 
 import valexa.helper as vx
 from valexa import models
@@ -765,6 +768,7 @@ class Profile:
         self.has_correction: bool = False
         self.correction_parameter: Optional[dict] = None
         self.correction_factor: Optional[float] = None
+        self.lod_type: Optional[str] = None
         if self.correction_allowed:
             self.generate_correction()
         self.calculate_bias()
@@ -941,18 +945,35 @@ class Profile:
 
         self.min_loq, self.max_loq = self.get_limits_of_quantification()
         if self.min_loq:
-            self.lod = self.get_lod
+            self.lod = self.get_lod()
             self.has_limits = True
         else:
             self.lod = None
         self.linearity = self.get_linearity
         self.generate_graphs()
 
-    @property
     def get_lod(self) -> float:
         base_lod = self.min_loq/3
+        full_regression = smf.wls(
+            formula=self.model.formula,
+            weights=dmatrix(self.model.weight, self.model.calibration_data),
+            data=self.model.calibration_data[['x','y']]
+        ).fit()
+        regression_intercept = 0 if full_regression.params['Intercept'] else full_regression.params['Intercept']
+        miller_lod_y = regression_intercept + 3 * math.sqrt(full_regression.mse_resid)
+        #TODO: Use Model Build Function
+        miller_lod = 0
+        if miller_lod > 0:
+            if miller_lod > base_lod:
+                self.lod_type = 'Miller'
+                return miller_lod
+            else:
+                self.lod_type = 'Base'
+                return base_lod
+        else:
+            self.lod_type = 'Base'
+            return base_lod
 
-        miller_lod =
 
     @property
     def get_linearity(self) -> (dict):
