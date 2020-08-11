@@ -941,12 +941,18 @@ class Profile:
 
         self.min_loq, self.max_loq = self.get_limits_of_quantification()
         if self.min_loq:
-            self.lod = self.min_loq / 3.3
+            self.lod = self.get_lod
             self.has_limits = True
         else:
             self.lod = None
         self.linearity = self.get_linearity
         self.generate_graphs()
+
+    @property
+    def get_lod(self) -> float:
+        base_lod = self.min_loq/3
+
+        miller_lod =
 
     @property
     def get_linearity(self) -> (dict):
