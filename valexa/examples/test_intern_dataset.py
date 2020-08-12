@@ -28,14 +28,12 @@ def test_intern_dataset():
         rolling_data=True,
         optimizer_parameter=optimizer_parameter,
         correction_allow=True,
-        generate_figure=True,
     )
     profiles.make_profiles(["Linear"])
     profiles.optimize()
 
     profiles.profiles["Linear"][1].summary()
 
-    assert profiles.profiles["Linear"][1].fig is not None
     return True
 
 

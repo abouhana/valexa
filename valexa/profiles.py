@@ -25,7 +25,6 @@ class ProfileManager:
     def __init__(
         self,
         compound_name: str,
-        compound_unit: str = None,
         data: Dict[str, pd.DataFrame],
         tolerance_limit: float = 80,
         acceptance_limit: float = 20,
@@ -34,7 +33,6 @@ class ProfileManager:
         rolling_data: bool = False,
         rolling_limit: Union[list, int] = 3,
         model_to_test: Union[List[str], str] = None,
-        generate_figure: bool = False,
         correction_allow: bool = False,
         correction_threshold: Optional[List[float]] = None,
         correction_forced_value: Optional[float] = None,
@@ -63,7 +61,6 @@ class ProfileManager:
         and the calibration data, in which case the order is [Validation, Calibration], defaults to 3.
         :param list? model_to_test: A list of model to test, if not set the system will test them all, defaults to
         None.
-        :param bool? generate_figure: Generate a plot of the profile, defaults to False.
         :param bool? correction_allow: If set to true, the model will be multiplied by a factor to bring the
         recovery close to 1, defaults to False
         :param list? correction_threshold: If allow_correction is set to True, these will overwrite the default
@@ -108,7 +105,6 @@ class ProfileManager:
 
         self.__set_rolling_data_limit(rolling_limit)
 
-        self.generate_figure: bool = generate_figure
         self.allow_correction: bool = correction_allow
         self.correction_round_to: int = correction_round_to
         self.forced_correction_value = None
@@ -307,8 +303,6 @@ class ProfileManager:
                 )
                 current_profile.calculate(self.stats_limits)
 
-                if self.generate_figure:
-                    current_profile.make_plot()
                 profiles.append(current_profile)
 
         return profiles
@@ -1316,7 +1310,7 @@ class Profile:
                 "list_of_levels_validation": self.model.list_of_levels().tolist(),
                 "absolute_acceptance": self.absolute_acceptance,
                 "average_recovery": roundsf(
-                    self.average_profile_parameter('recovery'), sigfig
+                    self.average_profile_parameter('recovery').recovery[0], sigfig
                 ),
                 "units": self.units,
                 "compound": self.compound,
