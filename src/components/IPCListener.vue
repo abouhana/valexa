@@ -65,12 +65,12 @@
                     if (this.profiler.listLocation<this.profileToTest.length) {
                         this.generateProfile(args.profiler, this.profiler.listLocation)
                     } else {
+                        loadBalancer.sendData(ipcRenderer, args.profiler, {
+                          data: 'EXIT'
+                        });
+                        this.destroyWorker({name: args.profiler})
                         if (this.getWorkersByStatus({status: 'idle'}).length === 0) {
                             this.setProfilerState({parameter: 'running', status: false})
-                            loadBalancer.sendData(ipcRenderer, args.profiler, {
-                                data: 'EXIT'
-                            });
-                            this.destroyWorker({name: args.profiler})
                         }
                     }
                 } else if (args.data !== 'START') {
@@ -90,7 +90,3 @@
         }
     }
 </script>
-
-<style scoped>
-
-</style>

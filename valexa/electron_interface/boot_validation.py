@@ -27,7 +27,7 @@ def valexa_validate():
             "name": "Feinberg, M. et al., Validation of Alternative Methods for the Analysis of Drinking Water and Their Application to Escherichia coli (2011)",
             "function": test_feinberg_coli,
             "index": 3,
-            "tested_profile": 2,
+            "tested_profile": 3,
         },
         {
             "name": "Huyez-Levrat, M et al., Cahier technique de l'INRA - Validation des méthodes (2010)",

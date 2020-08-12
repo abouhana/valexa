@@ -11,6 +11,7 @@ import pandas as pd
 import shapely.geometry
 import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
+import statsmodels.stats.outliers_influence as smout
 from scipy.stats import t
 
 import valexa.helper as vx
@@ -53,7 +54,7 @@ class ProfileManager:
         :param bool? acceptance_absolute: If True, the acceptance will be considered to be in absolute unit instead
         of percentage, defaults to False
         :param str? quantity_units: The units (%, mg/l, ppm, ...) of the introduced dataset. This is only to
-        ease the reading of the output, default to None
+        ease the reading of the output, default to None.
         :param bool? rolling_data: If this is set to True, the system will do multiple iteration with the dataset
         and generate multiple profile with each subset of dataset, defaults to False.
         :param list? rolling_limit: In combination with rolling_data, this is the minimum length of the subset
@@ -76,13 +77,13 @@ class ProfileManager:
         using the optimizer, default to None
         :param int? significant_figure: Set the number of significant figure to take into account during the
         analysis. Setting this to 0 will remove any rounding, defaults to 4
-        :param list? lod_allowed: List the allowed type of LOD calculation, Base use LOQ/3.3, Miller use the regression
-        standard deviation (Miller & Miller, 2010), if set to None, it will try both, defaults to None
+        :param list? lod_allowed: List the allowed type of LOD calculation, LOQ/3.3 is self-describing, Miller use the
+        regression standard deviation (Miller & Miller, 2010), if set to None, it will try both, defaults to None
         :param bool? lod_force_miller: Force the use of Miller & Miller calculation method for the LOD determination,
         defaults to False
         """
         self.compound_name: str = compound_name
-        self.quantity_units: str = quantity_units
+        self.quantity_units: str = quantity_units if quantity_units is not None else 'No Units'
         self.stats_limits: Dict[str, float] = {
             "Tolerance": tolerance_limit,
             "Acceptance": acceptance_limit,
@@ -93,7 +94,7 @@ class ProfileManager:
         self.data: Dict[str, pd.DataFrame] = data
         self.sigfig: int = significant_figure
         if lod_allowed is None:
-            self.lod_allowed: list = ['Base', 'Miller']
+            self.lod_allowed: list = ['LOQ/3.3', 'Miller']
         else:
             self.lod_allowed: list = lod_allowed
         self.lod_force_miller: bool = lod_force_miller
@@ -298,8 +299,8 @@ class ProfileManager:
                     self.sigfig,
                     self.lod_allowed,
                     self.lod_force_miller,
-                    self.quantity_units,
-                    self.compound_name
+                    self.compound_name,
+                    self.quantity_units
                 )
                 current_profile.calculate(self.stats_limits)
 
@@ -758,7 +759,7 @@ class Profile:
         absolute_acceptance: bool = False,
         correction_round_to: int = 2,
         sigfig: int = 4,
-        lod_allowed: list = ["Base", "Miller"],
+        lod_allowed: list = ["LOQ/3.3", "Miller"],
         lod_force_miller: bool = False,
         compound: str= None,
         units: str = None
@@ -995,10 +996,10 @@ class Profile:
                     self.lod_type = "Miller"
                     return miller_lod
                 else:
-                    self.lod_type = "Base"
+                    self.lod_type = "LOQ/3.3"
                     return base_lod
             else:
-                self.lod_type = "Base"
+                self.lod_type = "LOQ/3.3"
                 return base_lod
 
     @property
@@ -1304,6 +1305,8 @@ class Profile:
                 "forced_correction_value": roundsf(
                     self.forced_correction_value, sigfig
                 ),
+                "has_correction": self.has_correction,
+                "has_limits": self.has_limits,
                 "number_of_series_validation": len(self.model.list_of_series()),
                 "number_of_levels_validation": len(self.model.list_of_levels()),
                 "list_of_series_validation": self.model.list_of_series().tolist(),
@@ -1537,6 +1540,25 @@ class Profile:
                     marker={"size": 10, "line": {"color": "DarkSlateGrey", "width": 2}},
                 )
             )
+
+        linearity_fig.update_layout(
+            title={
+                'text': 'Lineartiy Plot',
+                'xanchor': 'center',
+                'yanchor': 'bottom',
+                'y': 0.9,
+                'x': 0.5,
+            },
+            legend={
+                'orientation': 'h',
+                'yanchor': 'bottom',
+                'y': 1.02,
+                'xanchor': 'right',
+                'x': 1
+            },
+            xaxis_title='Expected (' + self.units + ')',
+            yaxis_title='Calculated (' + self.units + ')',
+        )
         self.graphs["linearity"] = linearity_fig
 
         # Correction Graph
@@ -1551,7 +1573,7 @@ class Profile:
                     x=x_data,
                     y=correction_y,
                     mode="lines",
-                    name="Linearity (No Correction)",
+                    name="Linearity",
                 )
             )
             for series in self.model.list_of_series():
@@ -1559,7 +1581,7 @@ class Profile:
                     go.Scatter(
                         x=self.model.get_series(series)["x"],
                         y=self.model.get_series(series)["x_raw"],
-                        name="Series " + str(series) + " (No Correction)",
+                        name="Series " + str(series),
                         mode="markers",
                         marker={
                             "size": 10,
@@ -1567,12 +1589,32 @@ class Profile:
                         },
                     )
                 )
+
+            correction_fig.update_layout(
+                title={
+                    'text': 'Lineartiy Plot with no correction',
+                    'xanchor': 'center',
+                    'yanchor': 'bottom',
+                    'y': 0.9,
+                    'x': 0.5,
+                },
+                legend={
+                    'orientation': 'h',
+                    'yanchor': 'bottom',
+                    'y': 1.02,
+                    'xanchor': 'right',
+                    'x': 1
+                },
+                xaxis_title='Expected (' + self.units + ')',
+                yaxis_title='Calculated (' + self.units + ')',
+            )
             self.graphs["correction"] = correction_fig
 
         # Regression and Residual Graph
         if self.profile_data("regression_info").size > 0:
             regression_fig = go.Figure()
             residual_fig = go.Figure()
+            residual_std_fig = go.Figure()
             residual_fig.add_shape(
                 type="line",
                 xref="paper",
@@ -1581,7 +1623,17 @@ class Profile:
                 y0=0,
                 x1=1,
                 y1=0,
-                line={"color": "Green",},
+                line={"color": "Green"},
+            )
+            residual_std_fig.add_shape(
+                type="line",
+                xref="paper",
+                yref="y",
+                x0=0,
+                y0=0,
+                x1=1,
+                y1=0,
+                line={"color": "Green"},
             )
             x_data_spread = np.linspace(x_data.min(), x_data.max(), 100)
             if type(self.model.root_function) == dict:
@@ -1598,6 +1650,18 @@ class Profile:
                         go.Scatter(
                             x=self.model.fit[index].fittedvalues,
                             y=self.model.fit[index].resid,
+                            mode="markers",
+                            name="Series " + str(index),
+                            marker={
+                                "size": 10,
+                                "line": {"color": "DarkSlateGrey", "width": 2},
+                            },
+                        )
+                    )
+                    residual_std_fig.add_trace(
+                        go.Scatter(
+                            x=self.model.fit[index].fittedvalues,
+                            y=smout.OLSInfluence(self.model.fit[index]).resid_std,
                             mode="markers",
                             name="Series " + str(index),
                             marker={
@@ -1628,6 +1692,18 @@ class Profile:
                         },
                     )
                 )
+                residual_std_fig.add_trace(
+                    go.Scatter(
+                        x=self.model.fit.fittedvalues,
+                        y=smout.OLSInfluence(self.model.fit).resid_std,
+                        mode="markers",
+                        name="All Series",
+                        marker={
+                            "size": 10,
+                            "line": {"color": "DarkSlateGrey", "width": 2},
+                        },
+                    )
+                )
             for index in self.model.list_of_series():
                 regression_fig.add_trace(
                     go.Scatter(
@@ -1642,8 +1718,63 @@ class Profile:
                     )
                 )
 
+            regression_fig.update_layout(
+                title={
+                    'text': 'Regression Plot',
+                    'xanchor': 'center',
+                    'yanchor': 'bottom',
+                    'y': 0.9,
+                    'x': 0.5,
+                },
+                legend={
+                    'orientation': 'h',
+                    'yanchor': 'bottom',
+                    'y': 1.02,
+                    'xanchor': 'right',
+                    'x': 1
+                },
+                xaxis_title='Expected (' + self.units + ')',
+                yaxis_title='Signal',
+            )
+            residual_fig.update_layout(
+                title={
+                    'text': 'Residual Plot',
+                    'xanchor': 'center',
+                    'yanchor': 'bottom',
+                    'y': 0.9,
+                    'x': 0.5,
+                },
+                legend={
+                    'orientation': 'h',
+                    'yanchor': 'bottom',
+                    'y': 1.02,
+                    'xanchor': 'right',
+                    'x': 1
+                },
+                xaxis_title='Fitted (' + self.units + ')',
+                yaxis_title='Residual',
+            )
+            residual_std_fig.update_layout(
+                title={
+                    'text': 'Internally Studentized Residual Plot',
+                    'xanchor': 'center',
+                    'yanchor': 'bottom',
+                    'y': 0.9,
+                    'x': 0.5,
+                },
+                legend={
+                    'orientation': 'h',
+                    'yanchor': 'bottom',
+                    'y': 1.02,
+                    'xanchor': 'right',
+                    'x': 1
+                },
+                xaxis_title='Fitted (' + self.units + ')',
+                yaxis_title='Internally Studentized Residual',
+            )
             self.graphs["regression"] = regression_fig
             self.graphs["residual"] = residual_fig
+            self.graphs["residual_std"] = residual_std_fig
 
         # Profile Graph
         profile_fig = go.Figure()
@@ -1727,6 +1858,25 @@ class Profile:
                     marker={"size": 10, "line": {"color": "DarkSlateGrey", "width": 2}},
                 )
             )
+
+        profile_fig.update_layout(
+            title={
+                'text': 'Accuracy Profile',
+                'xanchor': 'center',
+                'yanchor': 'bottom',
+                'y': 0.9,
+                'x': 0.5,
+            },
+            legend={
+                'orientation': 'h',
+                'yanchor': 'bottom',
+                'y': 1.02,
+                'xanchor': 'right',
+                'x': 1
+            },
+            xaxis_title='Level (' + self.units + ')',
+            yaxis_title='Bias',
+        )
         self.graphs["profile"] = profile_fig
 
 

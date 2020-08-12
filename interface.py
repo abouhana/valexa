@@ -18,7 +18,7 @@ def main(arguments):
             dumps('READY')
             while(True):
                 in_stream_data = input()
-                if in_stream_data == "EXIT":
+                if in_stream_data == '"EXIT"':
                     print("EXIT")
                     exit(0)
                 parsed_stream_data = loads(in_stream_data)
