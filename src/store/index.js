@@ -29,9 +29,11 @@ export default new Vuex.Store({
     },
 
     averageTimePerProfile: 0,
+
     loadBalancerProc: 0,
 
     listOfProfile: {},
+
     listOfProfileCompleted: true,
 
     stateLoading: {
@@ -39,18 +41,22 @@ export default new Vuex.Store({
       backend: false,
       profiles: false
     },
+
     loadingStatus: {
       validation: '',
       backend: ''
     },
 
     compounds: {},
+
     settings: {
       default: { appliesTo: [] }
     },
+
     profileToTest: [],
 
     profileParams: {},
+
     profileGenerationParams: {},
 
     modelParams: {},
@@ -284,6 +290,11 @@ export default new Vuex.Store({
 
     setMaxWorkers (state, parameter) {
       state.profiler.maxWorkers = parameter.max
+    },
+
+    resetProfile (state) {
+      state.profiler.listLocation = 0
+      state.listOfProfile = {}
     }
   },
 

@@ -26,12 +26,9 @@
                             Gen
                         </v-btn>
                         <v-btn
+                            @click="resetProfileButton"
                         >
-                            Close
-                        </v-btn>
-                        <v-btn
-                        >
-                            Print
+                            Reset
                         </v-btn>
                     </div>
                 </v-card-text>
@@ -110,7 +107,8 @@
                 'setProfilerState',
                 'setProfileToTest',
                 'setProfilerWorkerState',
-                'increaseProfilerListLocation'
+                'increaseProfilerListLocation',
+                'resetProfile'
             ]),
             startThread: function() {
                 this.setProfilerState({parameter: 'running', status: true})
@@ -120,6 +118,10 @@
                         loadBalancer.start(ipcRenderer, 'profiler' + j)
                     }
                 }
+            },
+            resetProfileButton: function () {
+              this.setProfileToTest()
+              this.resetProfile()
             },
             startProfileGeneration: function () {
 
