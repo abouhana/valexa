@@ -897,7 +897,7 @@ class Profile:
                 value_dict: dict = {}
                 for index, level in self.profile_levels.items():
                     value_dict[index] = getattr(level, parameter)
-                if np.array(list(value_dict.values())[0]).size > 1:
+                if type(list(value_dict.values())[0])==pd.Series:
                     params_list = pd.concat([params_list, pd.DataFrame(value_dict)])
                 else:
                     params_list = pd.concat(
@@ -923,8 +923,7 @@ class Profile:
                         value_dict: dict = {}
                         for index, fit in self.model.fit.items():
                             value_dict[index] = getattr(fit, parameter)
-
-                        if np.array(list(value_dict.values())[0]).size > 1:
+                        if type(list(value_dict.values())[0])==pd.Series:
                             params_list = pd.concat(
                                 [params_list, pd.DataFrame(value_dict)]
                             )
@@ -932,7 +931,22 @@ class Profile:
                             params_list = pd.concat(
                                 [
                                     params_list,
-                                    pd.DataFrame(value_dict, index=[parameter]),
+                                    pd.DataFrame(value_dict, index=[parameter])
+                                ]
+                            )
+                    elif hasattr(self.model, parameter):
+                        value_dict: dict = {}
+                        for index, param in getattr(self.model, parameter).items():
+                            value_dict[index] = param
+                        if type(list(value_dict.values())[0]) == pd.Series:
+                            params_list = pd.concat(
+                                [params_list, pd.DataFrame(value_dict)]
+                            )
+                        else:
+                            params_list = pd.concat(
+                                [
+                                    params_list,
+                                    pd.DataFrame(value_dict, index=[parameter])
                                 ]
                             )
                     else:
@@ -942,8 +956,15 @@ class Profile:
                 else:
                     if hasattr(self.model.fit, parameter):
                         value = getattr(self.model.fit, parameter)
-
-                        if np.array(value).size > 1:
+                        if type(value) == pd.Series:
+                            params_list = pd.concat([params_list, pd.DataFrame(value)])
+                        else:
+                            params_list = pd.concat(
+                                [params_list, pd.DataFrame([value], index=[parameter])]
+                            )
+                    elif hasattr(self.model, parameter):
+                        value = getattr(self.model, parameter)
+                        if type(value) == pd.Series:
                             params_list = pd.concat([params_list, pd.DataFrame(value)])
                         else:
                             params_list = pd.concat(
@@ -951,7 +972,7 @@ class Profile:
                             )
                     else:
                         warn(
-                            "The model fits do not have an attribute named " + parameter
+                            "The model fit do not have an attribute named " + parameter
                         )
 
             if len(params_list) > 0:
@@ -1268,7 +1289,8 @@ class Profile:
         if hasattr(self.model, "fit"):
             regression_info = self.get_model_parameter(
                 ["params", "rsquared", "f_pvalue"]
-            )
+            ).applymap(lambda x: roundsf(x, sigfig))
+            regression_info['function_string'] = self.get_model_parameter('function_string')
         else:
             regression_info = pd.DataFrame(None)
 
@@ -1543,7 +1565,7 @@ class Profile:
 
         linearity_fig.update_layout(
             title={
-                'text': 'Lineartiy Plot',
+                'text': 'Linearity Plot',
                 'xanchor': 'center',
                 'yanchor': 'bottom',
                 'y': 0.9,
@@ -1592,7 +1614,7 @@ class Profile:
 
             correction_fig.update_layout(
                 title={
-                    'text': 'Lineartiy Plot with no correction',
+                    'text': 'Linearity Plot with no correction',
                     'xanchor': 'center',
                     'yanchor': 'bottom',
                     'y': 0.9,
@@ -1773,8 +1795,8 @@ class Profile:
                 yaxis_title='Internally Studentized Residual',
             )
             self.graphs["regression"] = regression_fig
-            self.graphs["residual"] = residual_fig
-            self.graphs["residual_std"] = residual_std_fig
+            self.graphs["residuals"] = residual_fig
+            self.graphs["residuals_std"] = residual_std_fig
 
         # Profile Graph
         profile_fig = go.Figure()

@@ -6,7 +6,7 @@ import copy
 import statsmodels.formula.api as smf
 import statsmodels.regression.linear_model as sm
 from math import sqrt
-from sympy import lambdify, solveset, S
+from sympy import lambdify, solveset, S, simplify
 from sympy.abc import x
 from sympy.sets.sets import EmptySet
 from patsy.highlevel import dmatrix
@@ -133,19 +133,22 @@ class Model:
             self.multiple_calibration: bool = True
             self.fit = {}
             self.root_function = {}
+            self.function_string = {}
             self.miller_lod = {}
             for series in self.list_of_series("calibration"):
                 self.fit[series] = self.__get_model_fit(series)
-                self.root_function[series] = self.__build_function_from_params(
+                self.function_string[series] = self.__build_function_from_params(
                     self.fit[series]
                 )
+                self.root_function[series] = lambdify(x, self.function_string[series])
                 self.miller_lod[series] = self.__get_miller_lod(
                     self.fit[series], self.root_function[series]
                 )
         else:
             self.multiple_calibration: bool = False
             self.fit = self.__get_model_fit()
-            self.root_function = self.__build_function_from_params(self.fit)
+            self.function_string = self.__build_function_from_params(self.fit)
+            self.root_function = lambdify(x, self.function_string)
             self.miller_lod = self.__get_miller_lod(self.fit, self.root_function)
 
         self.data.add_value(self.__get_model_roots, "x_calc")
@@ -211,17 +214,17 @@ class Model:
                 list_of_roots.append(None)
         return pd.Series(list_of_roots)
 
-    def __build_function_from_params(self, fitted_function: FitInfo) -> Callable:
+    def __build_function_from_params(self, fitted_function: FitInfo) -> str:
         function_string: str = ""
         params_items = fitted_function.params.items()
         for param, value in params_items:
             if param == "Intercept":
-                function_string += "+" + str(value)
+                function_string += "+" + str(roundsf(value, self.sigfig))
             elif param.startswith("I("):
-                function_string += "+" + str(value) + "*" + param[2:-1]
+                function_string += "+" + str(roundsf(value, self.sigfig)) + "*" + param[2:-1]
             else:
-                function_string += "+" + str(value) + "*" + param
-        return lambdify(x, function_string)
+                function_string += "+" + str(roundsf(value, self.sigfig)) + "*" + param
+        return str(simplify(function_string))
 
     def get_level(
         self, level: int, series_type: str = "validation"
