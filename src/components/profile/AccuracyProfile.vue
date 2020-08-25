@@ -2,7 +2,10 @@
   <div>
     <TableValidationSummary :table-data="profileData.model_info"/>
     <GraphProfile :graph-data="profileData.graphs.profile"/>
+    <TableValidationTrueness :table-data="profileData"/>
+    <TableValidationPrecision :table-data="profileData"/>
     <TableValidationData :table-data="profileData.validation_data"/>
+    <v-divider dark></v-divider>
     <GraphLinearity :graphs-data="profileData.graphs" :has-correction="profileData.model_info.has_correction"/>
     <TableLinearity v-if="profileData.model_info.has_correction"
         :linearity-data="profileData.linearity_info"
@@ -31,9 +34,13 @@
     import GraphRegression from "./table/GraphRegression";
     import TableLinearity from "./table/TableLinearity";
     import GraphResiduals from "./table/GraphResiduals";
+    import TableValidationTrueness from "./table/TableValidationTrueness";
+    import TableValidationPrecision from "./table/TableValidationPrecision";
 
     export default {
         components: {
+          TableValidationPrecision,
+          TableValidationTrueness,
           GraphResiduals,
           TableLinearity,
           GraphRegression,

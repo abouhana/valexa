@@ -1,7 +1,7 @@
 <template>
   <v-row>
     <v-col>
-      <h3>Validation Data</h3>
+      <span class="text-h5">Validation Data</span>
       <v-data-table
         dense
         :headers="headers"
