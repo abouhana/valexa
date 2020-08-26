@@ -38,10 +38,15 @@ def format_json_to_data(data):
                 [calibration_dataframe, temp_dataframe], ignore_index=True
             )
 
-    return {
-        "Validation": validation_dataframe,
-        "Calibration": calibration_dataframe,
-    }
+        return {
+            "Validation": validation_dataframe,
+            "Calibration": calibration_dataframe,
+        }
+
+    else:
+        return {
+            "Validation": validation_dataframe
+        }
 
 
 def roundsf(data, sigfig):

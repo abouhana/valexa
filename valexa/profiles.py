@@ -759,25 +759,27 @@ class Profile:
         absolute_acceptance: bool = False,
         correction_round_to: int = 2,
         sigfig: int = 4,
-        lod_allowed: list = ["LOQ/3.3", "Miller"],
+        lod_allowed: list = None,
         lod_force_miller: bool = False,
         compound: str= None,
         units: str = None
     ):
+        if lod_allowed is None:
+            lod_allowed = ["LOQ/3.3", "Miller"]
         self.model = model
         self.compound = compound
         self.units = units
         self.acceptance_interval: List[float] = []
         self.absolute_acceptance: bool = absolute_acceptance
-        self.acceptance_limit: float = None
-        self.tolerance_limit: float = None
+        self.acceptance_limit: Optional[float] = None
+        self.tolerance_limit: Optional[float] = None
         self.min_loq: Optional[float] = None
         self.max_loq: Optional[float] = None
         self.lod: Optional[float] = None
         self.has_limits: bool = False
         self.image_data = None
         self.fig = None
-        self.sigfig = sigfig
+        self.sigfig: int = sigfig
         self.correction_allowed: bool = correction_allowed
         self.correction_threshold: Optional[List[float]] = correction_threshold
         self.forced_correction_value: Optional[float] = forced_correction_value
@@ -1003,11 +1005,10 @@ class Profile:
 
     def get_lod(self) -> float:
         base_lod = self.min_loq / 3.3
+        miller_lod = None
         if "Miller" in self.lod_allowed:
             if self.model.calibration_data is not None:
                 miller_lod = pd.Series(self.model.miller_lod).mean()
-            else:
-                miller_lod = None
         if self.lod_force_miller:
             self.lod_type = "Miller"
             return miller_lod
@@ -1033,8 +1034,9 @@ class Profile:
         slope: float = x_plot.params["x"]
 
         return {
-            "slope": {"value": slope, "p_value": x_plot.pvalues["x"]},
-            "intercept": {"value": intercept, "p_value": x_plot.pvalues["Intercept"]},
+            "slope": {"value": slope, "p_value": x_plot.pvalues["x"], "std_error": x_plot.bse["x"]},
+            "intercept": {"value": intercept, "p_value": x_plot.pvalues["Intercept"], "std_error": x_plot.bse["Intercept"]},
+            "rsquared": {"value": x_plot.rsquared, "p_value": x_plot.f_pvalue, "std_error": ""}
         }
 
     def get_limits_of_quantification(self) -> (float, float):
@@ -1271,7 +1273,8 @@ class Profile:
             if (
                 level_tolerance.iloc[0]["lower_inside"]
                 and level_tolerance.iloc[0]["upper_inside"]
-            ):  # check if first point is between bound, since there are no intersect, the last point should be in bounds
+            ):
+                # check if first point is between bound, if there are no intersect, the last point should be in bounds
                 max_loq = level_tolerance.iloc[-1]["x_coord"]
                 min_loq = level_tolerance.iloc[0]["x_coord"]
 
@@ -1455,11 +1458,13 @@ class Profile:
             self.has_correction = True
 
             self.correction_parameter = {
-                "slope": {"value": slope, "p_value": x_plot.pvalues["x"]},
+                "slope": {"value": slope, "p_value": x_plot.pvalues["x"], "std_error": x_plot.bse["x"]},
                 "intercept": {
                     "value": intercept,
                     "p_value": x_plot.pvalues["Intercept"],
+                    "std_error": x_plot.bse["Intercept"]
                 },
+                "rsquared": {"value": x_plot.rsquared, "p_value": x_plot.f_pvalue, "std_error": ""}
             }
 
             corrected_value: pd.Series = pd.Series(
@@ -1726,13 +1731,14 @@ class Profile:
                         },
                     )
                 )
-            for index in self.model.list_of_series():
+
+            for index in self.model.list_of_series('calibration'):
                 regression_fig.add_trace(
                     go.Scatter(
-                        x=self.model.get_series(index)["x"],
-                        y=self.model.get_series(index)["y"],
+                        x=self.model.get_series(index, 'calibration')["x"],
+                        y=self.model.get_series(index, 'calibration')["y"],
                         mode="markers",
-                        name="Series " + str(index),
+                        name="Series " + str(index) if self.model.list_of_series('calibration').size > 1 else "All Series",
                         marker={
                             "size": 10,
                             "line": {"color": "DarkSlateGrey", "width": 2},
@@ -1774,7 +1780,7 @@ class Profile:
                     'x': 1
                 },
                 xaxis_title='Fitted (' + self.units + ')',
-                yaxis_title='Residual',
+                yaxis_title='Residuals',
             )
             residual_std_fig.update_layout(
                 title={
@@ -1792,7 +1798,7 @@ class Profile:
                     'x': 1
                 },
                 xaxis_title='Fitted (' + self.units + ')',
-                yaxis_title='Internally Studentized Residual',
+                yaxis_title='Internally Studentized Residuals',
             )
             self.graphs["regression"] = regression_fig
             self.graphs["residuals"] = residual_fig

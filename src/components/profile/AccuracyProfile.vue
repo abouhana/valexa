@@ -4,24 +4,24 @@
     <GraphProfile :graph-data="profileData.graphs.profile"/>
     <TableValidationTrueness :table-data="profileData"/>
     <TableValidationPrecision :table-data="profileData"/>
+    <TableValidationUncertainty :table-data="profileData"/>
+    <GraphLinearity
+        v-if="profileData.regression_info.length > 0"
+        :graphs-data="profileData.graphs"
+        :has-correction="profileData.model_info.has_correction"
+        :table-data="profileData"
+    />
     <TableValidationData :table-data="profileData.validation_data"/>
-    <v-divider dark></v-divider>
-    <GraphLinearity :graphs-data="profileData.graphs" :has-correction="profileData.model_info.has_correction"/>
-    <TableLinearity v-if="profileData.model_info.has_correction"
-        :linearity-data="profileData.linearity_info"
-        :has-correction="profileData.model_info.has_correction"
-        :correction-data="profileData.correction_info"
-    />
-    <TableLinearity v-else
-        :linearity-data="profileData.linearity_info"
-        :has-correction="profileData.model_info.has_correction"
-    />
-    <GraphRegression :graph-data="profileData.graphs.regression"/>
-    <GraphResiduals
-        :residuals-data="profileData.graphs.residuals"
-        :residuals-student-data="profileData.graphs.residuals_std"
-    />
-
+    <span v-if="profileData.regression_info.length > 0">
+      <v-divider dark></v-divider>
+      <TableRegressionParams :table-data="profileData"/>
+      <GraphRegression :graph-data="profileData.graphs.regression"/>
+      <GraphResiduals
+          :residuals-data="profileData.graphs.residuals"
+          :residuals-student-data="profileData.graphs.residuals_std"
+      />
+      <TableCalibrationData :table-data="profileData.calibration_data"/>
+    </span>
   </div>
 </template>
 
@@ -36,9 +36,15 @@
     import GraphResiduals from "./table/GraphResiduals";
     import TableValidationTrueness from "./table/TableValidationTrueness";
     import TableValidationPrecision from "./table/TableValidationPrecision";
+    import TableValidationUncertainty from "./table/TableValidationUncertainty";
+    import TableRegressionParams from "./table/TableRegressionParams";
+    import TableCalibrationData from "./table/TableCalibrationData";
 
     export default {
         components: {
+          TableCalibrationData,
+          TableRegressionParams,
+          TableValidationUncertainty,
           TableValidationPrecision,
           TableValidationTrueness,
           GraphResiduals,
@@ -68,11 +74,8 @@
                 return this.getProfile({id: this.profileId, compoundName: this.compoundName})
             },
         },
-
-        data () {
-            return {
-
-            }
+        mounted: function () {
+          console.log(this.profileData.regression_info.length)
         }
     }
 

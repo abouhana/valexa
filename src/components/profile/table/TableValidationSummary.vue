@@ -9,7 +9,9 @@
           <v-row>
             <v-col>
               <v-simple-table
-                dense>
+                dense
+                class="elevation-1"
+              >
                   <thead>
                     <tr>
                       <th class="text-left">Parameter</th>
@@ -34,7 +36,9 @@
             </v-col>
             <v-col>
               <v-simple-table
-                  dense>
+                  dense
+                  class="elevation-1"
+              >
                 <thead>
                   <tr>
                     <th class="text-left">Parameter</th>
