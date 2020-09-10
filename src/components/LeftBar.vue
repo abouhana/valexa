@@ -53,6 +53,11 @@
                         text: 'Profiles',
                         to: 'profiles'
                     },
+                    firstApp: {
+                          icon: 'mdi-tune',
+                          text: 'First App Alizee',
+                          to: 'firstAppVue'
+                      },
                 }
             }
     }
