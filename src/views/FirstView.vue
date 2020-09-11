@@ -23,18 +23,7 @@
                 <v-row>
                     <v-col>
                         <v-card shaped flat>
-
-                          <div id="app-6">
-                            <p>{{ message }}</p>
-                            <input v-model="message">
-                          </div>
-                          <div id="app-5">
-                            <p>{{ message }}</p>
-                            <button v-on:click="reverseMessage">Message retourné</button>
-                          </div>
-                          <compAlizee
-                            v-bind:tod="groceryList"
-                          ></compAlizee>   <!--tod = props spécifique a compAlizee-->
+                          <compAlizee v-bind:tod="groceryList" v-bind:propE="{id: 'non', a: true}"></compAlizee>   <!--tod = props spécifique a compAlizee-->
                           <!--composant d'affichage d'une liste en lui fournissant les données-->
                         </v-card>
                     </v-col>
@@ -55,15 +44,13 @@
     data: () => ({
       message: 'Hello Vue !',
       groceryList: [
-          { id: 0, text: 'Légumes' },
+        { id: 'ui' }, // objet
         { id: 1, text: 'Fromage' },
-        { id: 2, text: 'Tout ce que les humains sont supposés manger' }
-      ]
+        { id: 2, text: 'Tout ce que les humains sont supposés manger'}
+      ] // Array d'objets
     }),
     methods: {
-      reverseMessage: function () {
-        this.message = this.message.split('').reverse().join('')
-      }
+
     }
   }
 </script>

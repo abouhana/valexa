@@ -9,10 +9,15 @@
   export default {
     name: "compAlizee",
     props:{
+
       tod: {
-        id: Number,
-        text: String
+        Array: [{   // Array d'objets avec les propriétés ci dessous
+          id: Number,
+          text: String
+        }]
       }
+
+
     }
   }
 </script>
