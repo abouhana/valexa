@@ -6,6 +6,7 @@ import DataView from "../views/DataView";
 import LoadingView from "../views/LoadingView";
 import SettingsView from "../views/SettingsView";
 import FirstView from "../views/FirstView";
+import SecondView from "../views/SecondView";
 
 Vue.use(VueRouter)
 
@@ -34,7 +35,12 @@ Vue.use(VueRouter)
     path: '/firstAppVue',
     name: 'firstAppVue',
     component: FirstView
-  }
+  },
+  {
+    path: '/secondView',
+    name: 'secondView',
+    component: SecondView
+  },
 ]
 
 const router = new VueRouter({

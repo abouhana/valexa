@@ -47,7 +47,7 @@ export default new Vuex.Store({
       backend: ''
     },
 
-    compounds: {},
+    compounds: {},  // objet: composés analysés ?
 
     settings: {
       default: { appliesTo: [] }
@@ -60,6 +60,18 @@ export default new Vuex.Store({
     profileGenerationParams: {},
 
     modelParams: {},
+
+    // ALIZEE
+    dataListAB: [
+          {id: 1, nom: 'Bob', age: 10, animal: 'chat', gentil: false},
+          {id: 2, nom: 'Lala', age: 11, animal: 'lapin', gentil: true},
+          {id: 3, nom: 'Antoine', age: 12, animal: 'cheval', gentil: false},
+          {id: 4, nom: 'Lolo', age: 13, animal: 'lapin', gentil: true},
+          {id: 5, nom: 'Poulin', age: 14, animal: 'veau', gentil: false},
+          {id: 6, nom: 'Lili', age: 15, animal: 'lapin', gentil: true},
+      ],
+
+    animaux: ['chien', 'chat', 'oiseau', 'cheval', 'lapin', 'veau']
   },
 
   mutations: {
@@ -295,7 +307,48 @@ export default new Vuex.Store({
     resetProfile (state) {
       state.profiler.listLocation = 0
       state.listOfProfile = {}
+    },
+
+
+    //ALIZEE
+    removeDataListAB(state, parameter){
+      state.dataListAB.splice(state.dataListAB.findIndex(o => o.id === parameter.id), 1)
+    },
+
+    addDataListAB(state, parameter){  // TODO
+      if(parameter.hasOwnProperty('id')
+          && state.dataListAB.filter(o => o.id === parameter.id).length !== 0){  // verification pas de doublon d'id
+        // bon parameter.id
+      }else{  // ajout/modif propriete parameter.id
+        Object.defineProperty(parameter, 'id', {value: Math.max( ...state.dataListAB['id']) + 1})
+      }
+      state.dataListAB.push(parameter)
+    },
+
+    changeDataListAB(state, parameter){
+      var elemModif = state.dataListAB.filter(o => o.id === parameter.id) // array d'1 objet (normalement)
+      if(elemModif.length === 1){  // id non modifié !
+        elemModif[0].nom = parameter.hasOwnProperty('nom') ? parameter.nom : elemModif[0].nom
+        elemModif[0].age = parameter.hasOwnProperty('age') ? parameter.age : elemModif[0].age
+        elemModif[0].animal = parameter.hasOwnProperty('animal') ? parameter.animal : elemModif[0].animal
+        elemModif[0].gentil = parameter.hasOwnProperty('gentil') ? parameter.gentil : elemModif[0].gentil
+      }else{ // erreur nom changement
+
+      }
+
+    },
+
+    setDataListAB(state, parameter){
+      var proprieteDataListAB = ['nom', 'age', 'animal', 'gentil']
+
+      if( proprieteDataListAB.every(prop => parameter.every(obj => obj.hasOwnProperty(prop))) ){
+        state.dataListAB = parameter
+        // pqs de tests de type de donnees
+      }else{  // erreur non remplacement (si un objet colle pas au pattern), remplacement tout ou rien
+
+      }
     }
+
   },
 
   getters: {
@@ -383,7 +436,8 @@ export default new Vuex.Store({
 
     getListOfCompoundInProfileList: state => {
       return Object.keys(state.listOfProfile)
-    }
+    },
+
 
   }
 })

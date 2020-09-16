@@ -58,6 +58,11 @@
                           text: 'First App Alizee',
                           to: 'firstAppVue'
                       },
+                  secondApp: {
+                          icon: 'mdi-chart-line',
+                          text: 'Second App Alizee',
+                          to: 'secondView'
+                      },
                 }
             }
     }
