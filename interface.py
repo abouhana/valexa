@@ -24,10 +24,18 @@ def main(arguments):
                 parsed_stream_data = loads(in_stream_data)
                 output(**parsed_stream_data)
 
-
-
         if arguments[1] == "get_params":
             get_params()
+
+        if arguments[1] == "processProfilesReport":
+            while(True):  # récupération du "data" de l'objet envoyé
+                in_stream_data = input()
+                if in_stream_data == '"EXIT"':
+                    print("EXIT")
+                    exit(0)
+                parsed_stream_data = loads(in_stream_data)
+                #TODO : generer rapport avec profiles fournis
+                print(dumps({"type": "donnees", "data": parsed_stream_data}))
 
     print("EXIT")
     exit(0)
