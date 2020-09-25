@@ -36,15 +36,11 @@ def main(arguments):
                     print("EXIT")
                     exit(0)
                 parsed_stream_data = loads(in_stream_data)
-                #parsed_stream_data = in_stream_data.strip('][').split(', ')  # convert into list
 
-                print(dumps({"type": parsed_stream_data.__class__.__name__, "data": parsed_stream_data[1].__class__.__name__}))
                 for profile in parsed_stream_data:
-                    #p = loads(profile)
-                    #print(dumps({"type": p.__class__.__name__, "data": p}))
                     generate(**profile)
 
-                print(dumps({"type": "END", "data": in_stream_data}))
+                print(dumps({"type": "END"}))
 
     print("EXIT")
     exit(0)
