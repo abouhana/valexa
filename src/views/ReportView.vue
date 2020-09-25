@@ -8,7 +8,7 @@
 </template>
 
 <script>
-  import { mapMutations, mapGetters, mapState} from 'vuex'
+  import { mapState } from 'vuex'
   const electron = require('electron')
   const ipcRenderer = electron.ipcRenderer
   const loadBalancer = require('electron-load-balancer')
@@ -25,8 +25,12 @@
 
       ipcRenderer.on("CHANNEL_PROFILES_REPORT", (event, args) => {
         console.log("Listener sur CHANNEL_PROFILES_REPORT: "+ JSON.stringify(args).toString())
+
         if(JSON.stringify(args).toString() === '"processProfilesReport READY"'){  // le process peut recueillir des infos
           loadBalancer.sendData(ipcRenderer, 'processProfilesReport', {data: this.profilesReport})
+        }
+
+        if(args.type === "END"){
           loadBalancer.sendData(ipcRenderer, 'processProfilesReport', {data: 'EXIT'})  //stop process
         }
       })
