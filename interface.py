@@ -3,8 +3,11 @@ from json import loads, dumps
 from valexa.electron_interface.boot_validation import valexa_validate
 from valexa.electron_interface.ouput import output
 from valexa.electron_interface.params_export import get_params
-from valexa.electron_interface.generateReport import generate
+from valexa.electron_interface.generateReport import generate, createZip
 from warnings import filterwarnings
+import os
+import shutil
+
 
 def main(arguments):
 
@@ -37,8 +40,14 @@ def main(arguments):
                     exit(0)
                 parsed_stream_data = loads(in_stream_data)
 
+                for f in os.listdir('filesTex/profiles'):  #vide dossier profiles
+                    os.remove("filesTex/profiles/" + f)
+                open('filesTex/ListParagraphsProfile.tex', 'w').close()  # vide file ListParagraphsProfile.tex
+
                 for profile in parsed_stream_data:
                     generate(**profile)
+
+                createZip()
 
                 print(dumps({"type": "END"}))
 
