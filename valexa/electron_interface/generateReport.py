@@ -3,22 +3,14 @@ from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
 from zipfile import ZipFile
 import os
+import pdflatex
+import subprocess
 
 
 ###   MAIN   ###
 def generate(**data):
     idProfile = data['compound_name'] + str(data['id'])
-
-    createGraphs(id=idProfile,
-                 data=data['graphs']['profile']['data'],
-                 layout=data['graphs']['profile']['layout'])
-    commands = {
-        "\\COMPOUNDname": data['compound_name'],
-        "\\DATAcalibration": createTabular(data['calibration_data']), #serie, level, x, y
-        "\\DATAvalidation": createTabular(data['validation_data']),
-        "\\GRAPHcompound": "\\fbox{\\includegraphics[width=150mm]{profiles/fig_" + idProfile + "}}"
-    }
-
+    commands = recupData(**data)
 
     ## Fichier Paragraphe Profile
     fIn = open("filesTex/TemplateProfileParagraph.tex", 'r')
@@ -36,37 +28,67 @@ def generate(**data):
     f.close()
 
 
-def createZip():
-    # create zipfile
+def createTexZip():
+    """
+    Create a .zip file of the tex project in the "Downloads" directory of the PC user
+    """
     file_paths = []
     for root, directories, files in os.walk('filesTex/'):
         for filename in files:
-            # join the two strings in order to form the full filepath.
             filepath = os.path.join(root, filename)
             file_paths.append(filepath)
     file_paths.remove('filesTex/TemplateProfileParagraph.tex')
+    file_paths.remove('filesTex/TemplateRegressionInfo.tex')
     dirDownloads = os.path.join(os.path.expanduser("~"), "Downloads")
-    with ZipFile(dirDownloads+'/FichiersTEX.zip', 'w') as zip:
+    with ZipFile(dirDownloads + '/FichiersTEX.zip', 'w') as zip:
         for file in file_paths:
             zip.write(file)
 
 
- ###   METHODES   ###
-def createTabular(listData):
+def createPdf():  # TODO
+    """
+    Create a .pdf file in the "Downloads" directory of the PC user
+    """
+    #subprocess.call('pdflatex filesTex/main2.tex')
+
+
+
+###   METHODES   ###
+def createTabular(isCol, listData):  #
     """
     Create lines of the {tabular} object in .tex
+
+    :param bool isCol:      bool that specify if listData contains columns values (True) or lines values (False)
+    :param list listData:   list of dicts if !isCol (dicts contain values of each lines for the tabular),
+                            else list of lists (lists contain values of ech columns for the tabular)
     """
     line = ""
-    for d in listData:
-        d = {str(key): str(round(val, 3)) if isinstance(val, float) else str(val) for key, val in d.items()}  # convert values into str
-        line += " & ".join(d.values())
-        line += " \\\\\n"
+    if isCol:  # listdata = list of list
+        lineTemp = []
+        for i in range(len(listData[0])):  # n°item dans liste
+            for j in range(len(listData)):  # n°liste
+                lineTemp.append(listData[j][i])
+            line += " & ".join(lineTemp)
+            line += " \\\\\n"
+            lineTemp.clear()
+
+    else:
+        for d in listData:  # listData = list of dict
+            d = {str(key): str(round(val, 4)) if isinstance(val, float) else str(val) for key, val in
+                 d.items()}  # convert values into str
+            line += " & ".join(d.values())
+            line += " \\\\\n"
+
     return line
 
 
-def createGraphs(id, data, layout):  #data=list, layout=dict
+def createGraphs(id, data, layout):  # data=list, layout=dict
     """
     Create .png with graphs from the Profile vue
+
+    :param str id:      str id of the specific profile
+    :param list data:   list of dict of properties passed to the constructor of the specified trace type
+    :param dict layout: dict of properties passed to the Layout constructor
     """
     layout['title']['x'] = 0.5
     layout['title']['y'] = 0.92
@@ -74,5 +96,142 @@ def createGraphs(id, data, layout):  #data=list, layout=dict
     layout['legend']['y'] = 1
     scope = PlotlyScope()
     fig = go.Figure(data=data, layout=layout)
-    with open("filesTex/profiles/fig_" + id + ".png", "wb") as f:
+    with open("filesTex/profiles/fig" + id + ".png", "wb") as f:
         f.write(scope.transform(fig, format="png"))
+
+
+def recupData(**data):
+    """
+    Create graphs .png and replace commands in the file TemplateProfileParagraph.tex by the profile data
+    :param dict data
+    """
+    idProfile = data['compound_name'] + str(data['id'])
+
+    createGraphs(id="PROFILE_" + idProfile,
+                 data=data['graphs']['profile']['data'],
+                 layout=data['graphs']['profile']['layout'])
+    createGraphs(id="LINEARITY_" + idProfile,
+                 data=data['graphs']['linearity']['data'],
+                 layout=data['graphs']['linearity']['layout'])
+
+    commands = {
+        "\\COMPOUNDname": data['compound_name'],
+
+        ### SUMMARY TABLES  ###
+        "\\LODunitstype": str(data['model_info']['lod']) + " "
+                          + str(data['model_info']['units']) + " ("
+                          + (str(data['model_info']['lod_type']), "")[
+                              data['model_info']['lod_type'] is None]  # ternaire
+                          + ")",
+        "\\MINLOQunits": str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
+        "\\MAXLOQunits": str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
+        "\\CORRECTION": data['model_info']['correction_factor'] + ("", "(Forced)")[
+            float(data['model_info']['forced_correction_value']) > 0]
+        if data['model_info']['has_correction']
+        else "---",  # double ternaire
+        "\\AVERAGErecov": str(data['model_info']['average_recovery']),
+        "\\TOLERANCE": str(data['model_info']['tolerance']) + "\%",
+        "\\ACCEPT": str(data['model_info']['acceptance'])
+                    + ("\% (Relative)", data['model_info']['units'] + " (Absolute)")[
+                        data['model_info']['absolute_acceptance']],  # ternaire
+
+        ###  GRAPHIQUE PROFILE  ###
+        "\\GRAPHprofile": "\\includegraphics[width=150mm]{profiles/figPROFILE_" + idProfile + "}",
+
+        ###  TRUENESS TABLE  ###
+        "\\DATAtrueness": createTabular(True, [
+            [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
+            [str(item['introduced_concentration']) for item in data['levels_info']],
+            [str(item['calculated_concentration']) for item in data['levels_info']],
+            [str(item['bias_abs']) for item in data['bias_info']],
+            [str(item['bias_rel']) for item in data['bias_info']],
+            [str(item['recovery']) for item in data['bias_info']],
+            [str(item['tolerance_abs_high']) + ", " + str(item['tolerance_abs_low']) for item in
+             data['tolerance_info']],
+            [str(item['tolerance_rel_high']) + ", " + str(item['tolerance_rel_low']) for item in data['tolerance_info']]
+        ]),
+
+        ###  PRECISION REPEATABILITY TABLE  ###
+        "\\DATAprecisionrepeat": createTabular(True, [
+            [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
+            [str(item['introduced_concentration']) for item in data['levels_info']],
+            [str(item['intermediate_precision_std']) for item in data['intermediate_precision']],
+            [str(item['intermediate_precision_cv']) for item in data['intermediate_precision']],
+            [str(item['repeatability_std']) for item in data['repeatability_info']],
+            [str(item['repeatability_cv']) for item in data['repeatability_info']],
+            [str(item['ratio_var']) for item in data['misc_stats']]
+        ]),
+
+        ###  PRECISION REPEATABILITY TABLE  ###
+        "\\DATAvaliduncertainty": createTabular(True, [
+            [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
+            [str(item['introduced_concentration']) for item in data['levels_info']],
+            [str(item['calculated_concentration']) for item in data['levels_info']],
+            [str(item['uncertainty_abs']) for item in data['uncertainty_info']],
+            [str(item['uncertainty_pc']) for item in data['uncertainty_info']]
+        ]),
+
+        ###  GRAPHIQUE LINEARITY  ###
+        "\\GRAPHlinearity": "\\includegraphics[width=150mm]{profiles/figLINEARITY_" + idProfile + "}",
+
+        ###  VALIDATION TABLE  ###
+        "\\DATAvalidation": createTabular(False, data['validation_data'])
+    }
+
+    ###  SPAN REGRESSION INFO  ###
+    if len(data['validation_data']) > 0:
+        commands["\\REGRESSIONinfo"] = "\\input{profiles/regr_" + idProfile + "}"
+        createTexRegression(**data)
+    else:
+        commands["\\REGRESSIONinfo"] = ""
+
+    return commands
+
+
+def createTexRegression(**data):
+    """
+    Called only if there are regression information\n
+    Create graphs .png and replace commands in the file TemplateRegressionInfo.tex by the profile data
+    :param dict data
+    """
+    idProfile = data['compound_name'] + str(data['id'])
+
+    createGraphs(id="REGRESSION_" + idProfile,
+                 data=data['graphs']['regression']['data'],
+                 layout=data['graphs']['regression']['layout'])
+    createGraphs(id="RESIDUALS_" + idProfile,
+                 data=data['graphs']['residuals']['data'],
+                 layout=data['graphs']['residuals']['layout'])
+    createGraphs(id="RESIDUALSstd_" + idProfile,
+                 data=data['graphs']['residuals_std']['data'],
+                 layout=data['graphs']['residuals_std']['layout'])
+
+    commands = {
+        "\\COMPOUNDname": data['compound_name'],
+
+        ###  REGRESSION TABLE  ###
+        "\\DATAregression": createTabular(True, [
+            [str(item) for item in list(range(len(data['regression_info'])))],  # nb ligne tabular,
+            ["$" + str(item['function_string']) + "$" for item in data['regression_info']],
+            [str(item['rsquared']) for item in data['regression_info']]
+        ]),
+
+        ###  GRAPHIQUES  ###
+        "\\GRAPHregression": "\\includegraphics[width=150mm]{profiles/figREGRESSION_" + idProfile + "}",
+        "\\GRAPHresidualsFIRST": "\\includegraphics[width=150mm]{profiles/figRESIDUALS_" + idProfile + "}",
+        "\\GRAPHresidualsSECOND": "\\includegraphics[width=150mm]{profiles/figRESIDUALSstd_" + idProfile + "}",
+
+        ###  CALIBRATION TABLE  ###
+        "\\DATAcalibration": createTabular(False, data['calibration_data']),
+
+    }
+
+    ## Create file for regression info
+    fIn = open("filesTex/TemplateRegressionInfo.tex", 'r')
+    fOut = open("filesTex/profiles/regr_" + idProfile + ".tex", 'w')
+    for line in fIn:
+        for cle, val in commands.items():
+            line = line.replace(cle, val)
+        fOut.write(line)
+    fIn.close()
+    fOut.close()

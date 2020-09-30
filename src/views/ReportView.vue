@@ -61,7 +61,7 @@ export default {
     ipcRenderer.on("CHANNEL_PROFILES_REPORT", (event, args) => {  // LISTENER CHANNEL
       console.log("Listener sur CHANNEL_PROFILES_REPORT: "+ JSON.stringify(args).toString())
       if(JSON.stringify(args).toString() === '"processProfilesReport READY"'){  // le process peut recueillir des infos
-        loadBalancer.sendData(ipcRenderer, 'processProfilesReport', {data: this.profilesReport})  //TODO: + tex pdf
+        loadBalancer.sendData(ipcRenderer, 'processProfilesReport', {data: {profiles: this.profilesReport, typeReport: this.typeReport}})  //TODO: + tex pdf
       }
       if(args.type === "END"){
         loadBalancer.sendData(ipcRenderer, 'processProfilesReport', {data: 'EXIT'})  //stop process
