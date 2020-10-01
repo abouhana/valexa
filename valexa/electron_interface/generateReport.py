@@ -3,83 +3,67 @@ from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
 from zipfile import ZipFile
 import os
-import pdflatex
-import subprocess
+from docx import Document
+from docx.shared import Mm
+import shutil
+import win32com.client as client
+
+
 
 
 ###   MAIN   ###
-def generate(**data):
-    idProfile = data['compound_name'] + str(data['id'])
-    commands = recupData(**data)
+def generateWord(**listProfiles):
+    doc = Document("filesReport/TemplateReport.docx")
 
-    ## Fichier Paragraphe Profile
-    fIn = open("filesTex/TemplateProfileParagraph.tex", 'r')
-    fOut = open("filesTex/profiles/Profile_" + idProfile + ".tex", 'w')
-    for line in fIn:
-        for cle, val in commands.items():
-            line = line.replace(cle, val)
-        fOut.write(line)
-    fIn.close()
-    fOut.close()
+    commands = {
+        "DATEGENERATIONdoc": "12/12/2020",
+        "AUTEURdoc": "Hubert MARCEAU",
+        "PCNAMEdoc": "PC-MAT-005",
+        "NUMEROdoc": "PC-MAT-005-VAL",
+        "VERSIONdoc": "20B10",
+        "EXPIRATIONdoc": "2021/02/10",
 
-    ## Fichier listing des profiles
-    f = open('filesTex/ListParagraphsProfile.tex', 'a')
-    f.write("\\input{profiles/Profile_" + idProfile + "}\n")
-    f.close()
+        "commandPROFILE": listProfiles
+    }
 
+    for old, new in commands.items():
+        replaceInDocx(doc, old, new)
 
-def createTexZip():
-    """
-    Create a .zip file of the tex project in the "Downloads" directory of the PC user
-    """
-    file_paths = []
-    for root, directories, files in os.walk('filesTex/'):
-        for filename in files:
-            filepath = os.path.join(root, filename)
-            file_paths.append(filepath)
-    file_paths.remove('filesTex/TemplateProfileParagraph.tex')
-    file_paths.remove('filesTex/TemplateRegressionInfo.tex')
-    dirDownloads = os.path.join(os.path.expanduser("~"), "Downloads")
-    with ZipFile(dirDownloads + '/FichiersTEX.zip', 'w') as zip:
-        for file in file_paths:
-            zip.write(file)
-
-
-def createPdf():  # TODO
-    """
-    Create a .pdf file in the "Downloads" directory of the PC user
-    """
-    #subprocess.call('pdflatex filesTex/main2.tex')
+    doc.save('filesReport/RapportValidation.docx')
 
 
 
-###   METHODES   ###
-def createTabular(isCol, listData):  #
-    """
-    Create lines of the {tabular} object in .tex
 
-    :param bool isCol:      bool that specify if listData contains columns values (True) or lines values (False)
-    :param list listData:   list of dicts if !isCol (dicts contain values of each lines for the tabular),
-                            else list of lists (lists contain values of ech columns for the tabular)
-    """
-    line = ""
-    if isCol:  # listdata = list of list
-        lineTemp = []
-        for i in range(len(listData[0])):  # n°item dans liste
-            for j in range(len(listData)):  # n°liste
-                lineTemp.append(listData[j][i])
-            line += " & ".join(lineTemp)
-            line += " \\\\\n"
-            lineTemp.clear()
+def replaceInDocx(docObj, old, new):
+    for p in docObj.paragraphs:
+        if p.text.find(old) > -1:
+            inline = p.runs
+            for i in range(len(inline)):
+                if inline[i].text.find(old) > -1:
+                    if old == "commandPROFILE":
+                        inline[i].text = inline[i].text.replace(old, "")
+                        generateProfiles(docObj, **new)
+                    else:
+                        inline[i].text = inline[i].text.replace(old, new)
 
-    else:
-        for d in listData:  # listData = list of dict
-            d = {str(key): str(round(val, 4)) if isinstance(val, float) else str(val) for key, val in
-                 d.items()}  # convert values into str
-            line += " & ".join(d.values())
-            line += " \\\\\n"
 
-    return line
+    for table in docObj.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                replaceInDocx(cell, old, new)
+    if docObj.__class__.__name__ == "Document":
+        for s in docObj.sections:
+            replaceInDocx(s.header, old, new)
+
+
+def fillTable(table, headers, valuesCol):
+    for c in range(len(headers)):
+        table.cell(0, c).text = headers[c]
+        table.cell(0, c).paragraphs[0].runs[0].font.bold = True
+
+    for l in range(1, len(table.rows)):  #début ligne 1
+        for c in range(len(table.columns)):
+            table.cell(l, c).text = valuesCol[c][l-1]
 
 
 def createGraphs(id, data, layout):  # data=list, layout=dict
@@ -96,142 +80,212 @@ def createGraphs(id, data, layout):  # data=list, layout=dict
     layout['legend']['y'] = 1
     scope = PlotlyScope()
     fig = go.Figure(data=data, layout=layout)
-    with open("filesTex/profiles/fig" + id + ".png", "wb") as f:
+    with open("filesReport/profiles/" + id + ".png", "wb") as f:
         f.write(scope.transform(fig, format="png"))
 
 
-def recupData(**data):
-    """
-    Create graphs .png and replace commands in the file TemplateProfileParagraph.tex by the profile data
-    :param dict data
-    """
+
+
+def generateProfiles(docObj, **listProfiles):
+    docObj.add_heading('Profiles', 1)
+
+    for profile in listProfiles['profiles']:
+        generateProfile(docObj, **profile)
+        docObj.add_page_break()
+    ## page references/conclusion
+
+
+def generateProfile(docObj, **data):
     idProfile = data['compound_name'] + str(data['id'])
 
-    createGraphs(id="PROFILE_" + idProfile,
+    createGraphs(id="figPROFILE_" + idProfile,
                  data=data['graphs']['profile']['data'],
                  layout=data['graphs']['profile']['layout'])
-    createGraphs(id="LINEARITY_" + idProfile,
+    createGraphs(id="figLINEARITY_" + idProfile,
                  data=data['graphs']['linearity']['data'],
                  layout=data['graphs']['linearity']['layout'])
 
-    commands = {
-        "\\COMPOUNDname": data['compound_name'],
+    docObj.add_heading('Composé ' + data['compound_name'], 2)
 
-        ### SUMMARY TABLES  ###
-        "\\LODunitstype": str(data['model_info']['lod']) + " "
-                          + str(data['model_info']['units']) + " ("
-                          + (str(data['model_info']['lod_type']), "")[
-                              data['model_info']['lod_type'] is None]  # ternaire
-                          + ")",
-        "\\MINLOQunits": str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
-        "\\MAXLOQunits": str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
-        "\\CORRECTION": data['model_info']['correction_factor'] + ("", "(Forced)")[
-            float(data['model_info']['forced_correction_value']) > 0]
-        if data['model_info']['has_correction']
-        else "---",  # double ternaire
-        "\\AVERAGErecov": str(data['model_info']['average_recovery']),
-        "\\TOLERANCE": str(data['model_info']['tolerance']) + "\%",
-        "\\ACCEPT": str(data['model_info']['acceptance'])
-                    + ("\% (Relative)", data['model_info']['units'] + " (Absolute)")[
-                        data['model_info']['absolute_acceptance']],  # ternaire
+    ###   SUMMARY   ###
+    docObj.add_heading('Summary', 3)
+    table = docObj.add_table(8, 2)
+    table.style = 'Table Grid'
+    fillTable(table, ["Parameter", "Value"], [
+        ["LOD", "LOQ Min", "LOQ Max", "Correction", "Average Recovery", "Tolerance", "Acceptance"],
+        [
+            str(data['model_info']['lod']) + " " + str(data['model_info']['units']) + " (" +
+            (str(data['model_info']['lod_type']), "")[data['model_info']['lod_type'] is None] + ")",
+            str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
+            str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
+            data['model_info']['correction_factor'] + ("", "(Forced)")[
+                float(data['model_info']['forced_correction_value']) > 0] if data['model_info'][
+                'has_correction'] else "---",
+            str(data['model_info']['average_recovery']),
+            str(data['model_info']['tolerance']) + "%",
+            str(data['model_info']['acceptance']) + ("% (Relative)", data['model_info']['units'] + " (Absolute)")[
+                data['model_info']['absolute_acceptance']],  # ternaire
+        ]
+    ])
+    docObj.add_picture("filesReport/profiles/figPROFILE_" + idProfile + ".png", width=Mm(150))
 
-        ###  GRAPHIQUE PROFILE  ###
-        "\\GRAPHprofile": "\\includegraphics[width=150mm]{profiles/figPROFILE_" + idProfile + "}",
+    ###   TRUENESS   ###
+    docObj.add_heading('Trueness', 3)
+    table = docObj.add_table(len(data['levels_info']), 8)
+    table.style = 'Table Grid'
+    fillTable(table,
+              ["Level", "Introduced Concentration", "Calculated Concentration", "Absolute Bias (%)", "Relative Bias (%)", "Recovery (%)", "Tolerance Absolute", "Tolerance Relative"],
+              [
+                  [str(item) for item in list(range(len(data['levels_info'])))],
+                  [str(item['introduced_concentration']) for item in data['levels_info']],
+                  [str(item['calculated_concentration']) for item in data['levels_info']],
+                  [str(item['bias_abs']) for item in data['bias_info']],
+                  [str(item['bias_rel']) for item in data['bias_info']],
+                  [str(item['recovery']) for item in data['bias_info']],
+                  [str(item['tolerance_abs_high']) + ", " + str(item['tolerance_abs_low']) for item in data['tolerance_info']],
+                  [str(item['tolerance_rel_high']) + ", " + str(item['tolerance_rel_low']) for item in data['tolerance_info']]
+              ])
 
-        ###  TRUENESS TABLE  ###
-        "\\DATAtrueness": createTabular(True, [
-            [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
-            [str(item['introduced_concentration']) for item in data['levels_info']],
-            [str(item['calculated_concentration']) for item in data['levels_info']],
-            [str(item['bias_abs']) for item in data['bias_info']],
-            [str(item['bias_rel']) for item in data['bias_info']],
-            [str(item['recovery']) for item in data['bias_info']],
-            [str(item['tolerance_abs_high']) + ", " + str(item['tolerance_abs_low']) for item in
-             data['tolerance_info']],
-            [str(item['tolerance_rel_high']) + ", " + str(item['tolerance_rel_low']) for item in data['tolerance_info']]
-        ]),
+    ###  PRECISION REPEATABILITY TABLE  ###
+    docObj.add_heading('Precision and Repeatability', 3)
+    table = docObj.add_table(len(data['levels_info']), 7)
+    table.style = 'Table Grid'
+    fillTable(table,
+              ["Level", "Introduced Concentration", "Absolute Intermediate Precision",
+               "Relative Intermediate Precision", "Absolute Repeatability", "Relative Repeatability", "Variance Ratio"],
+              [
+                  [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
+                  [str(item['introduced_concentration']) for item in data['levels_info']],
+                  [str(item['intermediate_precision_std']) for item in data['intermediate_precision']],
+                  [str(item['intermediate_precision_cv']) for item in data['intermediate_precision']],
+                  [str(item['repeatability_std']) for item in data['repeatability_info']],
+                  [str(item['repeatability_cv']) for item in data['repeatability_info']],
+                  [str(item['ratio_var']) for item in data['misc_stats']]
+              ])
+    ###  VALIDATION UNCERTAINTY  ###
+    docObj.add_heading('Validation Uncertainty', 3)
+    table = docObj.add_table(len(data['levels_info']), 5)
+    table.style = 'Table Grid'
+    fillTable(table,
+              ["Level", "Introduced Concentration", "Calculated Concentration", "Absolute Expanded Uncertainty", "PC Expanded Uncertainty"],
+              [
+                  [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
+                  [str(item['introduced_concentration']) for item in data['levels_info']],
+                  [str(item['calculated_concentration']) for item in data['levels_info']],
+                  [str(item['uncertainty_abs']) for item in data['uncertainty_info']],
+                  [str(item['uncertainty_pc']) for item in data['uncertainty_info']]
+              ])
+    docObj.add_picture("filesReport/profiles/figLINEARITY_" + idProfile + ".png", width=Mm(150))
 
-        ###  PRECISION REPEATABILITY TABLE  ###
-        "\\DATAprecisionrepeat": createTabular(True, [
-            [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
-            [str(item['introduced_concentration']) for item in data['levels_info']],
-            [str(item['intermediate_precision_std']) for item in data['intermediate_precision']],
-            [str(item['intermediate_precision_cv']) for item in data['intermediate_precision']],
-            [str(item['repeatability_std']) for item in data['repeatability_info']],
-            [str(item['repeatability_cv']) for item in data['repeatability_info']],
-            [str(item['ratio_var']) for item in data['misc_stats']]
-        ]),
+    ###  VALIDATION TABLE  ###
+    docObj.add_heading('Validation', 3)
+    table = docObj.add_table(len(data['validation_data']), 7)
+    table.style = 'Table Grid'
+    fillTable(table,
+              ["Serie", "Niveau", "Concentration", "Réponse", "Concentration Calculée", "Biais Absolu", "Biais Relatif"],
+              [
+                  [str(item['Series']) for item in data['validation_data']],
+                  [str(item['Level']) for item in data['validation_data']],
+                  [str(item['x']) for item in data['validation_data']],
+                  [str(item['y']) for item in data['validation_data']],
+                  [str(item['x_calc']) for item in data['validation_data']],
+                  [str(item['bias_abs']) for item in data['validation_data']],
+                  [str(item['bias_rel']) for item in data['validation_data']],
+              ])
 
-        ###  PRECISION REPEATABILITY TABLE  ###
-        "\\DATAvaliduncertainty": createTabular(True, [
-            [str(item) for item in list(range(len(data['levels_info'])))],  # nb ligne tabular
-            [str(item['introduced_concentration']) for item in data['levels_info']],
-            [str(item['calculated_concentration']) for item in data['levels_info']],
-            [str(item['uncertainty_abs']) for item in data['uncertainty_info']],
-            [str(item['uncertainty_pc']) for item in data['uncertainty_info']]
-        ]),
-
-        ###  GRAPHIQUE LINEARITY  ###
-        "\\GRAPHlinearity": "\\includegraphics[width=150mm]{profiles/figLINEARITY_" + idProfile + "}",
-
-        ###  VALIDATION TABLE  ###
-        "\\DATAvalidation": createTabular(False, data['validation_data'])
-    }
-
-    ###  SPAN REGRESSION INFO  ###
+    ###  CALIBRATION REGRESSION  ###
     if len(data['validation_data']) > 0:
-        commands["\\REGRESSIONinfo"] = "\\input{profiles/regr_" + idProfile + "}"
-        createTexRegression(**data)
-    else:
-        commands["\\REGRESSIONinfo"] = ""
-
-    return commands
+        generatePartCalibration(docObj, **data)
 
 
-def createTexRegression(**data):
-    """
-    Called only if there are regression information\n
-    Create graphs .png and replace commands in the file TemplateRegressionInfo.tex by the profile data
-    :param dict data
-    """
+def generatePartCalibration(docObj, **data):
     idProfile = data['compound_name'] + str(data['id'])
 
-    createGraphs(id="REGRESSION_" + idProfile,
+    createGraphs(id="figREGRESSION_" + idProfile,
                  data=data['graphs']['regression']['data'],
                  layout=data['graphs']['regression']['layout'])
-    createGraphs(id="RESIDUALS_" + idProfile,
+    createGraphs(id="figRESIDUALS_" + idProfile,
                  data=data['graphs']['residuals']['data'],
                  layout=data['graphs']['residuals']['layout'])
-    createGraphs(id="RESIDUALSstd_" + idProfile,
+    createGraphs(id="figRESIDUALSstd_" + idProfile,
                  data=data['graphs']['residuals_std']['data'],
                  layout=data['graphs']['residuals_std']['layout'])
 
-    commands = {
-        "\\COMPOUNDname": data['compound_name'],
 
-        ###  REGRESSION TABLE  ###
-        "\\DATAregression": createTabular(True, [
-            [str(item) for item in list(range(len(data['regression_info'])))],  # nb ligne tabular,
-            ["$" + str(item['function_string']) + "$" for item in data['regression_info']],
-            [str(item['rsquared']) for item in data['regression_info']]
-        ]),
+    docObj.add_heading('Calibration regression', 3)
+    table = docObj.add_table(len(data['regression_info']), 3)
+    table.style = 'Table Grid'
+    fillTable(table,
+              ["Série", "Equation", "R^2"],
+              [
+                  [str(item) for item in list(range(len(data['regression_info'])))],  # nb ligne tabular,
+                  [str(item['function_string']) for item in data['regression_info']],
+                  [str(item['rsquared']) for item in data['regression_info']]
+              ])
+    docObj.add_picture("filesReport/profiles/figREGRESSION_" + idProfile + ".png", width=Mm(150))
+    docObj.add_picture("filesReport/profiles/figRESIDUALS_" + idProfile + ".png", width=Mm(150))
+    docObj.add_picture("filesReport/profiles/figRESIDUALSstd_" + idProfile + ".png", width=Mm(150))
 
-        ###  GRAPHIQUES  ###
-        "\\GRAPHregression": "\\includegraphics[width=150mm]{profiles/figREGRESSION_" + idProfile + "}",
-        "\\GRAPHresidualsFIRST": "\\includegraphics[width=150mm]{profiles/figRESIDUALS_" + idProfile + "}",
-        "\\GRAPHresidualsSECOND": "\\includegraphics[width=150mm]{profiles/figRESIDUALSstd_" + idProfile + "}",
+    ###  CALIBRATION TABLE  ###
+    docObj.add_heading('Calibration', 3)
+    table = docObj.add_table(len(data['validation_data']), 4)
+    table.style = 'Table Grid'
+    fillTable(table,
+              ["Serie", "Niveau", "Concentration", "Réponse"],
+              [
+                  [str(item['Series']) for item in data['calibration_data']],
+                  [str(item['Level']) for item in data['calibration_data']],
+                  [str(item['x']) for item in data['calibration_data']],
+                  [str(item['y']) for item in data['calibration_data']],
+              ])
 
-        ###  CALIBRATION TABLE  ###
-        "\\DATAcalibration": createTabular(False, data['calibration_data']),
 
-    }
 
-    ## Create file for regression info
-    fIn = open("filesTex/TemplateRegressionInfo.tex", 'r')
-    fOut = open("filesTex/profiles/regr_" + idProfile + ".tex", 'w')
-    for line in fIn:
-        for cle, val in commands.items():
-            line = line.replace(cle, val)
-        fOut.write(line)
-    fIn.close()
-    fOut.close()
+
+def downloadWord():
+    """
+    Download a .word file of the report in the "Downloads" directory of the PC user
+    """
+    dirDownloads = os.path.join(os.path.expanduser("~"), "Downloads")
+    shutil.copy("filesReport/RapportValidation.docx", dirDownloads + "/RapportValidation.docx")
+
+def downloadPdf(isWord):
+    """
+    Download a .pdf file of the report in the "Downloads" directory of the PC user
+    """
+    dirDownloads = os.path.join(os.path.expanduser("~"), "Downloads")
+    if not isWord:
+        downloadWord()
+    filepath = dirDownloads + "/RapportValidation.docx"
+
+    word = client.DispatchEx("Word.Application")
+    target_path = filepath.replace(".docx", r".pdf")
+    word_doc = word.Documents.Open(filepath)
+    word_doc.SaveAs(target_path, FileFormat=17)
+    word_doc.Close()
+    word.Quit()
+
+    if not isWord:
+        os.remove(filepath)
+
+
+def downloadZipPdfWordl(isWord, isPdf):
+    """
+    Download a .zip file of the word, pdf and images of the report in the "Downloads" directory of the PC user
+    """
+    if not isPdf:
+        downloadPdf(isWord)
+
+    file_paths = []
+    for root, directories, files in os.walk('filesReport/'):
+        for filename in files:
+            filepath = os.path.join(root, filename)
+            file_paths.append(filepath)
+    file_paths.remove('filesReport/TemplateReport.docx')
+    dirDownloads = os.path.join(os.path.expanduser("~"), "Downloads")
+    with ZipFile(dirDownloads + '/RapportValidation.zip', 'w') as zip:
+        for file in file_paths:
+            zip.write(file)
+
+    if not isPdf:
+        os.remove(dirDownloads + "/RapportValidation.pdf")

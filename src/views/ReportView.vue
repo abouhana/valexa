@@ -5,7 +5,6 @@
     <v-card-text>
       <v-row>
         <v-col>
-
           <v-card shaped flat>
             <v-card-title>Informations du rapport</v-card-title>
             <v-card-text>
@@ -17,15 +16,36 @@
               </v-list-item>
             </v-card-text>
           </v-card>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col>
 
-          <v-row>
-            <v-col>
-              <v-checkbox v-model="typeReport" label="pdf" value="pdf"/>
-            </v-col>
-            <v-col>
-              <v-checkbox v-model="typeReport" label="tex" value="tex"/>
-            </v-col>
-          </v-row>
+
+          <v-card shaped flat>
+            <v-card-title>Informations du rapport</v-card-title>
+            <v-card-text>
+              coc
+
+            </v-card-text>
+          </v-card>
+
+
+
+
+
+          <v-col>
+            <v-checkbox v-model="typeReport" label="Word" value="word"/>
+          </v-col>
+          <v-col>
+            <v-checkbox v-model="typeReport" label="PDF" value="pdf"/>
+          </v-col>
+          <v-col>
+            <v-checkbox v-model="typeReport" label="Tous les fichiers" value="all"/>
+          </v-col>
+          <v-col>
+            <v-checkbox v-model="typeReport" label="Projet TEX" value="tex"/>
+          </v-col>
 
           <v-btn text @click="createReport()" v-bind:disabled="this.beDisable">Génerer le rapport</v-btn>
 

@@ -138,3 +138,5 @@ pnpm-debug.log*
 *.xlsx
 filesTex/profiles/
 filesTex/ListParagraphsProfile.tex
+/filesReport/profiles/
+/filesReport/RapportValidation.docx
