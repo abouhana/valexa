@@ -255,7 +255,7 @@ def downloadPdf(isWord):
     """
     dirDownloads = os.path.join(os.path.expanduser("~"), "Downloads")
     if not isWord:
-        downloadWord()
+        downloadWord()  # fichier temporaire accessible a l'appli word
     filepath = dirDownloads + "/RapportValidation.docx"
 
     word = client.DispatchEx("Word.Application")
@@ -269,23 +269,17 @@ def downloadPdf(isWord):
         os.remove(filepath)
 
 
-def downloadZipPdfWordl(isWord, isPdf):
+def downloadZipGraph():
     """
-    Download a .zip file of the word, pdf and images of the report in the "Downloads" directory of the PC user
+    Download a .zip file of the images of the report in the "Downloads" directory of the PC user
     """
-    if not isPdf:
-        downloadPdf(isWord)
-
     file_paths = []
-    for root, directories, files in os.walk('filesReport/'):
+    for root, directories, files in os.walk('filesReport/profiles'):
         for filename in files:
             filepath = os.path.join(root, filename)
             file_paths.append(filepath)
-    file_paths.remove('filesReport/TemplateReport.docx')
     dirDownloads = os.path.join(os.path.expanduser("~"), "Downloads")
+    file_paths.append(dirDownloads + "/RapportValidation.pdf")
     with ZipFile(dirDownloads + '/RapportValidation.zip', 'w') as zip:
         for file in file_paths:
             zip.write(file)
-
-    if not isPdf:
-        os.remove(dirDownloads + "/RapportValidation.pdf")

@@ -4,7 +4,7 @@ from valexa.electron_interface.boot_validation import valexa_validate
 from valexa.electron_interface.ouput import output
 from valexa.electron_interface.params_export import get_params
 from valexa.electron_interface.generateReportTEX import generate, downloadZipTex
-from valexa.electron_interface.generateReport import generateWord, downloadWord, downloadPdf, downloadZipPdfWordl
+from valexa.electron_interface.generateReport import generateWord, downloadWord, downloadPdf, downloadZipGraph
 from warnings import filterwarnings
 import os
 
@@ -53,9 +53,8 @@ def main(arguments):
                         downloadWord()
                     if "pdf" in parsed_stream_data['typeReport']:
                         downloadPdf("word" in parsed_stream_data['typeReport'])
-                    if "all" in parsed_stream_data['typeReport']:
-                        downloadZipPdfWordl("word" in parsed_stream_data['typeReport'],
-                                            "pdf" in parsed_stream_data['typeReport'])
+                    if "graph" in parsed_stream_data['typeReport']:
+                        downloadZipGraph()
                 if "tex" in parsed_stream_data['typeReport']:
                     for f in os.listdir('filesTex/profiles'):  # vide dossier
                         os.remove("filesTex/profiles/" + f)
