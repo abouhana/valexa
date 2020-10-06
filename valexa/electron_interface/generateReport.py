@@ -1,4 +1,3 @@
-import json
 from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
 from zipfile import ZipFile
@@ -92,7 +91,7 @@ def generateProfiles(docObj, **listProfiles):
     for profile in listProfiles['profiles']:
         generateProfile(docObj, **profile)
         docObj.add_page_break()
-    ## page references/conclusion
+    ## TODO: ajout page references/conclusion
 
 
 def generateProfile(docObj, **data):
@@ -115,7 +114,7 @@ def generateProfile(docObj, **data):
         ["LOD", "LOQ Min", "LOQ Max", "Correction", "Average Recovery", "Tolerance", "Acceptance"],
         [
             str(data['model_info']['lod']) + " " + str(data['model_info']['units']) + " (" +
-            (str(data['model_info']['lod_type']), "")[data['model_info']['lod_type'] is None] + ")",
+                (str(data['model_info']['lod_type']), "")[data['model_info']['lod_type'] is None] + ")",
             str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
             str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
             data['model_info']['correction_factor'] + ("", "(Forced)")[
@@ -228,7 +227,7 @@ def generatePartCalibration(docObj, **data):
 
     ###  CALIBRATION TABLE  ###
     docObj.add_heading('Calibration', 3)
-    table = docObj.add_table(len(data['validation_data']), 4)
+    table = docObj.add_table(len(data['calibration_data']), 4)
     table.style = 'Table Grid'
     fillTable(table,
               ["Serie", "Niveau", "Concentration", "Réponse"],

@@ -2,7 +2,6 @@ from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
 from zipfile import ZipFile
 import os
-from pylatex import Document
 
 
 ###   MAIN   ###
