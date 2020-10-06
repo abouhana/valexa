@@ -116,7 +116,7 @@ def generateProfile(docObj, **data):
             str(data['model_info']['lod']) + " " + str(data['model_info']['units']) + " (" +
                 (str(data['model_info']['lod_type']), "")[data['model_info']['lod_type'] is None] + ")",
             str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
-            str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
+            str(data['model_info']['max_loq']) + " " + str(data['model_info']['units']),
             data['model_info']['correction_factor'] + ("", "(Forced)")[
                 float(data['model_info']['forced_correction_value']) > 0] if data['model_info'][
                 'has_correction'] else "---",
@@ -130,7 +130,7 @@ def generateProfile(docObj, **data):
 
     ###   TRUENESS   ###
     docObj.add_heading('Trueness', 3)
-    table = docObj.add_table(len(data['levels_info']), 8)
+    table = docObj.add_table(len(data['levels_info'])+1, 8)
     table.style = 'Table Grid'
     fillTable(table,
               ["Level", "Introduced Concentration", "Calculated Concentration", "Absolute Bias (%)", "Relative Bias (%)", "Recovery (%)", "Tolerance Absolute", "Tolerance Relative"],
@@ -147,7 +147,7 @@ def generateProfile(docObj, **data):
 
     ###  PRECISION REPEATABILITY TABLE  ###
     docObj.add_heading('Precision and Repeatability', 3)
-    table = docObj.add_table(len(data['levels_info']), 7)
+    table = docObj.add_table(len(data['levels_info'])+1, 7)
     table.style = 'Table Grid'
     fillTable(table,
               ["Level", "Introduced Concentration", "Absolute Intermediate Precision",
@@ -163,7 +163,7 @@ def generateProfile(docObj, **data):
               ])
     ###  VALIDATION UNCERTAINTY  ###
     docObj.add_heading('Validation Uncertainty', 3)
-    table = docObj.add_table(len(data['levels_info']), 5)
+    table = docObj.add_table(len(data['levels_info'])+1, 5)
     table.style = 'Table Grid'
     fillTable(table,
               ["Level", "Introduced Concentration", "Calculated Concentration", "Absolute Expanded Uncertainty", "PC Expanded Uncertainty"],
@@ -178,7 +178,7 @@ def generateProfile(docObj, **data):
 
     ###  VALIDATION TABLE  ###
     docObj.add_heading('Validation', 3)
-    table = docObj.add_table(len(data['validation_data']), 7)
+    table = docObj.add_table(len(data['validation_data'])+1, 7)
     table.style = 'Table Grid'
     fillTable(table,
               ["Serie", "Niveau", "Concentration", "Réponse", "Concentration Calculée", "Biais Absolu", "Biais Relatif"],
@@ -212,7 +212,7 @@ def generatePartCalibration(docObj, **data):
 
 
     docObj.add_heading('Calibration regression', 3)
-    table = docObj.add_table(len(data['regression_info']), 3)
+    table = docObj.add_table(len(data['regression_info'])+1, 3)
     table.style = 'Table Grid'
     fillTable(table,
               ["Série", "Equation", "R^2"],
@@ -227,7 +227,7 @@ def generatePartCalibration(docObj, **data):
 
     ###  CALIBRATION TABLE  ###
     docObj.add_heading('Calibration', 3)
-    table = docObj.add_table(len(data['calibration_data']), 4)
+    table = docObj.add_table(len(data['calibration_data'])+1, 4)
     table.style = 'Table Grid'
     fillTable(table,
               ["Serie", "Niveau", "Concentration", "Réponse"],
