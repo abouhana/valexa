@@ -24,13 +24,10 @@ def generateWord(**listProfiles):
 
         "commandPROFILE": listProfiles
     }
-
     for old, new in commands.items():
         replaceInDocx(doc, old, new)
 
     doc.save('filesReport/RapportValidation.docx')
-
-
 
 
 def replaceInDocx(docObj, old, new):
@@ -80,11 +77,8 @@ def createGraphs(id, data, layout):  # data=list, layout=dict
         f.write(scope.transform(fig, format="png"))
 
 
-
-
 def generateProfiles(docObj, **listProfiles):
     docObj.add_heading('Profiles', 1)
-
     for profile in listProfiles['profiles']:
         generateProfile(docObj, **profile)
         docObj.add_page_break()
@@ -117,7 +111,7 @@ def generateProfile(docObj, **data):
             f"{modelInfo['min_loq']} {modelInfo['units']}",
             f"{modelInfo['max_loq']} {modelInfo['units']}",
             f"""{
-                modelInfo['correction_factor'] ("", "(Forced)")[float(modelInfo['forced_correction_value'])>0] 
+                modelInfo['correction_factor'] ("", " (Forced)")[float(modelInfo['forced_correction_value'])>0] 
                 if modelInfo['has_correction'] else "---"
             }""",
             f"{modelInfo['average_recovery']}",

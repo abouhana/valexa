@@ -11,7 +11,7 @@ def generate(**data):
 
     ## Fichier Paragraphe Profile
     fIn = open("filesTex/TemplateProfileParagraph.tex", 'r')
-    fOut = open("filesTex/profiles/Profile_" + idProfile + ".tex", 'w')
+    fOut = open(f"filesTex/profiles/Profile_{idProfile}.tex", 'w')
     for line in fIn:
         for cle, val in commands.items():
             line = line.replace(cle, val)
@@ -61,16 +61,14 @@ def createTabular(isCol, listData):  #
             line += " & ".join(lineTemp)
             line += " \\\\\n"
             lineTemp.clear()
-
     else:
-        for d in listData:  # listData = list of dict
-            d = {
+        for dictValues in listData:  # listData = list of dict
+            dictValues = {
                 str(key): str(round(val, 4)) if isinstance(val, float) else str(val)
-                for key, val in d.items()
+                for key, val in dictValues.items()
             }  # convert values into str
-            line += " & ".join(d.values())
+            line += " & ".join(dictValues.values())
             line += " \\\\\n"
-
     return line
 
 
@@ -88,7 +86,7 @@ def createGraphs(id, data, layout):  # data=list, layout=dict
     layout['legend']['y'] = 1
     scope = PlotlyScope()
     fig = go.Figure(data=data, layout=layout)
-    with open("filesTex/profiles/fig" + id + ".png", "wb") as f:
+    with open(f"filesTex/profiles/fig{id}.png", "wb") as f:
         f.write(scope.transform(fig, format="png"))
 
 
@@ -98,6 +96,7 @@ def recupData(**data):
     :param dict data
     """
     idProfile = data['compound_name'] + str(data['id'])
+    modelInfo = data['model_info']
 
     createGraphs(id="PROFILE_" + idProfile,
                  data=data['graphs']['profile']['data'],
@@ -110,22 +109,20 @@ def recupData(**data):
         "\\COMPOUNDname": data['compound_name'],
 
         ### SUMMARY TABLES  ###
-        "\\LODunitstype": str(data['model_info']['lod']) + " "
-                          + str(data['model_info']['units']) + " ("
-                          + (str(data['model_info']['lod_type']), "")[
-                              data['model_info']['lod_type'] is None]  # ternaire
-                          + ")",
-        "\\MINLOQunits": str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
-        "\\MAXLOQunits": str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
-        "\\CORRECTION": data['model_info']['correction_factor'] + ("", "(Forced)")[
-            float(data['model_info']['forced_correction_value']) > 0]
-        if data['model_info']['has_correction']
-        else "---",  # double ternaire
-        "\\AVERAGErecov": str(data['model_info']['average_recovery']),
-        "\\TOLERANCE": str(data['model_info']['tolerance']) + "\%",
-        "\\ACCEPT": str(data['model_info']['acceptance'])
-                    + ("\% (Relative)", data['model_info']['units'] + " (Absolute)")[
-                        data['model_info']['absolute_acceptance']],  # ternaire
+        "\\LODunitstype": f"""{modelInfo['lod']} {modelInfo['units']} ({
+            "" if modelInfo['lod_type'] is None else modelInfo['lod_type']
+        })""",
+        "\\MINLOQunits": f"{modelInfo['min_loq']} {modelInfo['units']}",
+        "\\MAXLOQunits": f"{modelInfo['max_loq']} {modelInfo['units']}",
+        "\\CORRECTION": f"""{
+            modelInfo['correction_factor'] ("", " (Forced)")[float(modelInfo['forced_correction_value'])>0]
+            if modelInfo['has_correction'] else "---"
+        }""",
+        "\\AVERAGErecov": str(modelInfo['average_recovery']),
+        "\\TOLERANCE": f"{modelInfo['tolerance']}\%",
+        "\\ACCEPT": f"""{modelInfo['acceptance']}{
+            f'''{modelInfo['units']} (Absolute)''' if modelInfo['absolute_acceptance'] else "% (Relative)"
+        }""",
 
         ###  GRAPHIQUE PROFILE  ###
         "\\GRAPHprofile": "\\includegraphics[width=150mm]{profiles/figPROFILE_" + idProfile + "}",
@@ -138,9 +135,8 @@ def recupData(**data):
             [str(item['bias_abs']) for item in data['bias_info']],
             [str(item['bias_rel']) for item in data['bias_info']],
             [str(item['recovery']) for item in data['bias_info']],
-            [str(item['tolerance_abs_high']) + ", " + str(item['tolerance_abs_low']) for item in
-             data['tolerance_info']],
-            [str(item['tolerance_rel_high']) + ", " + str(item['tolerance_rel_low']) for item in data['tolerance_info']]
+            [f"{item['tolerance_abs_high']} , {item['tolerance_abs_low']}" for item in data['tolerance_info']],
+            [f"{item['tolerance_rel_high']} , {item['tolerance_rel_low']}" for item in data['tolerance_info']],
         ]),
 
         ###  PRECISION REPEATABILITY TABLE  ###
@@ -204,7 +200,7 @@ def createTexRegression(**data):
         ###  REGRESSION TABLE  ###
         "\\DATAregression": createTabular(True, [
             [str(item) for item in list(range(len(data['regression_info'])))],  # nb ligne tabular,
-            ["$" + str(item['function_string']) + "$" for item in data['regression_info']],
+            [f"${item['function_string']}$" for item in data['regression_info']],
             [str(item['rsquared']) for item in data['regression_info']]
         ]),
 
@@ -220,7 +216,7 @@ def createTexRegression(**data):
 
     ## Create file for regression info
     fIn = open("filesTex/TemplateRegressionInfo.tex", 'r')
-    fOut = open("filesTex/profiles/regr_" + idProfile + ".tex", 'w')
+    fOut = open(f"filesTex/profiles/regr_{idProfile}.tex", 'w')
     for line in fIn:
         for cle, val in commands.items():
             line = line.replace(cle, val)
