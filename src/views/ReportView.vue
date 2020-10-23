@@ -121,19 +121,9 @@ const loadBalancer = require('electron-load-balancer')
 
 export default {
   name: "ReportView",
-  computed: {
-    ...mapState(['profilesReport']),
-    beDisable: function(){
-      return !(this.profilesReport.length > 0 && this.typeReport.length > 0);
-    }
-
-  },
-  methods: {
-    createReport: function(){
-      loadBalancer.start(ipcRenderer, 'processProfilesReport')
-    },
-
-  },
+  data: () => ({
+    typeReport: ["pdf", "word"]
+  }),
   mounted() {
     ipcRenderer.on("CHANNEL_PROFILES_REPORT", (event, args) => {  // LISTENER CHANNEL
       console.log("Listener sur CHANNEL_PROFILES_REPORT: "+ JSON.stringify(args).toString())
@@ -143,13 +133,19 @@ export default {
       if(args.type === "END"){
         loadBalancer.sendData(ipcRenderer, 'processProfilesReport', {data: 'EXIT'})  //stop process
       }
-
     })
-
   },
-  data: () => ({
-    typeReport: ["pdf", "word"]
-  })
+  computed: {
+    ...mapState(['profilesReport']),
+    beDisable: function(){
+      return !(this.profilesReport.length > 0 && this.typeReport.length > 0);
+    }
+  },
+  methods: {
+    createReport: function(){
+      loadBalancer.start(ipcRenderer, 'processProfilesReport')
+    }
+  }
 }
 </script>
 
