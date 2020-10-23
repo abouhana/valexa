@@ -44,8 +44,6 @@ def replaceInDocx(docObj, old, new):
                         generateProfiles(docObj, **new)
                     else:
                         inline[i].text = inline[i].text.replace(old, new)
-
-
     for table in docObj.tables:
         for row in table.rows:
             for cell in row.cells:
@@ -59,7 +57,6 @@ def fillTable(table, headers, valuesCol):
     for c in range(len(headers)):
         table.cell(0, c).text = headers[c]
         table.cell(0, c).paragraphs[0].runs[0].font.bold = True
-
     for l in range(1, len(table.rows)):  #début ligne 1
         for c in range(len(table.columns)):
             table.cell(l, c).text = valuesCol[c][l-1]
@@ -96,6 +93,7 @@ def generateProfiles(docObj, **listProfiles):
 
 def generateProfile(docObj, **data):
     idProfile = data['compound_name'] + str(data['id'])
+    modelInfo = data['model_info']
 
     createGraphs(id="figPROFILE_" + idProfile,
                  data=data['graphs']['profile']['data'],
@@ -113,17 +111,20 @@ def generateProfile(docObj, **data):
     fillTable(table, ["Parameter", "Value"], [
         ["LOD", "LOQ Min", "LOQ Max", "Correction", "Average Recovery", "Tolerance", "Acceptance"],
         [
-            str(data['model_info']['lod']) + " " + str(data['model_info']['units']) + " (" +
-                (str(data['model_info']['lod_type']), "")[data['model_info']['lod_type'] is None] + ")",
-            str(data['model_info']['min_loq']) + " " + str(data['model_info']['units']),
-            str(data['model_info']['max_loq']) + " " + str(data['model_info']['units']),
-            data['model_info']['correction_factor'] + ("", "(Forced)")[
-                float(data['model_info']['forced_correction_value']) > 0] if data['model_info'][
-                'has_correction'] else "---",
-            str(data['model_info']['average_recovery']),
-            str(data['model_info']['tolerance']) + "%",
-            str(data['model_info']['acceptance']) + ("% (Relative)", data['model_info']['units'] + " (Absolute)")[
-                data['model_info']['absolute_acceptance']],  # ternaire
+            f"""{modelInfo['lod']} {modelInfo['units']} ({
+                "" if modelInfo['lod_type'] is None else modelInfo['lod_type']
+            })""",
+            f"{modelInfo['min_loq']} {modelInfo['units']}",
+            f"{modelInfo['max_loq']} {modelInfo['units']}",
+            f"""{
+                modelInfo['correction_factor'] ("", "(Forced)")[float(modelInfo['forced_correction_value'])>0] 
+                if modelInfo['has_correction'] else "---"
+            }""",
+            f"{modelInfo['average_recovery']}",
+            f"{modelInfo['tolerance']} %",
+            f"""{modelInfo['acceptance']}{
+                f'''{modelInfo['units']} (Absolute)''' if modelInfo['absolute_acceptance'] else "% (Relative)"
+            }""",
         ]
     ])
     docObj.add_picture("filesReport/profiles/figPROFILE_" + idProfile + ".png", width=Mm(150))
@@ -141,8 +142,8 @@ def generateProfile(docObj, **data):
                   [str(item['bias_abs']) for item in data['bias_info']],
                   [str(item['bias_rel']) for item in data['bias_info']],
                   [str(item['recovery']) for item in data['bias_info']],
-                  [str(item['tolerance_abs_high']) + ", " + str(item['tolerance_abs_low']) for item in data['tolerance_info']],
-                  [str(item['tolerance_rel_high']) + ", " + str(item['tolerance_rel_low']) for item in data['tolerance_info']]
+                  [f"{item['tolerance_abs_high']}, {item['tolerance_abs_low']}" for item in data['tolerance_info']],
+                  [f"{item['tolerance_rel_high']}, {item['tolerance_rel_low']}" for item in data['tolerance_info']],
               ])
 
     ###  PRECISION REPEATABILITY TABLE  ###

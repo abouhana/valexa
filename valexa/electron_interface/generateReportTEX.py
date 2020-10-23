@@ -64,8 +64,10 @@ def createTabular(isCol, listData):  #
 
     else:
         for d in listData:  # listData = list of dict
-            d = {str(key): str(round(val, 4)) if isinstance(val, float) else str(val) for key, val in
-                 d.items()}  # convert values into str
+            d = {
+                str(key): str(round(val, 4)) if isinstance(val, float) else str(val)
+                for key, val in d.items()
+            }  # convert values into str
             line += " & ".join(d.values())
             line += " \\\\\n"
 
