@@ -120,9 +120,7 @@ def recupData(**data):
         }""",
         "\\AVERAGErecov": str(modelInfo['average_recovery']),
         "\\TOLERANCE": f"{modelInfo['tolerance']}\%",
-        "\\ACCEPT": f"""{modelInfo['acceptance']}{
-            f'''{modelInfo['units']} (Absolute)''' if modelInfo['absolute_acceptance'] else "% (Relative)"
-        }""",
+        "\\ACCEPT": f"""{modelInfo['acceptance']}\% {"(Absolute)" if modelInfo['absolute_acceptance'] else "(Relative)"}""",
 
         ###  GRAPHIQUE PROFILE  ###
         "\\GRAPHprofile": "\\includegraphics[width=150mm]{profiles/figPROFILE_" + idProfile + "}",
